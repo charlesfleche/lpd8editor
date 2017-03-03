@@ -38,3 +38,8 @@ void Application::deletePreset(int presetId) {
     ::deletePreset(presetId);
     m_presets->select();
 }
+
+void Application::setPresetName(int presetId, const QString &name) {
+    ::setPresetName(presetId, name);
+    m_presets->select();
+}

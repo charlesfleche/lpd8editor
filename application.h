@@ -19,6 +19,7 @@ public:
 public slots:
     void newPreset();
     void deletePreset(int presetId);
+    void setPresetName(int, const QString&);
 
 private:
     QSqlTableModel* m_presets;

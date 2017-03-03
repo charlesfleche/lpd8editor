@@ -18,6 +18,14 @@ bool deletePreset(int presetId) {
     return q.exec();
 }
 
+bool setPresetName(int presetId, const QString& name) {
+    QSqlQuery q;
+    if(!q.prepare("update presets set name = ? where presetId = ?")) return false;
+    q.addBindValue(name);
+    q.addBindValue(presetId);
+    return q.exec();
+}
+
 bool initialize() {
     QSqlQuery q;
     if (!q.exec("create table presets(presetId integer primary key, name varchar)")) return false;

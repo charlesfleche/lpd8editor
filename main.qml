@@ -14,8 +14,11 @@ ApplicationWindow {
             Layout.fillHeight: true
             model: presets
             delegate: RowLayout {
-                Text {
+                TextField {
                     text: name
+                    onAccepted: {
+                        app.setPresetName(presetId, text);
+                    }
                 }
                 Button {
                     text: "Delete"
