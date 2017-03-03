@@ -4,47 +4,11 @@ bool isInitialized(const QSqlDatabase& db) {
     return db.tables().contains("presets");
 }
 
-bool addPad(int presetId, int programId, int controlId) {
-    QSqlQuery q;
-    if (!q.prepare("insert into pads( presetId,  programId,  controlId,  note,  pc,  cc,  momentary)"
-                             "values(:presetId, :programId, :controlId, :note, :pc, :cc, :momentary)")) return false;
-    q.bindValue(":presetId", presetId);
-    q.bindValue(":programId", programId);
-    q.bindValue(":controlId", controlId);
-    q.bindValue(":note", 1);
-    q.bindValue(":pc", 2);
-    q.bindValue(":cc", 3);
-    q.bindValue(":momentary", 0);
-    return q.exec();
-}
-
-bool addKnob(int presetId, int programId, int controlId) {
-    QSqlQuery q;
-    if (!q.prepare("insert into knobs( presetId,  programId,  controlId,  cc,  value)"
-                              "values(:presetId, :programId, :controlId, :cc, :value)")) return false;
-    q.bindValue(":presetId", presetId);
-    q.bindValue(":programId", programId);
-    q.bindValue(":controlId", controlId);
-    q.bindValue(":cc", 4);
-    q.bindValue(":value", 5);
-    return q.exec();
-}
-
 bool addPreset(const QString& name) {
     QSqlQuery q;
     if (!q.prepare("insert into presets(name) values(?)")) return false;
     q.addBindValue(name);
-    if (!q.exec()) return false;
-
-    int presetId = q.lastInsertId().toInt();
-
-    for (int programId = 0 ; programId < 4 ; ++programId) {
-        for (int controlId = 1 ; controlId <= 8 ; ++controlId) {
-            if (!addPad(presetId, programId, controlId)) return false;
-            if (!addKnob(presetId, programId, controlId)) return false;
-        }
-    }
-    return true;
+    return q.exec();
 }
 
 bool initialize() {
@@ -65,15 +29,90 @@ bool initialize() {
                                    "programId integer NOT NULL,"
                                    "controlId integer NOT NULL,"
                                    "cc integer NOT NULL,"
-                                   "value integer NOT NULL,"
                                    "PRIMARY KEY (presetId, programId, controlId),"
                                    "FOREIGN KEY (presetId) REFERENCES presets (presetId)"
                                    "ON DELETE CASCADE ON UPDATE NO ACTION"
                                    ");")) return false;
+    if (!q.exec("create trigger aft_insert after insert on presets "
+                "begin "
 
-    if(!addPreset("preset0")) return false;
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 1, 1, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 1, 2, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 1, 3, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 1, 4, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 1, 5, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 1, 6, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 1, 7, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 1, 8, 1, 2, 3, 0);"
+
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 1, 1, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 1, 2, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 1, 3, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 1, 4, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 1, 5, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 1, 6, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 1, 7, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 1, 8, 1);"
+
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 2, 1, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 2, 2, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 2, 3, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 2, 4, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 2, 5, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 2, 6, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 2, 7, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 2, 8, 1, 2, 3, 0);"
+
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 2, 1, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 2, 2, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 2, 3, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 2, 4, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 2, 5, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 2, 6, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 2, 7, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 2, 8, 1);"
+
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 3, 1, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 3, 2, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 3, 3, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 3, 4, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 3, 5, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 3, 6, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 3, 7, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 3, 8, 1, 2, 3, 0);"
+
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 3, 1, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 3, 2, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 3, 3, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 3, 4, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 3, 5, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 3, 6, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 3, 7, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 3, 8, 1);"
+
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 4, 1, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 4, 2, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 4, 3, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 4, 4, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 4, 5, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 4, 6, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 4, 7, 1, 2, 3, 0);"
+                "insert into pads(presetId, programId, controlId, note, pc, cc, momentary) values(NEW.presetId, 4, 8, 1, 2, 3, 0);"
+
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 4, 1, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 4, 2, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 4, 3, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 4, 4, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 4, 5, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 4, 6, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 4, 7, 1);"
+                "insert into knobs(presetId, programId, controlId, cc) values(NEW.presetId, 4, 8, 1);"
+
+                "end;")) return false;
+
     if(!addPreset("preset1")) return false;
     if(!addPreset("preset2")) return false;
+    if(!addPreset("preset3")) return false;
 
     return true;
 }
