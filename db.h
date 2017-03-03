@@ -7,5 +7,6 @@ class QString;
 
 QSqlError initDb(const QString&);
 bool addPreset(const QString&);
+bool deletePreset(int);
 
 #endif // DB_H

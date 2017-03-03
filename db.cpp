@@ -11,6 +11,13 @@ bool addPreset(const QString& name) {
     return q.exec();
 }
 
+bool deletePreset(int presetId) {
+    QSqlQuery q;
+    if(!q.prepare("delete from presets where presetId = ?")) return false;
+    q.addBindValue(presetId);
+    return q.exec();
+}
+
 bool initialize() {
     QSqlQuery q;
     if (!q.exec("create table presets(presetId integer primary key, name varchar)")) return false;
@@ -23,7 +30,6 @@ bool initialize() {
                                   "momentary integer NOT NULL,"
                                   "PRIMARY KEY (presetId, programId, controlId),"
                                   "FOREIGN KEY (presetId) REFERENCES presets (presetId)"
-                                  "ON DELETE CASCADE ON UPDATE NO ACTION"
                                   ");")) return false;
     if (!q.exec("create table knobs(presetId integer,"
                                    "programId integer NOT NULL,"
@@ -31,7 +37,6 @@ bool initialize() {
                                    "cc integer NOT NULL,"
                                    "PRIMARY KEY (presetId, programId, controlId),"
                                    "FOREIGN KEY (presetId) REFERENCES presets (presetId)"
-                                   "ON DELETE CASCADE ON UPDATE NO ACTION"
                                    ");")) return false;
     if (!q.exec("create trigger aft_insert after insert on presets "
                 "begin "
@@ -110,9 +115,11 @@ bool initialize() {
 
                 "end;")) return false;
 
-    if(!addPreset("preset1")) return false;
-    if(!addPreset("preset2")) return false;
-    if(!addPreset("preset3")) return false;
+    if (!q.exec("create trigger aft_delete after delete on presets "
+                "begin "
+                "delete from pads where presetId = OLD.presetId;"
+                "delete from knobs where presetId = OLD.presetId;"
+                "end;")) return false;
 
     return true;
 }

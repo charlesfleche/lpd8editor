@@ -35,5 +35,6 @@ void Application::newPreset() {
 }
 
 void Application::deletePreset(int presetId) {
-
+    ::deletePreset(presetId);
+    m_presets->select();
 }
