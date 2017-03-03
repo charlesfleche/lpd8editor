@@ -38,3 +38,17 @@ void QmlTableModelProxy::refreshRoleNames()
         m_role_names[Qt::UserRole+i] = sourceModel()->headerData(i, Qt::Horizontal).toByteArray();
     }
 }
+
+bool QmlTableModelProxy::setData(const QModelIndex &index, const QVariant &value, int role) {
+    Q_ASSERT(sourceModel());
+
+    if (role < Qt::UserRole) {
+        return sourceModel()->setData(index, value, role);
+    }
+
+    Q_ASSERT(index.column() == 0);
+
+    int column = role - Qt::UserRole;
+    QModelIndex sourceIndex = sourceModel()->index(index.row(), column);
+    return sourceModel()->setData(sourceIndex, value);
+}

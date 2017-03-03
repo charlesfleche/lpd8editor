@@ -15,9 +15,12 @@ ApplicationWindow {
             model: presets
             delegate: RowLayout {
                 TextField {
+                    id: presetName
                     text: name
-                    onAccepted: {
-                        app.setPresetName(presetId, text);
+                    Binding {
+                        target: model
+                        property: "name"
+                        value: presetName.text
                     }
                 }
                 Button {
