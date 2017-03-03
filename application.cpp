@@ -28,3 +28,12 @@ Application::Application(QObject *parent):
 QAbstractItemModel* Application::presets() const {
     return m_presets;
 }
+
+void Application::newPreset() {
+    addPreset("New preset");
+    m_presets->select();
+}
+
+void Application::deletePreset(int presetId) {
+
+}

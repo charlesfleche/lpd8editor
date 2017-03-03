@@ -2,9 +2,6 @@
 
 QmlTableModelProxy::QmlTableModelProxy(QObject *parent) : QIdentityProxyModel(parent)
 {
-//    connect(this,
-//            &QAbstractProxyModel::sourceModelChanged,
-//            &QmlTableModelProxy::refreshRoleNames);
     connect(this,
             SIGNAL(sourceModelChanged()),
             SLOT(refreshRoleNames()));

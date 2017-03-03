@@ -4,6 +4,7 @@
 #include <QObject>
 
 class QAbstractItemModel;
+class QSqlTableModel;
 
 class Application : public QObject
 {
@@ -15,8 +16,12 @@ public:
 
     QAbstractItemModel* presets() const;
 
+public slots:
+    void newPreset();
+    void deletePreset(int presetId);
+
 private:
-    QAbstractItemModel* m_presets;
+    QSqlTableModel* m_presets;
 };
 
 #endif // APPLICATION_H

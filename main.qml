@@ -8,11 +8,29 @@ ApplicationWindow {
     height: 480
     title: qsTr("lpd8-editor") // XXX get applicationName
 
-    ListView {
+    ColumnLayout {
         anchors.fill: parent
-        model: presets
-        delegate: Text {
-            text: 'Preset: ' + name
+        ListView {
+            Layout.fillHeight: true
+            model: presets
+            delegate: RowLayout {
+                Text {
+                    text: name
+                }
+                Button {
+                    text: "Delete"
+                    onClicked: {
+                        app.deletePreset(presetId);
+                    }
+                }
+            }
+        }
+        Button {
+            Layout.fillWidth: true
+            text: "Add preset"
+            onClicked: {
+                app.newPreset();
+            }
         }
     }
 }

@@ -18,6 +18,7 @@ int main(int argc, char *argv[])
     presets.setSourceModel(app.presets());
 
     QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("app", &app);
     engine.rootContext()->setContextProperty("presets", &presets);
     engine.load(QUrl(QLatin1String("qrc:/main.qml")));
 

@@ -6,5 +6,6 @@
 class QString;
 
 QSqlError initDb(const QString&);
+bool addPreset(const QString&);
 
 #endif // DB_H
