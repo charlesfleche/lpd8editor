@@ -4,5 +4,8 @@
         <file>Page1.qml</file>
         <file>Page1Form.ui.qml</file>
         <file>qtquickcontrols2.conf</file>
+        <file>Pad.qml</file>
+        <file>Preset.qml</file>
+        <file>Knob.qml</file>
     </qresource>
 </RCC>

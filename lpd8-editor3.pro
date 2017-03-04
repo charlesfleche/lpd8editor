@@ -37,3 +37,6 @@ HEADERS += \
     db.h \
     utils.h \
     qmltablemodelproxy.h
+
+DISTFILES += \
+    TOTO.md
