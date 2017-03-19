@@ -11,12 +11,17 @@ ApplicationWindow {
 
     property int globalSpacing: programButtons.spacing
 
+
     MockupPadsModel {
         id: padsModel
     }
 
     MockupKnobsModel {
         id: knobsModel
+    }
+
+    MockupProgramsModel {
+        id: programsModel
     }
 
     Rectangle {
@@ -105,33 +110,17 @@ ApplicationWindow {
                 Layout.fillWidth: false
                 Layout.alignment: Qt.AlignRight
 
-                Button {
-                    Layout.fillWidth: true
+                Repeater {
+                    model: programsModel
+                    delegate: Button {
+                        Layout.fillWidth: true
 
-                    autoExclusive: true
-                    checkable: true
-                    text: "Program 1"
-                }
-                Button {
-                    Layout.fillWidth: true
+                        autoExclusive: true
+                        checkable: true
 
-                    checkable: true
-                    autoExclusive: true
-                    text: "Program 2"
-                }
-                Button {
-                    Layout.fillWidth: true
-
-                    checkable: true
-                    autoExclusive: true
-                    text: "Program 3"
-                }
-                Button {
-                    Layout.fillWidth: true
-
-                    checkable: true
-                    autoExclusive: true
-                    text: "Program 4"
+                        checked: model.current
+                        text: "Program " + (model.index + 1)
+                    }
                 }
             }
 

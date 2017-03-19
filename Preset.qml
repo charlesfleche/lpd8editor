@@ -33,6 +33,7 @@ Control {
         Button {
             id: selectButton
             text: "Select"
+
         }
 
         Button {
