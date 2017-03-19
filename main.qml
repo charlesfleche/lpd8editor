@@ -106,6 +106,36 @@ ApplicationWindow {
             controlId: 3
             cc: 12
         }
+        ListElement {
+            presetId: 0
+            programId: 0
+            controlId: 4
+            cc: 13
+        }
+        ListElement {
+            presetId: 0
+            programId: 0
+            controlId: 5
+            cc: 14
+        }
+        ListElement {
+            presetId: 0
+            programId: 0
+            controlId: 6
+            cc: 15
+        }
+        ListElement {
+            presetId: 0
+            programId: 0
+            controlId: 7
+            cc: 16
+        }
+        ListElement {
+            presetId: 0
+            programId: 0
+            controlId: 8
+            cc: 17
+        }
     }
 
     Rectangle {
@@ -234,12 +264,14 @@ ApplicationWindow {
             }
         }
 
-        ColumnLayout {
+        GridLayout {
             id: padsColumn
 
             Layout.fillHeight: true
-            Layout.fillWidth: false
-            Layout.preferredWidth: padsView.width
+            Layout.fillWidth: true
+//            Layout.preferredWidth: padsView.width
+
+            columns: 4
 
             Rectangle {
                 anchors.fill: padsColumn
@@ -247,20 +279,37 @@ ApplicationWindow {
             }
 
             Text {
+                Layout.columnSpan: 4
+
                 text: "Pads"
             }
 
-            Grid {
-                id: padsView
-                columns: 4
-                spacing: globalSpacing
-
-                Layout.fillHeight: true
-
-                Repeater {
-                    model: padsModel
-                    delegate: Pad{}
+            Repeater {
+                model: padsModel
+                delegate: Pad {
+                    Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+//                    Layout.fillHeight: true
+//                    Layout.fillWidth: true
                 }
+            }
+
+            Text {
+                Layout.columnSpan: 4
+
+                text: "Knobs"
+            }
+
+            Repeater {
+                model: knobsModel
+                delegate: Knob {
+                    Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+//                    Layout.fillHeight: true
+//                    Layout.fillWidth: true
+                }
+            }
+
+            Item {
+                Layout.fillHeight: true
             }
         }
         /*
