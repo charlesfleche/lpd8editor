@@ -6,6 +6,7 @@ Item {
     id: root
 
     implicitHeight: presetName.implicitHeight
+    implicitWidth: presetName.implicitWidth + selectButton.implicitWidth + deleteButton.implicitWidth + row.spacing
 
     Rectangle {
         anchors.fill: root
@@ -13,6 +14,8 @@ Item {
     }
 
     RowLayout {
+        id: row
+
         anchors.fill: root
 
         TextField {
@@ -39,5 +42,12 @@ Item {
                 app.deletePreset(presetId);
             }
         }
+    }
+
+    Rectangle {
+        anchors.fill: root
+        color: "transparent"
+        border.color: "red"
+        border.width: 1
     }
 }

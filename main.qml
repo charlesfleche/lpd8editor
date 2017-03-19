@@ -125,7 +125,7 @@ ApplicationWindow {
 ////            width: parent.width
 //        }
 //    }
-
+/*
     GridView {
         id: widgetTester
         anchors.fill: parent
@@ -134,6 +134,19 @@ ApplicationWindow {
         model: padsModel
         delegate: Knob {
             width: widgetTester.cellWidth
+        }
+    }
+*/
+    ListView {
+        id: presetsSection
+
+        anchors.fill: parent
+
+        interactive: false
+
+        model: presets
+        delegate: Preset {
+            width: parent.width
         }
     }
 
