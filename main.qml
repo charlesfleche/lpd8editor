@@ -235,7 +235,7 @@ ApplicationWindow {
 
             Layout.fillHeight: true
             Layout.fillWidth: false
-            width: padsView.contentItem.children[0].implicitWidth
+            Layout.preferredWidth: padsView.contentItem.children[0].implicitWidth
 
             Rectangle {
                 anchors.fill: padsColumn
