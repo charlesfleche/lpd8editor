@@ -8,6 +8,8 @@ ApplicationWindow {
     height: 720
     title: qsTr("lpd8-editor") // XXX get applicationName
 
+    property int globalSpacing: programButtons.spacing
+
     ListModel {
         id: padsModel
         ListElement {
@@ -184,6 +186,8 @@ ApplicationWindow {
 
                 interactive: false
 
+                spacing: globalSpacing
+
                 model: presets
                 delegate: Preset {
                     width: parent.width
@@ -235,7 +239,7 @@ ApplicationWindow {
 
             Layout.fillHeight: true
             Layout.fillWidth: false
-            Layout.preferredWidth: padsView.contentItem.children[0].implicitWidth
+            Layout.preferredWidth: padsView.width
 
             Rectangle {
                 anchors.fill: padsColumn
@@ -246,22 +250,17 @@ ApplicationWindow {
                 text: "Pads"
             }
 
-            ListView {
+            Grid {
                 id: padsView
+                columns: 4
+                spacing: globalSpacing
 
-                Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                spacing: 8
-                model: padsModel
-                delegate: Pad {
-                    width: parent.width
+                Repeater {
+                    model: padsModel
+                    delegate: Pad{}
                 }
-//                delegate: Rectangle{
-//                    width: 256
-//                    height: 256
-//                    color: "red"
-//                }
             }
         }
         /*
