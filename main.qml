@@ -106,15 +106,15 @@ ApplicationWindow {
         }
     }
 
-//    Rectangle {
-//        anchors.fill: columns
-//        color: "darkgrey"
-//    }
-
     Rectangle {
-        anchors.fill: widgetTester
+        anchors.fill: columns
         color: "darkgrey"
     }
+
+//    Rectangle {
+//        anchors.fill: widgetTester
+//        color: "darkgrey"
+//    }
 
 //    ListView {
 //        id: widgetTester
@@ -137,6 +137,7 @@ ApplicationWindow {
         }
     }
 */
+    /*
     ListView {
         id: presetsSection
 
@@ -149,8 +150,8 @@ ApplicationWindow {
             width: parent.width
         }
     }
+    */
 
-/*
     RowLayout {
         id: columns
 
@@ -233,14 +234,22 @@ ApplicationWindow {
             id: padsColumn
 
             Layout.fillHeight: true
-            Layout.fillWidth: true
+            Layout.fillWidth: false
+            width: padsView.contentItem.children[0].implicitWidth
 
             Rectangle {
                 anchors.fill: padsColumn
-                color: "lightblue"
+                color: "lightgreen"
+            }
+
+            Text {
+                text: "Pads"
             }
 
             ListView {
+                id: padsView
+
+                Layout.fillWidth: true
                 Layout.fillHeight: true
 
                 spacing: 8
@@ -248,9 +257,14 @@ ApplicationWindow {
                 delegate: Pad {
                     width: parent.width
                 }
+//                delegate: Rectangle{
+//                    width: 256
+//                    height: 256
+//                    color: "red"
+//                }
             }
         }
-
+        /*
         ColumnLayout {
             id: knobsColumn
 
@@ -274,6 +288,6 @@ ApplicationWindow {
                 }
             }
         }
+        */
     }
-*/
 }
