@@ -9,8 +9,8 @@ Control {
     property var computedImplicitHeight: title.implicitHeight + mySpinBox.implicitHeight * 3 + buttonMomentary.implicitHeight + grid.rowSpacing * 4
     property var computedImplicitDimentsion: Math.max(computedImplicitWidth, computedImplicitHeight)
 
-    implicitWidth: computedImplicitWidth
-    implicitHeight: computedImplicitHeight
+    implicitWidth: computedImplicitDimentsion
+    implicitHeight: computedImplicitDimentsion
 
     Rectangle {
         anchors.fill: root
@@ -32,13 +32,14 @@ Control {
 
     GridLayout {
         id: grid
+
         anchors.fill: root
         columns: 2
-//        rowSpacing: 0
-//        columnSpacing: 0
+
         Text {
             id: title
 
+            Layout.fillWidth: true
             Layout.columnSpan: 2
 
             text: presetId + " / " + programId + " / " + controlId

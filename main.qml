@@ -129,14 +129,11 @@ ApplicationWindow {
     GridView {
         id: widgetTester
         anchors.fill: parent
-//        spacing: 10
         cellHeight: contentItem.children[0].implicitHeight
         cellWidth: contentItem.children[0].implicitWidth
         model: padsModel
-        delegate: Pad {
+        delegate: Knob {
             width: widgetTester.cellWidth
-//            height: widgetTester.cellHeight
-//            width: parent.width
         }
     }
 

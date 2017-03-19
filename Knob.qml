@@ -5,38 +5,56 @@ import QtQuick.Layouts 1.0
 Item {
     id: root
 
-    height: childrenRect.height
+    property var computedImplicitWidth: fontMetrics.boundingRect(ccText.text).width + grid.columnSpacing + mySpinBox.implicitWidth
+    property var computedImplicitHeight: title.implicitHeight + mySpinBox.implicitHeight + grid.rowSpacing
+//    property var computedImplicitDimentsion: Math.max(computedImplicitWidth, computedImplicitHeight)
+
+    implicitWidth: computedImplicitWidth
+    implicitHeight: computedImplicitHeight
 
     Rectangle {
         anchors.fill: root
-        color: "lightgrey"
+        color: "transparent"
+        border.color: "red"
+        border.width: 1
+        z: 10
     }
 
-    ColumnLayout {
-        width: root.width
+    Rectangle {
+        anchors.fill: grid
+        color: "lightgreen"
+    }
+
+    FontMetrics {
+        id: fontMetrics
+        font: ccText.font
+    }
+
+    GridLayout {
+        id: grid
+
+        anchors.fill: root
+        columns: 2
 
         Text {
             id: title
 
-//            Layout.fillWidth: true
+            Layout.fillWidth: true
+            Layout.columnSpan: 2
 
             text: presetId + " / " + programId + " / " + controlId
         }
-        GridLayout {
-            id: gridValues
 
-            Layout.fillHeight: true
-//            Layout.fillWidth: true
-
-            columns: 2
-
-            Text {
-                id: noteCC
-                text: "CC"
-            }
-            SpinBox {
-//                Layout.fillWidth: true;
-            }
+        Text {
+            id: ccText
+            text: "CC"
+        }
+        SpinBox {
+            id: mySpinBox
+            editable: true
+            Layout.fillWidth: true;
+            to: 127
+            value: 127
         }
     }
 }
