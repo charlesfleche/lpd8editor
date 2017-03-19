@@ -4,8 +4,8 @@ import QtQuick.Layouts 1.0
 
 ApplicationWindow {
     visible: true
-    width: 640
-    height: 480
+    width: 1280
+    height: 720
     title: qsTr("lpd8-editor") // XXX get applicationName
 
     ListModel {
@@ -63,7 +63,7 @@ ApplicationWindow {
 
     Rectangle {
         anchors.fill: columns
-        color: "chocolate"
+        color: "darkgrey"
     }
 
     RowLayout {
@@ -74,18 +74,21 @@ ApplicationWindow {
         ColumnLayout {
             id: presetsColumn
 
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+
             Rectangle {
                 anchors.fill: presetsColumn
                 color: "steelblue"
             }
+/*
+            Text {
+                text: "Presets"
+            }
 
             Rectangle {
                 anchors.fill: presetsSection
-                color: "lavenderblush"
-            }
-
-            Text {
-                text: "Presets"
+                color: "darkblue"
             }
 
             ListView {
@@ -101,6 +104,37 @@ ApplicationWindow {
                 }
             }
 
+            RowLayout {
+                id: programButtons
+
+                Layout.fillWidth: true
+
+                Button {
+                    Layout.fillWidth: true
+
+                    checkable: true
+                    text: "1"
+                }
+                Button {
+                    Layout.fillWidth: true
+
+                    checkable: true
+                    text: "2"
+                }
+                Button {
+                    Layout.fillWidth: true
+
+                    checkable: true
+                    text: "3"
+                }
+                Button {
+                    Layout.fillWidth: true
+
+                    checkable: true
+                    text: "4"
+                }
+            }
+
             Button {
                 Layout.fillWidth: true
                 text: "Add preset"
@@ -108,33 +142,45 @@ ApplicationWindow {
                     app.newPreset();
                 }
             }
+*/
         }
 
         ColumnLayout {
             id: padsColumn
 
             Layout.fillHeight: true
+            Layout.fillWidth: true
+//            width: childrenRect.width
 
             Rectangle {
                 anchors.fill: padsColumn
                 color: "lightblue"
             }
-
+            /*
             Text {
                 text: "Pads"
             }
-
+            */
             ListView {
                 Layout.fillHeight: true
                 Layout.fillWidth: true
+//                width: parent.width
+//                width: childrenRect.width
+//                width: 256
                 spacing: 8
                 model: padsModel
-                delegate: Pad {
+//                delegate: Pad {
+//                }
+                delegate: SpinBox{
                     width: parent.width
                 }
             }
-        }
 
+//            SpinBox {
+//                width: parent.width
+//            }
+        }
+/*
         ColumnLayout {
             id: knobsColumn
 
@@ -151,7 +197,7 @@ ApplicationWindow {
 
             ListView {
                 Layout.fillHeight: true
-                Layout.fillWidth: true
+//                Layout.fillWidth: true
                 spacing: 8
                 model: knobsModel
                 delegate: Knob {
@@ -159,5 +205,6 @@ ApplicationWindow {
                 }
             }
         }
+*/
     }
 }

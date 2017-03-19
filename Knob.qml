@@ -18,7 +18,7 @@ Item {
         Text {
             id: title
 
-            Layout.fillWidth: true
+//            Layout.fillWidth: true
 
             text: presetId + " / " + programId + " / " + controlId
         }
@@ -26,7 +26,7 @@ Item {
             id: gridValues
 
             Layout.fillHeight: true
-            Layout.fillWidth: true
+//            Layout.fillWidth: true
 
             columns: 2
 
@@ -35,7 +35,7 @@ Item {
                 text: "CC"
             }
             SpinBox {
-                Layout.fillWidth: true;
+//                Layout.fillWidth: true;
             }
         }
     }

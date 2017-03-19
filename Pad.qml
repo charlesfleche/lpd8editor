@@ -6,10 +6,17 @@ Item {
     id: root
 
     height: childrenRect.height
+    width: height
+//    width: childrenRect.width
 
     Rectangle {
         anchors.fill: root
-        color: "lightgrey"
+        color: "orange"
+    }
+
+    FontMetrics {
+        id: fontMetrics
+        font: mySpinBox.font
     }
 
     ColumnLayout {
@@ -35,7 +42,12 @@ Item {
                 text: "Note"
             }
             SpinBox {
+                id: mySpinBox
+                editable: true
                 Layout.fillWidth: true;
+                Layout.minimumWidth: up.indicator.implicitWidth + down.indicator.implicitWidth + fontMetrics.maximumCharacterWidth * 3
+                to: 127
+                value: 127
             }
             Text {
                 id: notePC
