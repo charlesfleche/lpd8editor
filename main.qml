@@ -1,11 +1,12 @@
 import QtQuick 2.7
 import QtQuick.Controls 2.0
 import QtQuick.Layouts 1.0
+import QtQuick.Window 2.0
 
 ApplicationWindow {
     visible: true
-    width: 1280
-    height: 720
+    minimumWidth: Screen.width / 3
+    minimumHeight: padsColumn.height
     title: qsTr("lpd8-editor") // XXX get applicationName
 
     property int globalSpacing: programButtons.spacing
@@ -39,8 +40,19 @@ ApplicationWindow {
                 color: "steelblue"
             }
 
-            Text {
-                text: "Presets"
+            RowLayout {
+                Text {
+                    Layout.fillWidth: true;
+
+                    text: "Presets"
+                }
+                Button {
+                    Layout.alignment: Qt.AlignRight
+                    text: "Add"
+                    onClicked: {
+                        app.newPreset();
+                    }
+                }
             }
 
             Rectangle {
@@ -53,52 +65,15 @@ ApplicationWindow {
                 Layout.fillHeight: true
                 Layout.fillWidth: true
 
-                interactive: false
-
                 spacing: globalSpacing
+
+                ScrollBar.vertical: ScrollBar{}
+
+                interactive: true
 
                 model: presets
                 delegate: Preset {
                     width: parent.width
-                }
-            }
-
-            RowLayout {
-                id: programButtons
-
-                Layout.fillWidth: true
-
-                Button {
-                    Layout.fillWidth: true
-
-                    checkable: true
-                    text: "1"
-                }
-                Button {
-                    Layout.fillWidth: true
-
-                    checkable: true
-                    text: "2"
-                }
-                Button {
-                    Layout.fillWidth: true
-
-                    checkable: true
-                    text: "3"
-                }
-                Button {
-                    Layout.fillWidth: true
-
-                    checkable: true
-                    text: "4"
-                }
-            }
-
-            Button {
-                Layout.fillWidth: true
-                text: "Add preset"
-                onClicked: {
-                    app.newPreset();
                 }
             }
         }
@@ -109,6 +84,8 @@ ApplicationWindow {
             Layout.fillHeight: true
             Layout.fillWidth: true
 
+            Layout.alignment: Qt.AlignTop
+
             columns: 4
 
             Rectangle {
@@ -117,9 +94,41 @@ ApplicationWindow {
             }
 
             Text {
-                Layout.columnSpan: 4
-
                 text: "Pads"
+            }
+
+            RowLayout {
+                id: programButtons
+
+                Layout.columnSpan: 3
+
+                Layout.fillWidth: false
+                Layout.alignment: Qt.AlignRight
+
+                Button {
+                    Layout.fillWidth: true
+
+                    checkable: true
+                    text: "Program 1"
+                }
+                Button {
+                    Layout.fillWidth: true
+
+                    checkable: true
+                    text: "Program 2"
+                }
+                Button {
+                    Layout.fillWidth: true
+
+                    checkable: true
+                    text: "Program 3"
+                }
+                Button {
+                    Layout.fillWidth: true
+
+                    checkable: true
+                    text: "Program 4"
+                }
             }
 
             Repeater {
@@ -140,10 +149,6 @@ ApplicationWindow {
                 delegate: Knob {
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
                 }
-            }
-
-            Item {
-                Layout.fillHeight: true
             }
         }
     }
