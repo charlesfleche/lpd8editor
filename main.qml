@@ -143,47 +143,6 @@ ApplicationWindow {
         color: "darkgrey"
     }
 
-//    Rectangle {
-//        anchors.fill: widgetTester
-//        color: "darkgrey"
-//    }
-
-//    ListView {
-//        id: widgetTester
-//        anchors.fill: parent
-//        spacing: 10
-//        model: padsModel
-//        delegate: Pad {
-////            width: parent.width
-//        }
-//    }
-/*
-    GridView {
-        id: widgetTester
-        anchors.fill: parent
-        cellHeight: contentItem.children[0].implicitHeight
-        cellWidth: contentItem.children[0].implicitWidth
-        model: padsModel
-        delegate: Knob {
-            width: widgetTester.cellWidth
-        }
-    }
-*/
-    /*
-    ListView {
-        id: presetsSection
-
-        anchors.fill: parent
-
-        interactive: false
-
-        model: presets
-        delegate: Preset {
-            width: parent.width
-        }
-    }
-    */
-
     RowLayout {
         id: columns
 
@@ -269,7 +228,6 @@ ApplicationWindow {
 
             Layout.fillHeight: true
             Layout.fillWidth: true
-//            Layout.preferredWidth: padsView.width
 
             columns: 4
 
@@ -288,8 +246,6 @@ ApplicationWindow {
                 model: padsModel
                 delegate: Pad {
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-//                    Layout.fillHeight: true
-//                    Layout.fillWidth: true
                 }
             }
 
@@ -303,8 +259,6 @@ ApplicationWindow {
                 model: knobsModel
                 delegate: Knob {
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-//                    Layout.fillHeight: true
-//                    Layout.fillWidth: true
                 }
             }
 
@@ -312,30 +266,5 @@ ApplicationWindow {
                 Layout.fillHeight: true
             }
         }
-        /*
-        ColumnLayout {
-            id: knobsColumn
-
-            Layout.fillHeight: true
-
-            Rectangle {
-                anchors.fill: knobsColumn
-                color: "lightcoral"
-            }
-
-            Text {
-                text: "Knobs"
-            }
-
-            ListView {
-                Layout.fillHeight: true
-                spacing: 8
-                model: knobsModel
-                delegate: Knob {
-                    width: parent.width
-                }
-            }
-        }
-        */
     }
 }
