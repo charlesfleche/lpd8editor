@@ -108,6 +108,7 @@ ApplicationWindow {
                 Button {
                     Layout.fillWidth: true
 
+                    autoExclusive: true
                     checkable: true
                     text: "Program 1"
                 }
@@ -115,18 +116,21 @@ ApplicationWindow {
                     Layout.fillWidth: true
 
                     checkable: true
+                    autoExclusive: true
                     text: "Program 2"
                 }
                 Button {
                     Layout.fillWidth: true
 
                     checkable: true
+                    autoExclusive: true
                     text: "Program 3"
                 }
                 Button {
                     Layout.fillWidth: true
 
                     checkable: true
+                    autoExclusive: true
                     text: "Program 4"
                 }
             }
