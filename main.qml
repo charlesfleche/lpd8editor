@@ -37,6 +37,51 @@ ApplicationWindow {
             cc: 9
             momentary: 0
         }
+        ListElement {
+            presetId: 0
+            programId: 0
+            controlId: 4
+            note: 10
+            pc: 11
+            cc: 12
+            momentary: 0
+        }
+        ListElement {
+            presetId: 0
+            programId: 0
+            controlId: 5
+            note: 13
+            pc: 14
+            cc: 15
+            momentary: 0
+        }
+        ListElement {
+            presetId: 0
+            programId: 0
+            controlId: 6
+            note: 16
+            pc: 17
+            cc: 18
+            momentary: 0
+        }
+        ListElement {
+            presetId: 0
+            programId: 0
+            controlId: 7
+            note: 19
+            pc: 20
+            cc: 21
+            momentary: 0
+        }
+        ListElement {
+            presetId: 0
+            programId: 0
+            controlId: 8
+            note: 22
+            pc: 23
+            cc: 24
+            momentary: 0
+        }
     }
 
     ListModel {
@@ -61,11 +106,41 @@ ApplicationWindow {
         }
     }
 
+//    Rectangle {
+//        anchors.fill: columns
+//        color: "darkgrey"
+//    }
+
     Rectangle {
-        anchors.fill: columns
+        anchors.fill: widgetTester
         color: "darkgrey"
     }
 
+//    ListView {
+//        id: widgetTester
+//        anchors.fill: parent
+//        spacing: 10
+//        model: padsModel
+//        delegate: Pad {
+////            width: parent.width
+//        }
+//    }
+
+    GridView {
+        id: widgetTester
+        anchors.fill: parent
+//        spacing: 10
+        cellHeight: contentItem.children[0].implicitHeight
+        cellWidth: contentItem.children[0].implicitWidth
+        model: padsModel
+        delegate: Pad {
+            width: widgetTester.cellWidth
+//            height: widgetTester.cellHeight
+//            width: parent.width
+        }
+    }
+
+/*
     RowLayout {
         id: columns
 
@@ -81,7 +156,7 @@ ApplicationWindow {
                 anchors.fill: presetsColumn
                 color: "steelblue"
             }
-/*
+
             Text {
                 text: "Presets"
             }
@@ -142,7 +217,6 @@ ApplicationWindow {
                     app.newPreset();
                 }
             }
-*/
         }
 
         ColumnLayout {
@@ -150,37 +224,23 @@ ApplicationWindow {
 
             Layout.fillHeight: true
             Layout.fillWidth: true
-//            width: childrenRect.width
 
             Rectangle {
                 anchors.fill: padsColumn
                 color: "lightblue"
             }
-            /*
-            Text {
-                text: "Pads"
-            }
-            */
+
             ListView {
                 Layout.fillHeight: true
-                Layout.fillWidth: true
-//                width: parent.width
-//                width: childrenRect.width
-//                width: 256
+
                 spacing: 8
                 model: padsModel
-//                delegate: Pad {
-//                }
-                delegate: SpinBox{
+                delegate: Pad {
                     width: parent.width
                 }
             }
-
-//            SpinBox {
-//                width: parent.width
-//            }
         }
-/*
+
         ColumnLayout {
             id: knobsColumn
 
@@ -197,7 +257,6 @@ ApplicationWindow {
 
             ListView {
                 Layout.fillHeight: true
-//                Layout.fillWidth: true
                 spacing: 8
                 model: knobsModel
                 delegate: Knob {
@@ -205,6 +264,6 @@ ApplicationWindow {
                 }
             }
         }
-*/
     }
+*/
 }
