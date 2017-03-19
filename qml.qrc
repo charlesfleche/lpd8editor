@@ -5,5 +5,7 @@
         <file>Pad.qml</file>
         <file>Preset.qml</file>
         <file>Knob.qml</file>
+        <file>MockupPadsModel.qml</file>
+        <file>MockupKnobsModel.qml</file>
     </qresource>
 </RCC>
