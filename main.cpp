@@ -9,6 +9,7 @@ int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication application(argc, argv);
+    application.setOrganizationName("lpd8-editor");
     application.setApplicationName("lpd8-editor");
     application.setApplicationVersion("0.0.0");
 
@@ -17,9 +18,17 @@ int main(int argc, char *argv[])
     QmlTableModelProxy presets;
     presets.setSourceModel(app.presets());
 
+    QmlTableModelProxy pads;
+    pads.setSourceModel(app.pads());
+
+    QmlTableModelProxy knobs;
+    knobs.setSourceModel(app.knobs());
+
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("app", &app);
     engine.rootContext()->setContextProperty("presets", &presets);
+    engine.rootContext()->setContextProperty("padsModel", &pads);
+    engine.rootContext()->setContextProperty("knobsModel", &knobs);
     engine.load(QUrl(QLatin1String("qrc:/main.qml")));
 
     return application.exec();

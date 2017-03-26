@@ -5,8 +5,8 @@ import QtQuick.Layouts 1.0
 Control {
     id: root
 
-    property var computedImplicitWidth: fontMetrics.boundingRect(noteText.text).width + grid.columnSpacing + mySpinBox.implicitWidth
-    property var computedImplicitHeight: title.implicitHeight + mySpinBox.implicitHeight * 3 + buttonMomentary.implicitHeight + grid.rowSpacing * 4
+    property var computedImplicitWidth: fontMetrics.boundingRect(noteText.text).width + grid.columnSpacing + noteSpinbox.implicitWidth
+    property var computedImplicitHeight: title.implicitHeight + noteSpinbox.implicitHeight * 3 + buttonMomentary.implicitHeight + grid.rowSpacing * 4
     property var computedImplicitDimentsion: Math.max(computedImplicitWidth, computedImplicitHeight)
 
     implicitWidth: computedImplicitDimentsion
@@ -52,11 +52,16 @@ Control {
         }
 
         SpinBox {
-            id: mySpinBox
+            id: noteSpinbox
             editable: true
             Layout.fillWidth: true;
             to: 127
-            value: 127
+            value: note
+            Binding {
+                target: model
+                property: "note"
+                value: noteSpinbox.value
+            }
         }
 
         Text {
@@ -64,7 +69,16 @@ Control {
             text: "PC"
         }
         SpinBox {
+            id: pcSpinbox
+            editable: true
             Layout.fillWidth: true;
+            to: 127
+            value: pc
+            Binding {
+                target: model
+                property: "pc"
+                value: pcSpinbox.value
+            }
         }
 
         Text {
@@ -72,7 +86,16 @@ Control {
             text: "CC"
         }
         SpinBox {
+            id: ccSpinbox
+            editable: true
             Layout.fillWidth: true;
+            to: 127
+            value: cc
+            Binding {
+                target: model
+                property: "cc"
+                value: ccSpinbox.value
+            }
         }
 
         Button {
@@ -83,6 +106,9 @@ Control {
 
             checkable: true
             text: "Momentary"
+            onClicked: {
+                model.momentary = checked
+            }
         }
     }
 }

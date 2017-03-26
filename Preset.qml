@@ -23,7 +23,7 @@ Control {
 
             Layout.fillWidth: true
 
-            text: name
+            text: model.name
             Binding {
                 target: model
                 property: "name"
@@ -33,9 +33,10 @@ Control {
         Button {
             id: selectButton
             text: "Select"
-
+            onClicked: {
+                app.activePresetId = presetId;
+            }
         }
-
         Button {
             id: deleteButton
             text: "Delete"

@@ -1,6 +1,6 @@
 # TODO
 
-- Show pads / knobs
+- Select Preset / Program
 - Edit pad / knobs
 - Receive SYSEX
 - Send SYSEX

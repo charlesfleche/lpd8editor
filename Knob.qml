@@ -5,8 +5,8 @@ import QtQuick.Layouts 1.0
 Control {
     id: root
 
-    property var computedImplicitWidth: fontMetrics.boundingRect(ccText.text).width + grid.columnSpacing + mySpinBox.implicitWidth
-    property var computedImplicitHeight: title.implicitHeight + mySpinBox.implicitHeight + grid.rowSpacing
+    property var computedImplicitWidth: fontMetrics.boundingRect(ccText.text).width + grid.columnSpacing + ccSpinbox.implicitWidth
+    property var computedImplicitHeight: title.implicitHeight + ccSpinbox.implicitHeight + grid.rowSpacing
 //    property var computedImplicitDimentsion: Math.max(computedImplicitWidth, computedImplicitHeight)
 
     implicitWidth: computedImplicitWidth
@@ -50,11 +50,16 @@ Control {
             text: "CC"
         }
         SpinBox {
-            id: mySpinBox
+            id: ccSpinbox
             editable: true
             Layout.fillWidth: true;
             to: 127
-            value: 127
+            value: cc
+            Binding {
+                target: model
+                property: "cc"
+                value: ccSpinbox.value
+            }
         }
     }
 }

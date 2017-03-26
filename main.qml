@@ -11,14 +11,13 @@ ApplicationWindow {
 
     property int globalSpacing: programButtons.spacing
 
+//    MockupPadsModel {
+//        id: padsModel
+//    }
 
-    MockupPadsModel {
-        id: padsModel
-    }
-
-    MockupKnobsModel {
-        id: knobsModel
-    }
+//    MockupKnobsModel {
+//        id: knobsModel
+//    }
 
     MockupProgramsModel {
         id: programsModel
@@ -119,7 +118,10 @@ ApplicationWindow {
                         checkable: true
 
                         checked: model.current
-                        text: "Program " + (model.index + 1)
+                        text: "Program " + (model.programId)
+                        onClicked: {
+                            app.activeProgramId = model.programId
+                        }
                     }
                 }
             }
@@ -128,6 +130,9 @@ ApplicationWindow {
                 model: padsModel
                 delegate: Pad {
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+                }
+                onCountChanged: {
+                    console.log('Pads repeater count: ' + count)
                 }
             }
 
