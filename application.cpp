@@ -72,8 +72,8 @@ void Application::deletePreset(int presetId) {
 }
 
 int Application::activePresetId() const {
-    const int ret = QSettings().value(SETTINGS_KEY_ACTIVE_PRESET_ID).toInt();
-    return ret;
+    const int presetId = QSettings().value(SETTINGS_KEY_ACTIVE_PRESET_ID, 0).toInt();
+    return isValidPresetId(presetId) ? presetId : 0;
 }
 
 void Application::setActivePresetId(int presetId) {
@@ -85,8 +85,8 @@ void Application::setActivePresetId(int presetId) {
 }
 
 int Application::activeProgramId() const {
-    const int ret = QSettings().value(SETTINGS_KEY_ACTIVE_PROGRAM_ID).toInt();
-    return ret;
+    const int programId = QSettings().value(SETTINGS_KEY_ACTIVE_PROGRAM_ID, 0).toInt();
+    return isValidProgramId(programId) ? programId : 0;
 }
 
 void Application::setActiveProgramId(int programId) {

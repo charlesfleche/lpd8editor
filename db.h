@@ -9,5 +9,7 @@ QSqlError initDb(const QString&);
 bool addPreset(const QString&);
 bool deletePreset(int);
 bool setPresetName(int, const QString&);
+bool isValidPresetId(int);
+bool isValidProgramId(int);
 
 #endif // DB_H

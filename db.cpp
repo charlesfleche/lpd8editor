@@ -1,5 +1,9 @@
 #include "db.h"
 
+QString sqlErrorMessage(const QString& msg, const QSqlError& err) {
+    return msg + QString("\n") + err.text();
+}
+
 bool isInitialized(const QSqlDatabase& db) {
     return db.tables().contains("presets");
 }
@@ -11,7 +15,17 @@ bool addPreset(const QString& name) {
     return q.exec();
 }
 
+bool addPreset(int presetId) {
+    QSqlQuery q;
+    if (!q.prepare("insert into presets(presetId, name) values(?, ?)")) return false;
+    q.addBindValue(presetId);
+    q.addBindValue("default");
+    return q.exec();
+}
+
 bool deletePreset(int presetId) {
+    Q_ASSERT(presetId > 0);
+
     QSqlQuery q;
     if(!q.prepare("delete from presets where presetId = ?")) return false;
     q.addBindValue(presetId);
@@ -24,6 +38,25 @@ bool setPresetName(int presetId, const QString& name) {
     q.addBindValue(name);
     q.addBindValue(presetId);
     return q.exec();
+}
+
+bool isValidPresetId(int presetId) {
+    QSqlQuery q;
+    if (!q.exec("select presetId from presets;")) {
+        qWarning() << "Cannot select presets";
+        qWarning() << q.lastError().text();
+        return false;
+    }
+    for (int i = 0 ; i < q.size() ; ++i) {
+        if (presetId == q.value(i)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool isValidProgramId(int programId) {
+    return programId >= 0 && programId <= 3;
 }
 
 bool initialize() {
@@ -132,13 +165,34 @@ bool initialize() {
     return true;
 }
 
+bool ensureDefaultPreset() {
+    if (!isValidPresetId(0)) {
+        return addPreset(0);
+    }
+    return true;
+}
+
 QSqlError initDb(const QString& path) {
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName(path);
-    if (db.open() && !isInitialized(db)) {
+
+    if (!db.open()) {
+        qWarning() << "Failed to open db" << path;
+        goto end;
+    }
+
+    if (!isInitialized(db)) {
         if (!initialize()) {
-            qDebug() << "Failed to initialize db";
+            qWarning() << "Failed to initialize db" << path;
+            goto end;
         }
     }
+
+    if (!ensureDefaultPreset()) {
+        qWarning() << "Failed to ensure default preset in db" << path;
+        goto end;
+    }
+
+    end:
     return db.lastError();
 }
