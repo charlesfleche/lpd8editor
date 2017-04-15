@@ -23,6 +23,8 @@ Control {
 
             Layout.fillWidth: true
 
+            readOnly: presetId === 0
+
             text: model.name
             Binding {
                 target: model
@@ -39,6 +41,7 @@ Control {
         }
         Button {
             id: deleteButton
+            enabled: presetId > 0
             text: "Delete"
             onClicked: {
                 app.deletePreset(presetId);
