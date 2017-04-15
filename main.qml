@@ -11,6 +11,7 @@ ApplicationWindow {
 
     property int globalSpacing: programButtons.spacing
     property alias padSize: invisiblePad.computedImplicitDimension
+    property alias knobHeight: invisibleKnob.implicitHeight
 
 //    MockupPadsModel {
 //        id: padsModel
@@ -31,6 +32,11 @@ ApplicationWindow {
 
     Pad {
         id: invisiblePad
+        visible: false
+    }
+
+    Knob {
+        id: invisibleKnob
         visible: false
     }
 
@@ -89,49 +95,44 @@ ApplicationWindow {
             }
         }
 
-        GridLayout {
+        ColumnLayout {
             id: padsColumn
 
             Layout.fillHeight: true
             Layout.fillWidth: false
-
-            Layout.alignment: Qt.AlignTop
-
-            columns: 4
-
             Layout.minimumWidth: 4 * (padSize+globalSpacing)
+            Layout.alignment: Qt.AlignTop
 
             Rectangle {
                 anchors.fill: padsColumn
                 color: "lightgreen"
             }
 
-            Text {
-                Layout.columnSpan: 3
-                Layout.fillWidth: true
-                text: "Program"
-            }
-
             RowLayout {
-                id: programButtons
+                Text {
+                    Layout.fillWidth: true
+                    text: "Program"
+                }
 
-                Layout.columnSpan: 1
+                RowLayout {
+                    id: programButtons
 
-                Layout.fillWidth: false
-                Layout.alignment: Qt.AlignRight
+                    Layout.fillWidth: false
+                    Layout.alignment: Qt.AlignRight
 
-                Repeater {
-                    model: programsModel
-                    delegate: Button {
-                        Layout.fillWidth: true
+                    Repeater {
+                        model: programsModel
+                        delegate: Button {
+                            Layout.fillWidth: true
 
-                        autoExclusive: true
-                        checkable: true
+                            autoExclusive: true
+                            checkable: true
 
-                        checked: model.current
-                        text: model.programId
-                        onClicked: {
-                            app.activeProgramId = model.programId
+                            checked: model.current
+                            text: model.programId
+                            onClicked: {
+                                app.activeProgramId = model.programId
+                            }
                         }
                     }
                 }
@@ -139,15 +140,14 @@ ApplicationWindow {
 
             Text {
                 text: "Pads"
-                Layout.columnSpan: 4
             }
 
             GridView {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+                id: padsView
 
-                Layout.columnSpan: 4
-                Layout.rowSpan: 2
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+                Layout.minimumHeight: cellHeight*2
 
                 cellHeight: padSize + globalSpacing
                 cellWidth: padSize + globalSpacing
@@ -164,17 +164,16 @@ ApplicationWindow {
 
             Text {
                 text: "Knobs"
-                Layout.columnSpan: 4
             }
-/*
+
             GridView {
+                id: knobsView
+
                 Layout.fillWidth: true
-                Layout.fillHeight: true
+                Layout.fillHeight: false
+                Layout.minimumHeight: cellHeight*2
 
-                Layout.columnSpan: 4
-                Layout.rowSpan: 2
-
-                cellHeight: padSize + globalSpacing
+                cellHeight: knobHeight + globalSpacing
                 cellWidth: padSize + globalSpacing
 
                 model: knobsModel
@@ -185,12 +184,6 @@ ApplicationWindow {
                         anchors.centerIn: parent
                     }
                 }
-            }
-*/
-            Item {
-                Layout.columnSpan: 4
-                Layout.fillHeight: true
-                Layout.fillWidth: true
             }
 
             /*

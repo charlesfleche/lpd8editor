@@ -22,7 +22,7 @@ Control {
 
     Rectangle {
         anchors.fill: grid
-        color: "lightgreen"
+        color: "orange"
     }
 
     FontMetrics {
