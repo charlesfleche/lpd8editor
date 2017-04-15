@@ -5,9 +5,9 @@ import QtQuick.Layouts 1.0
 Control {
     id: root
 
-    property var computedImplicitWidth: fontMetrics.boundingRect(noteText.text).width + grid.columnSpacing + noteSpinbox.implicitWidth
-    property var computedImplicitHeight: title.implicitHeight + noteSpinbox.implicitHeight * 3 + buttonMomentary.implicitHeight + grid.rowSpacing * 4
-    property var computedImplicitDimension: Math.max(computedImplicitWidth, computedImplicitHeight)
+    property int computedImplicitWidth: fontMetrics.boundingRect(noteText.text).width + grid.columnSpacing + noteSpinbox.implicitWidth
+    property int computedImplicitHeight: title.implicitHeight + noteSpinbox.implicitHeight * 3 + buttonMomentary.implicitHeight + grid.rowSpacing * 4
+    property int computedImplicitDimension: Math.max(computedImplicitWidth, computedImplicitHeight)
 
     implicitWidth: computedImplicitDimension
     implicitHeight: computedImplicitDimension

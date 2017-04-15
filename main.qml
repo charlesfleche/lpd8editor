@@ -6,20 +6,12 @@ import QtQuick.Window 2.0
 ApplicationWindow {
     visible: true
     minimumWidth: (presetsColumn.Layout.minimumWidth + padsColumn.Layout.minimumWidth) * 1.1 // 1.1 temp hack
-    minimumHeight: Screen.height / 4
+    minimumHeight: padsColumn.height
     title: qsTr("lpd8-editor") // XXX get applicationName
 
-    property int globalSpacing: programButtons.spacing
-    property alias padSize: invisiblePad.computedImplicitDimension
-    property alias knobHeight: invisibleKnob.implicitHeight
-
-//    MockupPadsModel {
-//        id: padsModel
-//    }
-
-//    MockupKnobsModel {
-//        id: knobsModel
-//    }
+    property int globalSpacing: 0
+    property int padSize: 256
+    property int knobHeight: 128
 
     MockupProgramsModel {
         id: programsModel
@@ -28,16 +20,6 @@ ApplicationWindow {
     Rectangle {
         anchors.fill: columns
         color: "darkgrey"
-    }
-
-    Pad {
-        id: invisiblePad
-        visible: false
-    }
-
-    Knob {
-        id: invisibleKnob
-        visible: false
     }
 
     RowLayout {
@@ -185,29 +167,6 @@ ApplicationWindow {
                     }
                 }
             }
-
-            /*
-            Repeater {
-                model: padsModel
-                delegate: Pad {
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-                }
-            }
-            */
-            /*
-            Text {
-                Layout.columnSpan: 4
-
-                text: "Knobs"
-            }
-
-            Repeater {
-                model: knobsModel
-                delegate: Knob {
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-                }
-            }
-            */
         }
     }
 }
