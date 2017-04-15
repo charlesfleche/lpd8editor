@@ -7,10 +7,10 @@ Control {
 
     property var computedImplicitWidth: fontMetrics.boundingRect(noteText.text).width + grid.columnSpacing + noteSpinbox.implicitWidth
     property var computedImplicitHeight: title.implicitHeight + noteSpinbox.implicitHeight * 3 + buttonMomentary.implicitHeight + grid.rowSpacing * 4
-    property var computedImplicitDimentsion: Math.max(computedImplicitWidth, computedImplicitHeight)
+    property var computedImplicitDimension: Math.max(computedImplicitWidth, computedImplicitHeight)
 
-    implicitWidth: computedImplicitDimentsion
-    implicitHeight: computedImplicitDimentsion
+    implicitWidth: computedImplicitDimension
+    implicitHeight: computedImplicitDimension
 
     Rectangle {
         anchors.fill: root

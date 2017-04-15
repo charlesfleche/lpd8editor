@@ -100,7 +100,7 @@ void Application::setActiveProgramId(int programId) {
 void Application::refreshModels() {
     Q_CHECK_PTR(m_pads);
     Q_CHECK_PTR(m_knobs);
-
+    qDebug() << "Application::refreshModel" << activePresetId() << activeProgramId();
     const QString filter = QString("presetId=%1 AND programId=%2")
                            .arg(activePresetId())
                            .arg(activeProgramId());

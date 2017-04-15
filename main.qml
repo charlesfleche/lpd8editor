@@ -5,11 +5,12 @@ import QtQuick.Window 2.0
 
 ApplicationWindow {
     visible: true
-    minimumWidth: Screen.width / 3
-    minimumHeight: padsColumn.height
+    minimumWidth: (presetsColumn.Layout.minimumWidth + padsColumn.Layout.minimumWidth) * 1.1 // 1.1 temp hack
+    minimumHeight: Screen.height / 4
     title: qsTr("lpd8-editor") // XXX get applicationName
 
     property int globalSpacing: programButtons.spacing
+    property alias padSize: invisiblePad.computedImplicitDimension
 
 //    MockupPadsModel {
 //        id: padsModel
@@ -28,6 +29,11 @@ ApplicationWindow {
         color: "darkgrey"
     }
 
+    Pad {
+        id: invisiblePad
+        visible: false
+    }
+
     RowLayout {
         id: columns
 
@@ -38,6 +44,7 @@ ApplicationWindow {
 
             Layout.fillHeight: true
             Layout.fillWidth: true
+            Layout.minimumWidth: Screen.width / 8
 
             Rectangle {
                 anchors.fill: presetsColumn
@@ -86,11 +93,13 @@ ApplicationWindow {
             id: padsColumn
 
             Layout.fillHeight: true
-            Layout.fillWidth: true
+            Layout.fillWidth: false
 
             Layout.alignment: Qt.AlignTop
 
             columns: 4
+
+            Layout.minimumWidth: 4 * (padSize+globalSpacing)
 
             Rectangle {
                 anchors.fill: padsColumn
@@ -98,13 +107,15 @@ ApplicationWindow {
             }
 
             Text {
-                text: "Pads"
+                Layout.columnSpan: 3
+                Layout.fillWidth: true
+                text: "Program"
             }
 
             RowLayout {
                 id: programButtons
 
-                Layout.columnSpan: 3
+                Layout.columnSpan: 1
 
                 Layout.fillWidth: false
                 Layout.alignment: Qt.AlignRight
@@ -118,7 +129,7 @@ ApplicationWindow {
                         checkable: true
 
                         checked: model.current
-                        text: "Program " + (model.programId)
+                        text: model.programId
                         onClicked: {
                             app.activeProgramId = model.programId
                         }
@@ -126,16 +137,71 @@ ApplicationWindow {
                 }
             }
 
+            Text {
+                text: "Pads"
+                Layout.columnSpan: 4
+            }
+
+            GridView {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
+                Layout.columnSpan: 4
+                Layout.rowSpan: 2
+
+                cellHeight: padSize + globalSpacing
+                cellWidth: padSize + globalSpacing
+
+                model: padsModel
+                delegate: Item {
+                    width: GridView.view.cellWidth
+                    height: GridView.view.cellHeight
+                    Pad {
+                        anchors.centerIn: parent
+                    }
+                }
+            }
+
+            Text {
+                text: "Knobs"
+                Layout.columnSpan: 4
+            }
+/*
+            GridView {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
+                Layout.columnSpan: 4
+                Layout.rowSpan: 2
+
+                cellHeight: padSize + globalSpacing
+                cellWidth: padSize + globalSpacing
+
+                model: knobsModel
+                delegate: Item {
+                    width: GridView.view.cellWidth
+                    height: GridView.view.cellHeight
+                    Knob {
+                        anchors.centerIn: parent
+                    }
+                }
+            }
+*/
+            Item {
+                Layout.columnSpan: 4
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+            }
+
+            /*
             Repeater {
                 model: padsModel
                 delegate: Pad {
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
                 }
-                onCountChanged: {
-                    console.log('Pads repeater count: ' + count)
-                }
             }
-
+            */
+            /*
             Text {
                 Layout.columnSpan: 4
 
@@ -148,6 +214,7 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
                 }
             }
+            */
         }
     }
 }
