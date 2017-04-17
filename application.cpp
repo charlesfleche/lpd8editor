@@ -1,6 +1,7 @@
 #include "application.h"
 
 #include "db.h"
+#include "midiio.h"
 #include "utils.h"
 
 #include <QSettings>
@@ -18,10 +19,10 @@ Application::Application(QObject *parent):
     m_knobs(Q_NULLPTR)
 {
     if (!initFilesystem()) {
-        throw std::exception();
+        throw std::runtime_error("Failed filesystem initialization");
     }
     if (initDb(defaultDbPath()).isValid()) {
-        throw std::exception();
+        throw std::runtime_error("Failed database initialization");
     }
 
     m_presets = new QSqlTableModel(this);
@@ -47,6 +48,8 @@ Application::Application(QObject *parent):
             &Application::refreshModels);
 
     refreshModels();
+
+    new MidiIO(this);
 }
 
 QAbstractItemModel* Application::presets() const {

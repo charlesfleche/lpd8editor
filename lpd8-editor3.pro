@@ -1,12 +1,13 @@
 QT += qml quick sql
 
-CONFIG += c++11
+CONFIG += c++11 link_pkgconfig
 
 SOURCES += main.cpp \
     application.cpp \
     db.cpp \
     utils.cpp \
-    qmltablemodelproxy.cpp
+    qmltablemodelproxy.cpp \
+    midiio.cpp
 
 RESOURCES += qml.qrc
 
@@ -36,7 +37,10 @@ HEADERS += \
     application.h \
     db.h \
     utils.h \
-    qmltablemodelproxy.h
+    qmltablemodelproxy.h \
+    midiio.h
 
 DISTFILES += \
     TOTO.md
+
+PKGCONFIG += alsa
