@@ -52,7 +52,7 @@ MidiIO::MidiIO(QObject *parent) : QObject(parent),
         QSocketNotifier* n = new QSocketNotifier(m_pfds[i].fd, QSocketNotifier::Read);
         connect(qGuiApp,
                 &QGuiApplication::aboutToQuit,
-                [&]() {
+                [=]() {
                     qDebug() << "Disabling MIDI poll descriptor" << i;
                     n->setEnabled(false);
                 }
