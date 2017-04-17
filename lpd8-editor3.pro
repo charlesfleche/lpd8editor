@@ -7,7 +7,8 @@ SOURCES += main.cpp \
     db.cpp \
     utils.cpp \
     qmltablemodelproxy.cpp \
-    midiio.cpp
+    midiio.cpp \
+    lpd8controller.cpp
 
 RESOURCES += qml.qrc
 
@@ -38,7 +39,8 @@ HEADERS += \
     db.h \
     utils.h \
     qmltablemodelproxy.h \
-    midiio.h
+    midiio.h \
+    lpd8controller.h
 
 DISTFILES += \
     TOTO.md

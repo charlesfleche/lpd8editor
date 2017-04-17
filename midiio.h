@@ -12,6 +12,9 @@ public:
     explicit MidiIO(QObject *parent = 0);
     ~MidiIO();
 
+public slots:
+    void sendEvent(snd_seq_event_t *);
+
 signals:
     void eventReceived(snd_seq_event_t *) const;
 
