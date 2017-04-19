@@ -43,6 +43,8 @@ MidiIO::MidiIO(QObject *parent) : QObject(parent),
         throw std::runtime_error("Failed setting sequencer port OUT");
     }
 
+    // Poll
+
     int npfd = snd_seq_poll_descriptors_count(m_seq_handle, POLLIN);
     m_pfds = (struct pollfd *)alloca(npfd * sizeof(struct pollfd));
     int npfdf = snd_seq_poll_descriptors(m_seq_handle, m_pfds, npfd, POLLIN);
@@ -63,6 +65,8 @@ MidiIO::MidiIO(QObject *parent) : QObject(parent),
                 &MidiIO::readEvents
         );
     }
+
+    sendIdRequest();
 }
 
 MidiIO::~MidiIO() {
@@ -80,11 +84,82 @@ MidiIO::~MidiIO() {
     }
 }
 
-void MidiIO::readEvents() const {
-    int r = 1;
+void MidiIO::readEvents()
+{
+    int r = 99;
     while (r>0) {
         snd_seq_event_t *ev;
         r = snd_seq_event_input(m_seq_handle, &ev);
-        emit eventReceived(ev);
+        qDebug() << "Received event" << ev->type;
+        processEvent(ev);
+    }
+}
+
+void MidiIO::processEvent(snd_seq_event_t* ev)
+{
+    switch (ev->type) {
+    case SND_SEQ_EVENT_PORT_SUBSCRIBED:
+        processPortSubscribed(ev);
+        break;
+    case SND_SEQ_EVENT_PORT_UNSUBSCRIBED:
+        break;
+    case SND_SEQ_EVENT_PORT_START:
+        break;
+    case SND_SEQ_EVENT_PORT_EXIT:
+        break;
+    case SND_SEQ_EVENT_PORT_CHANGE:
+        break;
+    case SND_SEQ_EVENT_SYSEX:
+        processSysex(ev);
+    default:
+        break;
+    }
+}
+
+void MidiIO::processPortSubscribed(snd_seq_event_t* ev) {
+    Q_CHECK_PTR(ev);
+    Q_ASSERT(ev->type == SND_SEQ_EVENT_PORT_SUBSCRIBED);
+
+    sendIdRequest();
+}
+
+void MidiIO::processSysex(snd_seq_event_t* ev) {
+    Q_CHECK_PTR(ev);
+    Q_ASSERT(ev->type == SND_SEQ_EVENT_SYSEX);
+
+    QByteArray s(
+        static_cast<const char*>(ev->data.ext.ptr),
+        ev->data.ext.len);
+    qDebug() << "Received Sysex:"
+             << s.length()
+             << s;
+    emit sysexReceived(s);
+}
+
+void MidiIO::sendIdRequest()
+{
+    const unsigned char b[] = {0xF0, 0x7E, 0x00, 0x06, 0x01, 0xF7};
+    const QByteArray sysex(reinterpret_cast<const char*>(b), sizeof(b));
+    sendSysex(sysex);
+}
+
+void MidiIO::sendSysex(QByteArray sysex) {
+    snd_seq_event_t ev;
+    snd_seq_ev_clear(&ev);
+    snd_seq_ev_set_subs(&ev);
+    snd_seq_ev_set_direct(&ev);
+    snd_seq_ev_set_source(&ev, m_seq_port_out);
+    snd_seq_ev_set_sysex(&ev, sysex.length(), sysex.data());
+
+    int err = snd_seq_event_output_direct(m_seq_handle, &ev);
+    if (err < 0) {
+        throw std::runtime_error(snd_strerror(err));
+    }
+    err = 1;
+    while (err > 0) {
+        err = snd_seq_drain_output(m_seq_handle);
+        if (err < 0) {
+            throw std::runtime_error(snd_strerror(err));
+        }
     }
 }

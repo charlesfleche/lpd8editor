@@ -13,6 +13,37 @@ ApplicationWindow {
     property int padSize: 256
     property int knobHeight: 128
 
+    header: ToolBar {
+        RowLayout {
+            anchors.fill: parent
+
+            ToolButton {
+                text: "Get"
+                hoverEnabled: true
+                enabled: app.connected
+
+                ToolTip.visible: hovered
+                ToolTip.text: "Get programs from LPD8"
+                ToolTip.delay: 1000
+                ToolTip.timeout: 5000
+
+            }
+            ToolButton {
+                text: "Send"
+                hoverEnabled: true
+                enabled: app.connected
+
+                ToolTip.visible: down
+                ToolTip.text: "Send programs to LPD8"
+                ToolTip.delay: 1000
+                ToolTip.timeout: 5000
+            }
+            Item {
+                Layout.fillWidth: true
+            }
+        }
+    }
+
     MockupProgramsModel {
         id: programsModel
     }

@@ -110,3 +110,10 @@ void Application::refreshModels() {
     m_pads->setFilter(filter);
     m_knobs->setFilter(filter);
 }
+
+bool Application::connected() const {
+    return false;
+}
+
+void Application::setConnected(bool) {
+}

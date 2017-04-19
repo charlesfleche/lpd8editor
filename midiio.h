@@ -12,16 +12,21 @@ public:
     explicit MidiIO(QObject *parent = 0);
     ~MidiIO();
 
-public slots:
-    void sendEvent(snd_seq_event_t *);
+    void sendSysex(QByteArray);
 
 signals:
-    void eventReceived(snd_seq_event_t *) const;
+    void sysexReceived(QByteArray);
 
 private slots:
-    void readEvents() const;
+    void readEvents();
+    void processEvent(snd_seq_event_t *);
 
 private:
+    void processPortSubscribed(snd_seq_event_t*);
+    void processSysex(snd_seq_event_t*);
+
+    void sendIdRequest();
+
     snd_seq_t* m_seq_handle;
     struct pollfd * m_pfds;
     int m_seq_port_in;

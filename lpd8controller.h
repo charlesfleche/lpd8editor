@@ -15,12 +15,7 @@ public:
 signals:
 
 public slots:
-private slots:
-    void processEvent(snd_seq_event_t*);
-
 private:
-    void processClientStart(snd_seq_event_t*);
-
     bool m_connected;
 };
 
