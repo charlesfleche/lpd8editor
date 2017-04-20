@@ -86,13 +86,13 @@ MidiIO::~MidiIO() {
 
 void MidiIO::readEvents()
 {
-    int r = 99;
-    while (r>0) {
+    while (snd_seq_event_input_pending(m_seq_handle, 1) > 0) {
         snd_seq_event_t *ev;
-        r = snd_seq_event_input(m_seq_handle, &ev);
+        snd_seq_event_input(m_seq_handle, &ev);
         qDebug() << "Received event" << ev->type;
         processEvent(ev);
     }
+    qDebug() << "readEvents done";
 }
 
 void MidiIO::processEvent(snd_seq_event_t* ev)
