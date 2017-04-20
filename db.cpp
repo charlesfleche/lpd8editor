@@ -56,7 +56,7 @@ bool isValidPresetId(int presetId) {
 }
 
 bool isValidProgramId(int programId) {
-    return programId >= 0 && programId <= 3;
+    return programId >= 1 && programId <= 4;
 }
 
 bool initialize() {

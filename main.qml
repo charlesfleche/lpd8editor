@@ -142,7 +142,7 @@ ApplicationWindow {
                             checkable: true
 
                             checked: model.current
-                            text: model.programId
+                            text: model.programLabel
                             onClicked: {
                                 app.activeProgramId = model.programId
                             }
