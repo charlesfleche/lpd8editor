@@ -47,7 +47,6 @@ Control {
 
         Text {
             id: noteText
-
             text: "Note"
         }
 

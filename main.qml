@@ -11,7 +11,7 @@ ApplicationWindow {
 
     property int globalSpacing: 0
     property int padSize: 256
-    property int knobHeight: 128
+    property int knobHeight: 256
 
     header: ToolBar {
         RowLayout {
@@ -162,7 +162,7 @@ ApplicationWindow {
 
                 Layout.fillWidth: true
                 Layout.fillHeight: false
-                Layout.minimumHeight: cellHeight*2
+                Layout.minimumHeight: padSize*2
 
                 cellHeight: padSize + globalSpacing
                 cellWidth: padSize + globalSpacing
@@ -186,9 +186,9 @@ ApplicationWindow {
 
                 Layout.fillWidth: true
                 Layout.fillHeight: false
-                Layout.minimumHeight: cellHeight*2
+                Layout.minimumHeight: padSize*2
 
-                cellHeight: knobHeight + globalSpacing
+                cellHeight: padSize + globalSpacing
                 cellWidth: padSize + globalSpacing
 
                 model: knobsModel
