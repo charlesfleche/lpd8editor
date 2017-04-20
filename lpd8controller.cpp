@@ -4,5 +4,5 @@
 
 Lpd8Controller::Lpd8Controller(QObject *parent) : QObject(parent)
 {
-    MidiIO* io = new MidiIO(this);
+
 }

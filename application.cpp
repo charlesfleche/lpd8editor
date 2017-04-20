@@ -6,6 +6,7 @@
 
 #include <QSettings>
 #include <QSqlTableModel>
+#include <QtDebug>
 
 #include <exception>
 
@@ -15,8 +16,11 @@ static const QString SETTINGS_KEY_ACTIVE_PROGRAM_ID = "active/program_id";
 Application::Application(QObject *parent):
     QObject(parent),
     m_presets(Q_NULLPTR),
-    m_pads(Q_NULLPTR),
-    m_knobs(Q_NULLPTR)
+    m_preset_pads(Q_NULLPTR),
+    m_preset_knobs(Q_NULLPTR),
+    m_program_pads(Q_NULLPTR),
+    m_program_knobs(Q_NULLPTR),
+    m_midi_io(Q_NULLPTR)
 {
     if (!initFilesystem()) {
         throw std::runtime_error("Failed filesystem initialization");
@@ -30,15 +34,25 @@ Application::Application(QObject *parent):
     m_presets->setEditStrategy(QSqlTableModel::OnFieldChange);
     m_presets->select();
 
-    m_pads = new QSqlTableModel(this);
-    m_pads->setTable("pads");
-    m_pads->setEditStrategy(QSqlTableModel::OnFieldChange);
-    m_pads->select();
+    m_preset_pads = new QSqlTableModel(this);
+    m_preset_pads->setTable("pads");
+    m_preset_pads->setEditStrategy(QSqlTableModel::OnFieldChange);
+    m_preset_pads->select();
 
-    m_knobs = new QSqlTableModel(this);
-    m_knobs->setTable("knobs");
-    m_knobs->setEditStrategy(QSqlTableModel::OnFieldChange);
-    m_knobs->select();
+    m_preset_knobs = new QSqlTableModel(this);
+    m_preset_knobs->setTable("knobs");
+    m_preset_knobs->setEditStrategy(QSqlTableModel::OnFieldChange);
+    m_preset_knobs->select();
+
+    m_program_pads = new QSqlTableModel(this);
+    m_program_pads->setTable("pads");
+    m_program_pads->setEditStrategy(QSqlTableModel::OnFieldChange);
+    m_program_pads->select();
+
+    m_program_knobs = new QSqlTableModel(this);
+    m_program_knobs->setTable("knobs");
+    m_program_knobs->setEditStrategy(QSqlTableModel::OnFieldChange);
+    m_program_knobs->select();
 
     connect(this,
             &Application::activeProgramIdChanged,
@@ -49,7 +63,11 @@ Application::Application(QObject *parent):
 
     refreshModels();
 
-    new MidiIO(this);
+    m_midi_io = new MidiIO(this);
+    connect(m_midi_io,
+            &MidiIO::programReceived,
+            this,
+            &Application::onProgramFetched);
 }
 
 QAbstractItemModel* Application::presets() const {
@@ -57,11 +75,11 @@ QAbstractItemModel* Application::presets() const {
 }
 
 QAbstractItemModel* Application::pads() const {
-    return m_pads;
+    return m_program_pads;
 }
 
 QAbstractItemModel* Application::knobs() const {
-    return m_knobs;
+    return m_program_knobs;
 }
 
 void Application::newPreset() {
@@ -101,14 +119,20 @@ void Application::setActiveProgramId(int programId) {
 }
 
 void Application::refreshModels() {
-    Q_CHECK_PTR(m_pads);
-    Q_CHECK_PTR(m_knobs);
+    Q_CHECK_PTR(m_program_pads);
+    Q_CHECK_PTR(m_program_knobs);
+
     qDebug() << "Application::refreshModel" << activePresetId() << activeProgramId();
-    const QString filter = QString("presetId=%1 AND programId=%2")
-                           .arg(activePresetId())
-                           .arg(activeProgramId());
-    m_pads->setFilter(filter);
-    m_knobs->setFilter(filter);
+
+    QString filter = QString("presetId=%1").arg(activePresetId());
+    m_preset_pads->setFilter(filter);
+    m_preset_knobs->setFilter(filter);
+
+    filter = QString("presetId=%1 AND programId=%2")
+             .arg(activePresetId())
+             .arg(activeProgramId());
+    m_program_pads->setFilter(filter);
+    m_program_knobs->setFilter(filter);
 }
 
 bool Application::connected() const {
@@ -116,4 +140,49 @@ bool Application::connected() const {
 }
 
 void Application::setConnected(bool) {
+}
+
+void Application::fetchPrograms() const {
+    Q_CHECK_PTR(m_midi_io);
+
+    // XXX Should be based on a model, not static program numbers
+//    for (int i = 1 ; i <= 4 ; ++i) {
+//        m_midi_io->getProgram(i);
+//    }
+    m_midi_io->getPrograms();
+}
+
+void Application::onProgramFetched(pProgram p) {
+    Q_UNUSED(p)
+
+    const int programId = static_cast<int>(p->id);
+    const int row_offset = programId - 1;
+
+    for (int i = 0 ; i < 8 ; ++i) {
+        QSqlRecord r;
+        r.append(QSqlField("note", QVariant::Int));
+        r.setValue("note", p->pads[i].note);
+
+        r.append(QSqlField("pc", QVariant::Int));
+        r.setValue("pc", p->pads[i].pc);
+
+        r.append(QSqlField("cc", QVariant::Int));
+        r.setValue("cc", p->pads[i].cc);
+
+        r.append(QSqlField("momentary", QVariant::Int));
+        r.setValue("momentary", p->pads[i].momentary);
+        qDebug() << "Set pad" << programId << i;
+        if (!m_preset_pads->setRecord(row_offset + i, r)) {
+            qDebug() << "Cannot set pad" << programId << i << r;
+        }
+
+        r.clear();
+
+        r.append(QSqlField("cc", QVariant::Int));
+        r.setValue("cc", p->pads[i].cc);
+        qDebug() << "Set knob" << programId << i;
+        if (!m_preset_knobs->setRecord(row_offset + i, r)) {
+            qDebug() << "Cannot set knob" << programId << i << r;
+        }
+    }
 }

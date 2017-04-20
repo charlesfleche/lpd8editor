@@ -1,8 +1,10 @@
 #include "midiio.h"
 
-#include<QGuiApplication>
+#include <lpd8_sysex.h>
+#include <QGuiApplication>
 #include <QSocketNotifier>
 #include <QtDebug>
+#include <QThread>
 
 #include <exception>
 
@@ -17,6 +19,8 @@ MidiIO::MidiIO(QObject *parent) : QObject(parent),
     if (snd_seq_open(&m_seq_handle, "hw", SND_SEQ_OPEN_DUPLEX, 0) < 0) {
         throw std::runtime_error("Failed opening sequencer");
     }
+
+    snd_seq_set_client_event_filter(m_seq_handle, SND_SEQ_EVENT_SYSEX);
 
     // Try qUtf8Printable
     if (snd_seq_set_client_name(m_seq_handle, qPrintable(qApp->applicationName())) < 0) {
@@ -65,8 +69,6 @@ MidiIO::MidiIO(QObject *parent) : QObject(parent),
                 &MidiIO::readEvents
         );
     }
-
-    sendIdRequest();
 }
 
 MidiIO::~MidiIO() {
@@ -120,7 +122,7 @@ void MidiIO::processPortSubscribed(snd_seq_event_t* ev) {
     Q_CHECK_PTR(ev);
     Q_ASSERT(ev->type == SND_SEQ_EVENT_PORT_SUBSCRIBED);
 
-    sendIdRequest();
+//    sendIdRequest();
 }
 
 void MidiIO::processSysex(snd_seq_event_t* ev) {
@@ -133,17 +135,26 @@ void MidiIO::processSysex(snd_seq_event_t* ev) {
     qDebug() << "Received Sysex:"
              << s.length()
              << s;
+
+    switch (sysex::type(s)) {
+    case sysex::TypeProgram:
+        emit programReceived(sysex::toProgram(s));
+        break;
+    default:
+        break;
+    }
     emit sysexReceived(s);
 }
 
-void MidiIO::sendIdRequest()
+void MidiIO::sendIdRequest() const
 {
     const unsigned char b[] = {0xF0, 0x7E, 0x00, 0x06, 0x01, 0xF7};
     const QByteArray sysex(reinterpret_cast<const char*>(b), sizeof(b));
     sendSysex(sysex);
 }
 
-void MidiIO::sendSysex(QByteArray sysex) {
+void MidiIO::sendSysex(QByteArray sysex) const
+{
     snd_seq_event_t ev;
     snd_seq_ev_clear(&ev);
     snd_seq_ev_set_subs(&ev);
@@ -151,7 +162,7 @@ void MidiIO::sendSysex(QByteArray sysex) {
     snd_seq_ev_set_source(&ev, m_seq_port_out);
     snd_seq_ev_set_sysex(&ev, sysex.length(), sysex.data());
 
-    int err = snd_seq_event_output_direct(m_seq_handle, &ev);
+    int err = snd_seq_event_output(m_seq_handle, &ev);
     if (err < 0) {
         throw std::runtime_error(snd_strerror(err));
     }
@@ -162,4 +173,20 @@ void MidiIO::sendSysex(QByteArray sysex) {
             throw std::runtime_error(snd_strerror(err));
         }
     }
+    QThread::usleep(320*sysex.size()); // As per Midi standard...
+}
+
+void MidiIO::getPrograms() const {
+    qDebug() << "Send sysex: getPrograms";
+    for (int i = 1 ; i <= 4 ; ++i) {
+        sendSysex(sysex::getProgram(i));
+    }
+}
+
+void MidiIO::getProgram(int id) const {
+    Q_ASSERT(id >= 1 && id <= 4);
+
+    qDebug() << "Send sysex: getProgram" << id;
+    sendSysex(sysex::getProgram(id));
+    QThread::sleep(1);
 }

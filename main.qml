@@ -20,18 +20,20 @@ ApplicationWindow {
             ToolButton {
                 text: "Get"
                 hoverEnabled: true
-                enabled: app.connected
 
                 ToolTip.visible: hovered
                 ToolTip.text: "Get programs from LPD8"
                 ToolTip.delay: 1000
                 ToolTip.timeout: 5000
 
+                onClicked: {
+                    app.fetchPrograms()
+                }
+
             }
             ToolButton {
                 text: "Send"
                 hoverEnabled: true
-                enabled: app.connected
 
                 ToolTip.visible: down
                 ToolTip.text: "Send programs to LPD8"

@@ -1,7 +1,11 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
+#include "lpd8_types.h"
+
 #include <QObject>
+
+class MidiIO;
 
 class QAbstractItemModel;
 class QSqlTableModel;
@@ -35,6 +39,8 @@ public slots:
 
     void setConnected(bool);
 
+    void fetchPrograms() const;
+
 signals:
     void activePresetIdChanged(int);
     void activeProgramIdChanged(int);
@@ -43,10 +49,16 @@ signals:
 private slots:
     void refreshModels();
 
+    void onProgramFetched(pProgram);
+
 private:
     QSqlTableModel* m_presets;
-    QSqlTableModel* m_pads;
-    QSqlTableModel* m_knobs;
+    QSqlTableModel* m_preset_pads;
+    QSqlTableModel* m_preset_knobs;
+    QSqlTableModel* m_program_pads;
+    QSqlTableModel* m_program_knobs;
+
+    MidiIO* m_midi_io;
 };
 
 #endif // APPLICATION_H
