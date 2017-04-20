@@ -156,9 +156,10 @@ void Application::onProgramFetched(pProgram p) {
     Q_UNUSED(p)
 
     const int programId = static_cast<int>(p->id);
-    const int row_offset = programId - 1;
+    const int row_offset = (programId - 1)*8;
 
     for (int i = 0 ; i < 8 ; ++i) {
+        const int row = row_offset + i;
         QSqlRecord r;
         r.append(QSqlField("note", QVariant::Int));
         r.setValue("note", p->pads[i].note);
@@ -172,7 +173,7 @@ void Application::onProgramFetched(pProgram p) {
         r.append(QSqlField("momentary", QVariant::Int));
         r.setValue("momentary", p->pads[i].momentary);
         qDebug() << "Set pad" << programId << i;
-        if (!m_preset_pads->setRecord(row_offset + i, r)) {
+        if (!m_preset_pads->setRecord(row, r)) {
             qDebug() << "Cannot set pad" << programId << i << r;
         }
 
@@ -181,7 +182,7 @@ void Application::onProgramFetched(pProgram p) {
         r.append(QSqlField("cc", QVariant::Int));
         r.setValue("cc", p->pads[i].cc);
         qDebug() << "Set knob" << programId << i;
-        if (!m_preset_knobs->setRecord(row_offset + i, r)) {
+        if (!m_preset_knobs->setRecord(row, r)) {
             qDebug() << "Cannot set knob" << programId << i << r;
         }
     }
