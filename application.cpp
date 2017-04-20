@@ -107,7 +107,7 @@ void Application::setActivePresetId(int presetId) {
 
 int Application::activeProgramId() const {
     const int programId = QSettings().value(SETTINGS_KEY_ACTIVE_PROGRAM_ID, 0).toInt();
-    return isValidProgramId(programId) ? programId : 0;
+    return isValidProgramId(programId) ? programId : 1;
 }
 
 void Application::setActiveProgramId(int programId) {
@@ -172,7 +172,7 @@ void Application::onProgramFetched(pProgram p) {
 
         r.append(QSqlField("momentary", QVariant::Int));
         r.setValue("momentary", p->pads[i].momentary);
-        qDebug() << "Set pad" << programId << i;
+//        qDebug() << "Set pad" << programId << i;
         if (!m_preset_pads->setRecord(row, r)) {
             qDebug() << "Cannot set pad" << programId << i << r;
         }
@@ -181,9 +181,11 @@ void Application::onProgramFetched(pProgram p) {
 
         r.append(QSqlField("cc", QVariant::Int));
         r.setValue("cc", p->pads[i].cc);
-        qDebug() << "Set knob" << programId << i;
+//        qDebug() << "Set knob" << programId << i;
         if (!m_preset_knobs->setRecord(row, r)) {
             qDebug() << "Cannot set knob" << programId << i << r;
         }
     }
+
+    refreshModels();
 }
