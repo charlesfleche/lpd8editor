@@ -75,7 +75,7 @@ Control {
             Binding {
                 target: model
                 property: "low"
-                value: ccSpinbox.value
+                value: lowSpinbox.value
             }
         }
 
@@ -92,7 +92,7 @@ Control {
             Binding {
                 target: model
                 property: "high"
-                value: ccSpinbox.value
+                value: highSpinbox.value
             }
         }
     }
