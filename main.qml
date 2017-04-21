@@ -46,10 +46,6 @@ ApplicationWindow {
         }
     }
 
-    MockupProgramsModel {
-        id: programsModel
-    }
-
     Rectangle {
         anchors.fill: columns
         color: "darkgrey"
@@ -136,17 +132,18 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignRight
 
                     Repeater {
-                        model: programsModel
+                        model: 4
                         delegate: Button {
+                            property int programId: modelData + 1
                             Layout.fillWidth: true
 
                             autoExclusive: true
                             checkable: true
 
-                            checked: model.current
-                            text: model.programLabel
+                            checked: programId === app.activeProgramId
+                            text: programId
                             onClicked: {
-                                app.activeProgramId = model.programId
+                                app.activeProgramId = programId
                             }
                         }
                     }
