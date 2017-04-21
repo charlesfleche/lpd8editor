@@ -152,8 +152,73 @@ void Application::fetchPrograms() const {
     m_midi_io->getPrograms();
 }
 
+#define GET_CHAR(record, name) record.value(name).toChar().toLatin1();
+
+char getChar(const QSqlRecord& r, const QString& name) {
+    return r.value(name).toChar().toLatin1();
+}
+
+void Application::sendPrograms() {
+    Q_CHECK_PTR(m_midi_io);
+    Q_CHECK_PTR(m_preset_pads);
+    Q_CHECK_PTR(m_preset_knobs);
+
+    // Update m_preset_*
+    refreshModels();
+
+    QList<pProgram> programs;
+
+    for (int i = 0 ; i < 4 ; ++i) {
+        pProgram p(new Program());
+        p->id = static_cast<char>(i) + 1;
+        p->channel = 1;
+        programs.append(p);
+    }
+
+    for (int i = 0 ; i < m_preset_pads->rowCount() ; ++i ) {
+        QSqlRecord r = m_preset_pads->record(i);
+
+        qDebug() << i << r;
+
+        Q_ASSERT(r.contains("programId"));
+        Q_ASSERT(r.contains("note"));
+        Q_ASSERT(r.contains("pc"));
+        Q_ASSERT(r.contains("cc"));
+        Q_ASSERT(r.contains("momentary"));
+
+        const int programIndex = r.value("programId").toInt()-1;
+        const int padIndex = r.value("controlId").toInt()-1;
+        Pad& pad = programs[programIndex]->pads[padIndex];
+
+        pad.note = getChar(r, "note");
+        pad.pc = getChar(r, "pc");
+        pad.cc = getChar(r, "cc");
+        pad.momentary = getChar(r, "momentary");
+    }
+
+    for (int i = 0 ; i < m_preset_knobs->rowCount() ; ++i ) {
+        QSqlRecord r = m_preset_knobs->record(i);
+        qDebug() << r;
+
+        Q_ASSERT(r.contains("programId"));
+        Q_ASSERT(r.contains("cc"));
+        Q_ASSERT(r.contains("low"));
+        Q_ASSERT(r.contains("high"));
+
+        const int programIndex = r.value("programId").toInt()-1;
+        const int knobIndex = r.value("controlId").toInt()-1;
+        Knob& knob = programs[programIndex]->knobs[knobIndex];
+
+        knob.cc = getChar(r, "cc");
+        knob.low = getChar(r, "low");
+        knob.high = getChar(r, "high");
+    }
+
+    m_midi_io->sendPrograms(programs);
+}
+
 void Application::onProgramFetched(pProgram p) {
-    Q_UNUSED(p)
+    Q_CHECK_PTR(p);
 
     const int programId = static_cast<int>(p->id);
     const int row_offset = (programId - 1)*8;
@@ -172,7 +237,6 @@ void Application::onProgramFetched(pProgram p) {
 
         r.append(QSqlField("momentary", QVariant::Int));
         r.setValue("momentary", p->pads[i].momentary);
-//        qDebug() << "Set pad" << programId << i;
         if (!m_preset_pads->setRecord(row, r)) {
             qDebug() << "Cannot set pad" << programId << i << r;
         }
@@ -181,7 +245,6 @@ void Application::onProgramFetched(pProgram p) {
 
         r.append(QSqlField("cc", QVariant::Int));
         r.setValue("cc", p->pads[i].cc);
-//        qDebug() << "Set knob" << programId << i;
         if (!m_preset_knobs->setRecord(row, r)) {
             qDebug() << "Cannot set knob" << programId << i << r;
         }

@@ -40,6 +40,7 @@ public slots:
     void setConnected(bool);
 
     void fetchPrograms() const;
+    void sendPrograms();
 
 signals:
     void activePresetIdChanged(int);

@@ -14,6 +14,7 @@ enum Type {
 
 Type type(const QByteArray&);
 QByteArray getProgram(int);
+QByteArray setProgram(pProgram);
 pProgram toProgram(const QByteArray&);
 
 }

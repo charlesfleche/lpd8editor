@@ -173,6 +173,7 @@ void MidiIO::sendSysex(QByteArray sysex) const
             throw std::runtime_error(snd_strerror(err));
         }
     }
+    qDebug() << "Sent sysex:" << sysex;
     QThread::usleep(320*sysex.size()); // As per Midi standard...
 }
 
@@ -180,6 +181,18 @@ void MidiIO::getPrograms() const {
     qDebug() << "Send sysex: getPrograms";
     for (int i = 1 ; i <= 4 ; ++i) {
         sendSysex(sysex::getProgram(i));
+    }
+}
+
+void MidiIO::sendPrograms(QList<pProgram> programs) const
+{
+    sendSysex(sysex::setProgram(programs[0]));
+    return;
+
+    qDebug() << "Send programs";
+    for (int i = 0 ; i < programs.length() ; ++i) {
+        QByteArray s = sysex::setProgram(programs[i]);
+        sendSysex(s);
     }
 }
 

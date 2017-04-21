@@ -14,6 +14,8 @@ static const char sysex_program_rep[] = {'\x63', '\x00', '\x3a'};
 static const char sysex_program_rep_size = 66;
 static const char sysex_program_rep_payload_offset = 7;
 
+static const char sysex_set_program_req[] = {'\x61', '\x00', '\x3a'};
+
 #define RETURN_IF_TYPE(type, b, code, size) if (is(b, code, size)) return type
 
 namespace sysex {
@@ -80,6 +82,33 @@ pProgram toProgram(const QByteArray & b) {
         ret->knobs[i].low = b[offset++];
         ret->knobs[i].high = b[offset++];
     }
+    return ret;
+}
+
+QByteArray setProgram(pProgram p) {
+    Q_CHECK_PTR(p);
+
+    QByteArray ret;
+    addHeader(ret);
+    ret += sysex_set_program_req[0];
+    ret += sysex_set_program_req[1];
+    ret += sysex_set_program_req[2];
+    ret += p->id;
+    ret += p->channel;
+    for (int i = 0 ; i < 8 ; ++i) {
+        const Pad& pad = p->pads[i];
+        ret += pad.note;
+        ret += pad.pc;
+        ret += pad.cc;
+        ret += pad.momentary;
+    }
+    for (int i = 0 ; i < 8 ; ++i) {
+        const Knob& knob = p->knobs[i];
+        ret += knob.cc;
+        ret += knob.low;
+        ret += knob.high;
+    }
+    addFooter(ret);
     return ret;
 }
 

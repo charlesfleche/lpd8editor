@@ -39,6 +39,10 @@ ApplicationWindow {
                 ToolTip.text: "Send programs to LPD8"
                 ToolTip.delay: 1000
                 ToolTip.timeout: 5000
+
+                onClicked: {
+                    app.sendPrograms()
+                }
             }
             Item {
                 Layout.fillWidth: true
