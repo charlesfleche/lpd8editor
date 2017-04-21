@@ -75,7 +75,7 @@ pProgram toProgram(const QByteArray & b) {
         ret->pads[i].note = b[offset++];
         ret->pads[i].pc = b[offset++];
         ret->pads[i].cc = b[offset++];
-        ret->pads[i].momentary = b[offset++];
+        ret->pads[i].toggle = b[offset++];
     }
     for (int i = 0 ; i < 8 ; ++i) {
         ret->knobs[i].cc = b[offset++];
@@ -100,7 +100,7 @@ QByteArray setProgram(pProgram p) {
         ret += pad.note;
         ret += pad.pc;
         ret += pad.cc;
-        ret += pad.momentary;
+        ret += pad.toggle;
     }
     for (int i = 0 ; i < 8 ; ++i) {
         const Knob& knob = p->knobs[i];
