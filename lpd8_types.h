@@ -8,7 +8,7 @@ struct Pad
     char note;
     char pc;
     char cc;
-    char momentary;
+    char toggle;
 };
 
 struct Knob

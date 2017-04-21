@@ -184,7 +184,7 @@ void Application::sendPrograms() {
         Q_ASSERT(r.contains("note"));
         Q_ASSERT(r.contains("pc"));
         Q_ASSERT(r.contains("cc"));
-        Q_ASSERT(r.contains("momentary"));
+        Q_ASSERT(r.contains("toggle"));
 
         const int programIndex = r.value("programId").toInt()-1;
         const int padIndex = r.value("controlId").toInt()-1;
@@ -193,7 +193,7 @@ void Application::sendPrograms() {
         pad.note = getChar(r, "note");
         pad.pc = getChar(r, "pc");
         pad.cc = getChar(r, "cc");
-        pad.momentary = getChar(r, "momentary");
+        pad.toggle = getChar(r, "toggle");
     }
 
     for (int i = 0 ; i < m_preset_knobs->rowCount() ; ++i ) {
@@ -235,8 +235,8 @@ void Application::onProgramFetched(pProgram p) {
         r.append(QSqlField("cc", QVariant::Int));
         r.setValue("cc", p->pads[i].cc);
 
-        r.append(QSqlField("momentary", QVariant::Int));
-        r.setValue("momentary", p->pads[i].momentary);
+        r.append(QSqlField("toggle", QVariant::Int));
+        r.setValue("toggle", p->pads[i].toggle);
         if (!m_preset_pads->setRecord(row, r)) {
             qDebug() << "Cannot set pad" << programId << i << r;
         }

@@ -103,13 +103,11 @@ Control {
             Layout.fillWidth: true
             Layout.columnSpan: 2
 
-            property bool padToggle: !momentary
-
             checkable: true
-            checked: padToggle
-            text: padToggle ? "Toggle" : "Momentary"
+            checked: model.toggle
+            text: model.toggle ? "Toggle" : "Momentary"
             onClicked: {
-                model.momentary = !checked
+                model.toggle = checked
             }
         }
     }

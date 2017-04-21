@@ -174,7 +174,7 @@ void MidiIO::sendSysex(QByteArray sysex) const
         }
     }
     qDebug() << "Sent sysex:" << sysex;
-    QThread::usleep(320*sysex.size()); // As per Midi standard...
+    QThread::msleep(1*sysex.size());
 }
 
 void MidiIO::getPrograms() const {
@@ -186,9 +186,6 @@ void MidiIO::getPrograms() const {
 
 void MidiIO::sendPrograms(QList<pProgram> programs) const
 {
-    sendSysex(sysex::setProgram(programs[0]));
-    return;
-
     qDebug() << "Send programs";
     for (int i = 0 ; i < programs.length() ; ++i) {
         QByteArray s = sysex::setProgram(programs[i]);
