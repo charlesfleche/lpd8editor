@@ -168,6 +168,8 @@ ApplicationWindow {
                 cellHeight: padSize + globalSpacing
                 cellWidth: padSize + globalSpacing
 
+                verticalLayoutDirection: GridView.BottomToTop
+
                 model: padsModel
                 delegate: Item {
                     width: GridView.view.cellWidth
