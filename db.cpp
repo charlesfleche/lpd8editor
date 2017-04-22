@@ -1,5 +1,18 @@
 #include "db.h"
 
+#include <exception>
+
+QString readTextFile(const QString& path) {
+    QFile f(path);
+    if (!f.open(QFile::ReadOnly | QFile::Text)) {
+        QString msg("Failed to read file: ");
+        msg += path;
+        throw std::runtime_error(msg.toStdString());
+    }
+    QTextStream ts(&f);
+    return ts.readAll();
+}
+
 QString sqlErrorMessage(const QString& msg, const QSqlError& err) {
     return msg + QString("\n") + err.text();
 }
@@ -61,109 +74,11 @@ bool isValidProgramId(int programId) {
 
 bool initialize() {
     QSqlQuery q;
-    if (!q.exec("create table presets(presetId integer primary key, name varchar)")) return false;
-    if (!q.exec("create table pads(presetId integer,"
-                                  "programId integer NOT NULL,"
-                                  "controlId integer NOT NULL,"
-                                  "note integer NOT NULL,"
-                                  "pc integer NOT NULL,"
-                                  "cc integer NOT NULL,"
-                                  "toggle integer NOT NULL,"
-                                  "PRIMARY KEY (presetId, programId, controlId),"
-                                  "FOREIGN KEY (presetId) REFERENCES presets (presetId)"
-                                  ");")) return false;
-    if (!q.exec("create table knobs(presetId integer,"
-                                   "programId integer NOT NULL,"
-                                   "controlId integer NOT NULL,"
-                                   "cc integer NOT NULL,"
-                                   "low integer NOT NULL,"
-                                   "high integer NOT NULL,"
-                                   "PRIMARY KEY (presetId, programId, controlId),"
-                                   "FOREIGN KEY (presetId) REFERENCES presets (presetId)"
-                                   ");")) return false;
-    if (!q.exec("create trigger aft_insert after insert on presets "
-                "begin "
-
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 1, 1, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 1, 2, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 1, 3, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 1, 4, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 1, 5, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 1, 6, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 1, 7, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 1, 8, 1, 2, 3, 0);"
-
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 1, 1, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 1, 2, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 1, 3, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 1, 4, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 1, 5, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 1, 6, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 1, 7, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 1, 8, 1, 0, 127);"
-
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 2, 1, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 2, 2, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 2, 3, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 2, 4, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 2, 5, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 2, 6, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 2, 7, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 2, 8, 1, 2, 3, 0);"
-
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 2, 1, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 2, 2, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 2, 3, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 2, 4, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 2, 5, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 2, 6, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 2, 7, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 2, 8, 1, 0, 127);"
-
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 3, 1, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 3, 2, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 3, 3, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 3, 4, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 3, 5, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 3, 6, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 3, 7, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 3, 8, 1, 2, 3, 0);"
-
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 3, 1, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 3, 2, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 3, 3, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 3, 4, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 3, 5, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 3, 6, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 3, 7, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 3, 8, 1, 0, 127);"
-
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 4, 1, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 4, 2, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 4, 3, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 4, 4, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 4, 5, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 4, 6, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 4, 7, 1, 2, 3, 0);"
-                "insert into pads(presetId, programId, controlId, note, pc, cc, toggle) values(NEW.presetId, 4, 8, 1, 2, 3, 0);"
-
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 4, 1, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 4, 2, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 4, 3, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 4, 4, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 4, 5, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 4, 6, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 4, 7, 1, 0, 127);"
-                "insert into knobs(presetId, programId, controlId, cc, low, high) values(NEW.presetId, 4, 8, 1, 0, 127);"
-
-                "end;")) return false;
-
-    if (!q.exec("create trigger aft_delete after delete on presets "
-                "begin "
-                "delete from pads where presetId = OLD.presetId;"
-                "delete from knobs where presetId = OLD.presetId;"
-                "end;")) return false;
-
+    if (!q.exec(readTextFile(":/create_table_presets.sql"))) return false;
+    if (!q.exec(readTextFile(":/create_table_pads.sql"))) return false;
+    if (!q.exec(readTextFile(":/create_table_knobs.sql"))) return false;
+    if (!q.exec(readTextFile(":/create_trigger_add_preset.sql"))) return false;
+    if (!q.exec(readTextFile(":/create_trigger_delete_preset.sql"))) return false;
     return true;
 }
 

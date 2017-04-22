@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>create_table_presets.sql</file>
+        <file>create_table_pads.sql</file>
+        <file>create_table_knobs.sql</file>
+        <file>create_trigger_add_preset.sql</file>
+        <file>create_trigger_delete_preset.sql</file>
+    </qresource>
+</RCC>

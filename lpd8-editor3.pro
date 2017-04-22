@@ -11,7 +11,8 @@ SOURCES += main.cpp \
     lpd8controller.cpp \
     lpd8_sysex.cpp
 
-RESOURCES += qml.qrc
+RESOURCES += qml.qrc \
+    sql.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
