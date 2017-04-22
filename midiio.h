@@ -17,7 +17,7 @@ public:
     void sendSysex(QByteArray) const;
     void getProgram(int) const;
     void getPrograms() const;
-    void sendPrograms(QList<pProgram>) const;
+    void sendProgram(pProgram) const;
 
 signals:
     void sysexReceived(QByteArray);

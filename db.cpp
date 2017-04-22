@@ -18,75 +18,76 @@ QString sqlErrorMessage(const QString& msg, const QSqlError& err) {
 }
 
 bool isInitialized(const QSqlDatabase& db) {
-    return db.tables().contains("presets");
+    return db.tables().contains("programs");
 }
 
-bool addPreset(const QString& name) {
+bool addProgram(const QString& name) {
     QSqlQuery q;
-    if (!q.prepare("insert into presets(name) values(?)")) return false;
+    if (!q.prepare("insert into programs(name, channel) values(?, ?)")) return false;
     q.addBindValue(name);
+    q.addBindValue(10);
     return q.exec();
 }
 
-bool addPreset(int presetId) {
+bool addProgram(int programId) {
     QSqlQuery q;
-    if (!q.prepare("insert into presets(presetId, name) values(?, ?)")) return false;
-    q.addBindValue(presetId);
+    if (!q.prepare("insert into programs(programId, name, channel) values(?, ?, ?)")) return false;
+    q.addBindValue(programId);
     q.addBindValue("default");
+    q.addBindValue(10);
     return q.exec();
 }
 
-bool deletePreset(int presetId) {
-    Q_ASSERT(presetId > 0);
+bool deleteProgram(int programId) {
+    Q_ASSERT(programId > 0);
 
     QSqlQuery q;
-    if(!q.prepare("delete from presets where presetId = ?")) return false;
-    q.addBindValue(presetId);
+    if(!q.prepare("delete from programs where programId = ?")) return false;
+    q.addBindValue(programId);
     return q.exec();
 }
 
-bool setPresetName(int presetId, const QString& name) {
+bool setProgramName(int programId, const QString& name) {
     QSqlQuery q;
-    if(!q.prepare("update presets set name = ? where presetId = ?")) return false;
+    if(!q.prepare("update programs set name = ? where programId = ?")) return false;
     q.addBindValue(name);
-    q.addBindValue(presetId);
+    q.addBindValue(programId);
     return q.exec();
 }
 
-bool isValidPresetId(int presetId) {
+bool isValidProgramId(int programId) {
     QSqlQuery q;
-    if (!q.exec("select presetId from presets;")) {
-        qWarning() << "Cannot select presets";
+    if (!q.exec("select programId from programs;")) {
+        qWarning() << "Cannot select programs";
         qWarning() << q.lastError().text();
         return false;
     }
-    for (int i = 0 ; i < q.size() ; ++i) {
-        if (presetId == q.value(i)) {
+
+    qDebug() << q.size();
+    while (q.next()) {
+        qDebug() << q.value(0);
+        if (programId == q.value(0)) {
             return true;
         }
     }
     return false;
 }
 
-bool isValidProgramId(int programId) {
-    return programId >= 1 && programId <= 4;
-}
-
 bool initialize() {
     QSqlQuery q;
-    if (!q.exec(readTextFile(":/create_table_presets.sql"))) return false;
+    if (!q.exec(readTextFile(":/create_table_programs.sql"))) return false;
     if (!q.exec(readTextFile(":/create_table_pads.sql"))) return false;
     if (!q.exec(readTextFile(":/create_table_knobs.sql"))) return false;
-    if (!q.exec(readTextFile(":/create_trigger_add_preset.sql"))) return false;
-    if (!q.exec(readTextFile(":/create_trigger_delete_preset.sql"))) return false;
+    if (!q.exec(readTextFile(":/create_trigger_add_program.sql"))) return false;
+    if (!q.exec(readTextFile(":/create_trigger_delete_program.sql"))) return false;
     return true;
 }
 
-bool ensureDefaultPreset() {
-    if (!isValidPresetId(0)) {
-        return addPreset(0);
+bool ensureDefaultProgram() {
+    if (isValidProgramId(0)) {
+        return true;
     }
-    return true;
+    return addProgram(0);
 }
 
 QSqlError initDb(const QString& path) {
@@ -105,8 +106,8 @@ QSqlError initDb(const QString& path) {
         }
     }
 
-    if (!ensureDefaultPreset()) {
-        qWarning() << "Failed to ensure default preset in db" << path;
+    if (!ensureDefaultProgram()) {
+        qWarning() << "Failed to ensure default program in db" << path;
         goto end;
     }
 

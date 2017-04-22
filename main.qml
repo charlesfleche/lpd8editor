@@ -17,33 +17,45 @@ ApplicationWindow {
         RowLayout {
             anchors.fill: parent
 
-            ToolButton {
-                text: "Get"
-                hoverEnabled: true
+            Repeater {
+                model: 4
+                delegate: ToolButton {
+                    property int programId: modelData + 1
 
-                ToolTip.visible: hovered
-                ToolTip.text: "Get programs from LPD8"
-                ToolTip.delay: 1000
-                ToolTip.timeout: 5000
+                    text: "↓" + programId
+                    hoverEnabled: true
 
-                onClicked: {
-                    app.fetchPrograms()
-                }
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Get program " + programId + " from LPD8"
+                    ToolTip.delay: 1000
+                    ToolTip.timeout: 5000
 
-            }
-            ToolButton {
-                text: "Send"
-                hoverEnabled: true
+                    onClicked: {
+                        app.fetchProgram(programId)
+                    }
 
-                ToolTip.visible: down
-                ToolTip.text: "Send programs to LPD8"
-                ToolTip.delay: 1000
-                ToolTip.timeout: 5000
-
-                onClicked: {
-                    app.sendPrograms()
                 }
             }
+
+            Repeater {
+                model: 4
+                delegate: ToolButton {
+                    property int programId: modelData + 1
+
+                    text: "↑" + programId
+                    hoverEnabled: true
+
+                    ToolTip.visible: down
+                    ToolTip.text: "Send program " + programId + " to LPD8"
+                    ToolTip.delay: 1000
+                    ToolTip.timeout: 5000
+
+                    onClicked: {
+                        app.sendProgram(programId)
+                    }
+                }
+            }
+
             Item {
                 Layout.fillWidth: true
             }
@@ -76,13 +88,13 @@ ApplicationWindow {
                 Text {
                     Layout.fillWidth: true;
 
-                    text: "Presets"
+                    text: "Programs"
                 }
                 Button {
                     Layout.alignment: Qt.AlignRight
                     text: "Add"
                     onClicked: {
-                        app.newPreset();
+                        app.newProgram();
                     }
                 }
             }
@@ -103,8 +115,8 @@ ApplicationWindow {
 
                 interactive: true
 
-                model: presets
-                delegate: Preset {
+                model: programsModel
+                delegate: Program {
                     width: parent.width
                 }
             }
@@ -121,37 +133,6 @@ ApplicationWindow {
             Rectangle {
                 anchors.fill: padsColumn
                 color: "lightgreen"
-            }
-
-            RowLayout {
-                Text {
-                    Layout.fillWidth: true
-                    text: "Program"
-                }
-
-                RowLayout {
-                    id: programButtons
-
-                    Layout.fillWidth: false
-                    Layout.alignment: Qt.AlignRight
-
-                    Repeater {
-                        model: 4
-                        delegate: Button {
-                            property int programId: modelData + 1
-                            Layout.fillWidth: true
-
-                            autoExclusive: true
-                            checkable: true
-
-                            checked: programId === app.activeProgramId
-                            text: programId
-                            onClicked: {
-                                app.activeProgramId = programId
-                            }
-                        }
-                    }
-                }
             }
 
             Text {

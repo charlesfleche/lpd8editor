@@ -15,8 +15,8 @@ int main(int argc, char *argv[])
 
     Application app;
 
-    QmlTableModelProxy presets;
-    presets.setSourceModel(app.presets());
+    QmlTableModelProxy programs;
+    programs.setSourceModel(app.programs());
 
     QmlTableModelProxy pads;
     pads.setSourceModel(app.pads());
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("app", &app);
-    engine.rootContext()->setContextProperty("presets", &presets);
+    engine.rootContext()->setContextProperty("programsModel", &programs);
     engine.rootContext()->setContextProperty("padsModel", &pads);
     engine.rootContext()->setContextProperty("knobsModel", &knobs);
     engine.load(QUrl(QLatin1String("qrc:/main.qml")));

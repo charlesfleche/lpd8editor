@@ -47,6 +47,6 @@ HEADERS += \
     lpd8_types.h
 
 DISTFILES += \
-    TOTO.md
+    TODO.md
 
 PKGCONFIG += alsa

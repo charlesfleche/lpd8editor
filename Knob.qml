@@ -42,7 +42,7 @@ Control {
             Layout.fillWidth: true
             Layout.columnSpan: 2
 
-            text: presetId + " / " + programId + " / " + controlId
+            text: programId + " / " + controlId
         }
 
         Text {

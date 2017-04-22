@@ -5,8 +5,8 @@ import QtQuick.Layouts 1.0
 Control {
     id: root
 
-    implicitHeight: presetName.implicitHeight
-    implicitWidth: presetName.implicitWidth + selectButton.implicitWidth + deleteButton.implicitWidth + row.spacing
+    implicitHeight: programName.implicitHeight
+    implicitWidth: programName.implicitWidth + selectButton.implicitWidth + deleteButton.implicitWidth + row.spacing
 
     Rectangle {
         anchors.fill: root
@@ -19,32 +19,32 @@ Control {
         anchors.fill: root
 
         TextField {
-            id: presetName
+            id: programName
 
             Layout.fillWidth: true
 
-            readOnly: presetId === 0
+            readOnly: model.programId === 0
 
             text: model.name
             Binding {
                 target: model
                 property: "name"
-                value: presetName.text
+                value: programName.text
             }
         }
         Button {
             id: selectButton
             text: "Select"
             onClicked: {
-                app.activePresetId = presetId;
+                app.activeProgramId = programId;
             }
         }
         Button {
             id: deleteButton
-            enabled: presetId > 0
+            enabled: model.programId > 0
             text: "Delete"
             onClicked: {
-                app.deletePreset(presetId);
+                app.deleteProgram(model.programId);
             }
         }
     }

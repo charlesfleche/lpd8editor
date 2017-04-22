@@ -13,37 +13,27 @@ class QSqlTableModel;
 class Application : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(int activePresetId READ activePresetId WRITE setActivePresetId NOTIFY activePresetIdChanged)
     Q_PROPERTY(int activeProgramId READ activeProgramId WRITE setActiveProgramId NOTIFY activeProgramIdChanged)
-    Q_PROPERTY(QAbstractItemModel* presets READ presets CONSTANT)
-    Q_PROPERTY(bool connected READ connected WRITE setConnected NOTIFY connectedChanged)
 
 public:
     explicit Application(QObject *parent = 0);
 
-    int activePresetId() const;
     int activeProgramId() const;
 
-    QAbstractItemModel* presets() const;
+    QAbstractItemModel* programs() const;
     QAbstractItemModel* pads() const;
     QAbstractItemModel* knobs() const;
 
-    bool connected() const;
-
 public slots:
-    void setActivePresetId(int);
     void setActiveProgramId(int);
 
-    void newPreset();
-    void deletePreset(int presetId);
+    void newProgram();
+    void deleteProgram(int);
 
-    void setConnected(bool);
-
-    void fetchPrograms() const;
-    void sendPrograms();
+    void fetchProgram(int) const;
+    void sendProgram(int);
 
 signals:
-    void activePresetIdChanged(int);
     void activeProgramIdChanged(int);
     void connectedChanged(bool);
 
@@ -53,11 +43,9 @@ private slots:
     void onProgramFetched(pProgram);
 
 private:
-    QSqlTableModel* m_presets;
-    QSqlTableModel* m_preset_pads;
-    QSqlTableModel* m_preset_knobs;
-    QSqlTableModel* m_program_pads;
-    QSqlTableModel* m_program_knobs;
+    QSqlTableModel* m_programs;
+    QSqlTableModel* m_pads;
+    QSqlTableModel* m_knobs;
 
     MidiIO* m_midi_io;
 };

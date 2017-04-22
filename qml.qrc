@@ -3,7 +3,7 @@
         <file>main.qml</file>
         <file>qtquickcontrols2.conf</file>
         <file>Pad.qml</file>
-        <file>Preset.qml</file>
+        <file>Program.qml</file>
         <file>Knob.qml</file>
     </qresource>
 </RCC>

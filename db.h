@@ -6,10 +6,9 @@
 class QString;
 
 QSqlError initDb(const QString&);
-bool addPreset(const QString&);
-bool deletePreset(int);
-bool setPresetName(int, const QString&);
-bool isValidPresetId(int);
+bool addProgram(const QString&);
+bool deleteProgram(int);
+bool setProgramName(int, const QString&);
 bool isValidProgramId(int);
 
 #endif // DB_H
