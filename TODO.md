@@ -6,3 +6,4 @@
 - Program select on click
 - Active program highlight
 - Take debugging background colors away
+- Delete active program set a default one

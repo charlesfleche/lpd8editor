@@ -24,6 +24,14 @@ ApplicationWindow {
                 }
             }
 
+            ToolButton {
+                enabled: app.activeProgramId > 0
+                text: "Delete"
+                onClicked: {
+                    app.deleteProgram(app.activeProgramId);
+                }
+            }
+
             ToolSeparator {
 
             }

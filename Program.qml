@@ -58,14 +58,6 @@ Control {
                 value: channelSpinbox.value
             }
         }
-        Button {
-            id: deleteButton
-            enabled: model.programId > 0
-            text: "Delete"
-            onClicked: {
-                app.deleteProgram(model.programId);
-            }
-        }
     }
 
     MouseArea {
