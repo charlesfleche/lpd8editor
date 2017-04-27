@@ -6,7 +6,7 @@ Control {
     id: root
 
     implicitHeight: programName.implicitHeight
-    implicitWidth: programName.implicitWidth + deleteButton.implicitWidth + row.spacing
+    implicitWidth: programName.implicitWidth + channelText.implicitWidth + channelSpinbox.implicitWidth + row.spacing
 
     Rectangle {
         anchors.fill: root
@@ -42,6 +42,7 @@ Control {
         }
 
         Text {
+            id: channelText
             horizontalAlignment: Text.AlignRight
             Layout.fillWidth: true;
             text: "Channel"
