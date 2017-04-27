@@ -6,7 +6,7 @@ import QtQuick.Window 2.0
 ApplicationWindow {
     visible: true
     minimumWidth: (presetsColumn.Layout.minimumWidth + padsColumn.Layout.minimumWidth) * 1.1 // 1.1 temp hack
-    minimumHeight: padsColumn.height
+    minimumHeight: toolBar.height + padsColumn.height
     title: qsTr("lpd8-editor") // XXX get applicationName
 
     property int globalSpacing: 0
@@ -14,6 +14,7 @@ ApplicationWindow {
     property int knobHeight: 256
 
     header: ToolBar {
+        id: toolBar
         RowLayout {
             anchors.fill: parent
 
