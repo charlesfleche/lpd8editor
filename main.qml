@@ -1,5 +1,5 @@
 import QtQuick 2.7
-import QtQuick.Controls 2.0
+import QtQuick.Controls 2.1
 import QtQuick.Layouts 1.0
 import QtQuick.Window 2.0
 
@@ -16,6 +16,17 @@ ApplicationWindow {
     header: ToolBar {
         RowLayout {
             anchors.fill: parent
+
+            ToolButton {
+                text: "New"
+                onClicked: {
+                    app.newProgram();
+                }
+            }
+
+            ToolSeparator {
+
+            }
 
             Repeater {
                 model: 4
@@ -74,19 +85,8 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.minimumWidth: Screen.width / 8
 
-            RowLayout {
-                Text {
-                    Layout.fillWidth: true
-
-                    text: "Programs"
-                }
-                Button {
-                    Layout.alignment: Qt.AlignRight
-                    text: "Add"
-                    onClicked: {
-                        app.newProgram();
-                    }
-                }
+            Text {
+                text: "Programs"
             }
 
             ListView {

@@ -6,7 +6,7 @@ Control {
     id: root
 
     implicitHeight: programName.implicitHeight
-    implicitWidth: programName.implicitWidth + selectButton.implicitWidth + deleteButton.implicitWidth + row.spacing
+    implicitWidth: programName.implicitWidth + deleteButton.implicitWidth + row.spacing
 
     Rectangle {
         anchors.fill: root
