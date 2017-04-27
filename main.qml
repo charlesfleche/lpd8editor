@@ -62,11 +62,6 @@ ApplicationWindow {
         }
     }
 
-    Rectangle {
-        anchors.fill: columns
-        color: "darkgrey"
-    }
-
     RowLayout {
         id: columns
 
@@ -78,11 +73,6 @@ ApplicationWindow {
             Layout.fillHeight: true
             Layout.fillWidth: true
             Layout.minimumWidth: Screen.width / 8
-
-            Rectangle {
-                anchors.fill: presetsColumn
-                color: "steelblue"
-            }
 
             RowLayout {
                 Text {
@@ -97,11 +87,6 @@ ApplicationWindow {
                         app.newProgram();
                     }
                 }
-            }
-
-            Rectangle {
-                anchors.fill: presetsSection
-                color: "darkblue"
             }
 
             ListView {

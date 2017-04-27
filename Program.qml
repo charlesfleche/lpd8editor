@@ -10,13 +10,21 @@ Control {
 
     Rectangle {
         anchors.fill: root
-        color: ListView.isCurrentItem ? "red" : "orange"
+        color: index % 2 == 0 ? "transparent" : "lightgrey"
+        opacity: .5
     }
 
     RowLayout {
         id: row
 
         anchors.fill: root
+
+        Text {
+            horizontalAlignment: Text.AlignRight
+            verticalAlignment: Text.AlignVCenter
+            opacity: programId == app.activeProgramId ? 1 : 0;
+            text: "•"
+        }
 
         TextField {
             id: programName
@@ -32,8 +40,10 @@ Control {
                 value: programName.text
             }
         }
+
         Text {
-            Layout.fillWidth: false;
+            horizontalAlignment: Text.AlignRight
+            Layout.fillWidth: true;
             text: "Channel"
         }
         SpinBox {
@@ -56,13 +66,6 @@ Control {
                 app.deleteProgram(model.programId);
             }
         }
-    }
-
-    Rectangle {
-        anchors.fill: root
-        color: "transparent"
-        border.color: "red"
-        border.width: 1
     }
 
     MouseArea {
