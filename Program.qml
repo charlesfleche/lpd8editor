@@ -32,6 +32,22 @@ Control {
                 value: programName.text
             }
         }
+        Text {
+            Layout.fillWidth: false;
+            text: "Channel"
+        }
+        SpinBox {
+            id: channelSpinbox
+            editable: true
+            from: 1
+            to: 16
+            value: channel
+            Binding {
+                target: model
+                property: "channel"
+                value: channelSpinbox.value
+            }
+        }
         Button {
             id: selectButton
             text: "Select"
