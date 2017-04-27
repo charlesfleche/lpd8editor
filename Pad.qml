@@ -12,19 +12,6 @@ Control {
     implicitWidth: computedImplicitDimension
     implicitHeight: computedImplicitDimension
 
-    Rectangle {
-        anchors.fill: root
-        color: "transparent"
-        border.color: "red"
-        border.width: 1
-        z: 10
-    }
-
-    Rectangle {
-        anchors.fill: grid
-        color: "orange"
-    }
-
     FontMetrics {
         id: fontMetrics
         font: noteText.font

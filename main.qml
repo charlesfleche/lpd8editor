@@ -9,7 +9,7 @@ ApplicationWindow {
     minimumHeight: toolBar.height + padsColumn.height
     title: qsTr("lpd8-editor") // XXX get applicationName
 
-    property int globalSpacing: 0
+    property int globalSpacing: 14
     property int padSize: 256
     property int knobHeight: 256
 
@@ -132,11 +132,8 @@ ApplicationWindow {
 
             Rectangle {
                 anchors.fill: padsColumn
-                color: "lightgreen"
-            }
-
-            Text {
-                text: "Pads"
+                color: "lightgrey"
+                opacity: .5
             }
 
             GridView {
@@ -144,7 +141,7 @@ ApplicationWindow {
 
                 Layout.fillWidth: true
                 Layout.fillHeight: false
-                Layout.minimumHeight: padSize*2
+                Layout.minimumHeight: (padSize + globalSpacing) * 2
 
                 interactive: false
 
@@ -154,17 +151,21 @@ ApplicationWindow {
                 verticalLayoutDirection: GridView.BottomToTop
 
                 model: padsModel
-                delegate: Item {
+                delegate: Control {
+                    padding: globalSpacing
                     width: GridView.view.cellWidth
                     height: GridView.view.cellHeight
+                    Rectangle {
+                        color: "lightgrey"
+                        width: padSize
+                        height: padSize
+                        anchors.centerIn: parent
+                    }
+
                     Pad {
                         anchors.centerIn: parent
                     }
                 }
-            }
-
-            Text {
-                text: "Knobs"
             }
 
             GridView {
@@ -172,7 +173,7 @@ ApplicationWindow {
 
                 Layout.fillWidth: true
                 Layout.fillHeight: false
-                Layout.minimumHeight: padSize*2
+                Layout.minimumHeight: (padSize + globalSpacing) * 2
 
                 interactive: false
 
@@ -180,9 +181,17 @@ ApplicationWindow {
                 cellWidth: padSize + globalSpacing
 
                 model: knobsModel
-                delegate: Item {
+                delegate: Control {
+                    padding: globalSpacing
                     width: GridView.view.cellWidth
                     height: GridView.view.cellHeight
+                    Rectangle {
+                        color: "lightgrey"
+                        width: padSize
+                        height: padSize
+                        anchors.centerIn: parent
+                    }
+
                     Knob {
                         anchors.centerIn: parent
                     }
