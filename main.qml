@@ -32,8 +32,10 @@ ApplicationWindow {
                 }
             }
 
-            ToolSeparator {
+            ToolSeparator {}
 
+            Text {
+                text: "Get"
             }
 
             Repeater {
@@ -54,6 +56,12 @@ ApplicationWindow {
                     }
 
                 }
+            }
+
+            ToolSeparator {}
+
+            Text {
+                text: "Send"
             }
 
             Repeater {
