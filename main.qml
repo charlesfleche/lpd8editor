@@ -86,7 +86,7 @@ ApplicationWindow {
 
             RowLayout {
                 Text {
-                    Layout.fillWidth: true;
+                    Layout.fillWidth: true
 
                     text: "Programs"
                 }
@@ -112,8 +112,6 @@ ApplicationWindow {
                 spacing: globalSpacing
 
                 ScrollBar.vertical: ScrollBar{}
-
-                interactive: true
 
                 model: programsModel
                 delegate: Program {
@@ -146,6 +144,8 @@ ApplicationWindow {
                 Layout.fillHeight: false
                 Layout.minimumHeight: padSize*2
 
+                interactive: false
+
                 cellHeight: padSize + globalSpacing
                 cellWidth: padSize + globalSpacing
 
@@ -171,6 +171,8 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: false
                 Layout.minimumHeight: padSize*2
+
+                interactive: false
 
                 cellHeight: padSize + globalSpacing
                 cellWidth: padSize + globalSpacing
