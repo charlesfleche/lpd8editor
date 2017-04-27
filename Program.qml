@@ -31,20 +31,35 @@ Control {
 
             Layout.fillWidth: true
 
+            activeFocusOnPress: false
+
             readOnly: model.programId === 0
 
             text: model.name
+
+            background: Item {}
+
+            onAccepted: focus = false
+
             Binding {
                 target: model
                 property: "name"
                 value: programName.text
+            }
+            MouseArea {
+                anchors.fill: parent
+                propagateComposedEvents: true
+                preventStealing: false
+                onDoubleClicked: {
+                    programName.forceActiveFocus();
+                    mouse.accepted = true;
+                }
             }
         }
 
         Text {
             id: channelText
             horizontalAlignment: Text.AlignRight
-            Layout.fillWidth: true;
             text: "Channel"
         }
         SpinBox {
