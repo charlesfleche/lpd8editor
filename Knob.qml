@@ -42,7 +42,7 @@ Control {
             Layout.fillWidth: true
             Layout.columnSpan: 2
 
-            text: programId + " / " + controlId
+            text: 'K' + controlId
         }
 
         Text {
