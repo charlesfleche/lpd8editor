@@ -10,7 +10,7 @@ Control {
 
     Rectangle {
         anchors.fill: root
-        color: "orange"
+        color: ListView.isCurrentItem ? "red" : "orange"
     }
 
     RowLayout {
@@ -49,13 +49,6 @@ Control {
             }
         }
         Button {
-            id: selectButton
-            text: "Select"
-            onClicked: {
-                app.activeProgramId = programId;
-            }
-        }
-        Button {
             id: deleteButton
             enabled: model.programId > 0
             text: "Delete"
@@ -70,5 +63,15 @@ Control {
         color: "transparent"
         border.color: "red"
         border.width: 1
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        propagateComposedEvents: true
+        preventStealing: false
+        onPressed: {
+            app.activeProgramId = programId;
+            mouse.accepted = false;
+        }
     }
 }
