@@ -130,9 +130,6 @@ void MidiIO::processSysex(snd_seq_event_t* ev) {
     QByteArray s(
         static_cast<const char*>(ev->data.ext.ptr),
         ev->data.ext.len);
-    qDebug() << "Received Sysex:"
-             << s.length()
-             << s;
 
     switch (sysex::type(s)) {
     case sysex::TypeProgram:
