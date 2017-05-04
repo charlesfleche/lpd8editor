@@ -2,17 +2,18 @@ QT += qml quick sql
 
 CONFIG += c++11 link_pkgconfig
 
-SOURCES += main.cpp \
-    application.cpp \
-    db.cpp \
-    utils.cpp \
-    qmltablemodelproxy.cpp \
-    midiio.cpp \
-    lpd8controller.cpp \
-    lpd8_sysex.cpp
+SOURCES += src/main.cpp \
+    src/application.cpp \
+    src/db.cpp \
+    src/utils.cpp \
+    src/qmltablemodelproxy.cpp \
+    src/midiio.cpp \
+    src/lpd8controller.cpp \
+    src/lpd8_sysex.cpp
 
-RESOURCES += qml.qrc \
-    sql.qrc
+RESOURCES += src/qml.qrc \
+    src/sql.qrc \
+    src/qtquickcontrols2.conf
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
@@ -36,15 +37,17 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
+INCLUDEPATH += $$PWD/src
+
 HEADERS += \
-    application.h \
-    db.h \
-    utils.h \
-    qmltablemodelproxy.h \
-    midiio.h \
-    lpd8controller.h \
-    lpd8_sysex.h \
-    lpd8_types.h
+    src/application.h \
+    src/db.h \
+    src/utils.h \
+    src/qmltablemodelproxy.h \
+    src/midiio.h \
+    src/lpd8controller.h \
+    src/lpd8_sysex.h \
+    src/lpd8_types.h
 
 DISTFILES +=
 
