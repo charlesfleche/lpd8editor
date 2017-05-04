@@ -73,6 +73,7 @@ void Application::newProgram() {
 
 void Application::deleteProgram(int programId) {
     ::deleteProgram(programId);
+    setActiveProgramId(0);
     m_programs->select();
 }
 
