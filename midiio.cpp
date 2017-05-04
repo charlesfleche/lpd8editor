@@ -91,10 +91,8 @@ void MidiIO::readEvents()
     while (snd_seq_event_input_pending(m_seq_handle, 1) > 0) {
         snd_seq_event_t *ev;
         snd_seq_event_input(m_seq_handle, &ev);
-        qDebug() << "Received event" << ev->type;
         processEvent(ev);
     }
-    qDebug() << "readEvents done";
 }
 
 void MidiIO::processEvent(snd_seq_event_t* ev)
@@ -173,12 +171,9 @@ void MidiIO::sendSysex(QByteArray sysex) const
             throw std::runtime_error(snd_strerror(err));
         }
     }
-    qDebug() << "Sent sysex:" << sysex;
-//    QThread::msleep(1*sysex.size());
 }
 
 void MidiIO::getPrograms() const {
-    qDebug() << "Send sysex: getPrograms";
     for (int i = 1 ; i <= 4 ; ++i) {
         sendSysex(sysex::getProgram(i));
     }
@@ -193,7 +188,6 @@ void MidiIO::sendProgram(pProgram program) const
 void MidiIO::getProgram(int id) const {
     Q_ASSERT(id >= 1 && id <= 4);
 
-    qDebug() << "Send sysex: getProgram" << id;
     sendSysex(sysex::getProgram(id));
     QThread::sleep(1);
 }

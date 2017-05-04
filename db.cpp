@@ -63,9 +63,7 @@ bool isValidProgramId(int programId) {
         return false;
     }
 
-    qDebug() << q.size();
     while (q.next()) {
-        qDebug() << q.value(0);
         if (programId == q.value(0)) {
             return true;
         }

@@ -94,12 +94,9 @@ void Application::refreshModels() {
     Q_CHECK_PTR(m_pads);
     Q_CHECK_PTR(m_knobs);
 
-    qDebug() << "Application::refreshModel" <<activeProgramId();
-
     const QString filter = QString("programId=%1").arg(activeProgramId());
     m_pads->setFilter(filter);
     m_knobs->setFilter(filter);
-    qDebug() << m_pads->rowCount() << m_knobs->rowCount();
 }
 
 void Application::fetchProgram(int programId) const {
