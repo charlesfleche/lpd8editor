@@ -1,6 +1,6 @@
 # lpd8-editor
 
-A Linux editor for the [Akai LPD8 drum controller](http://www.akaipro.com/product/lpd8).
+A Linux editor for the [Akai LPD8 pad controller](http://www.akaipro.com/product/lpd8).
 
 ![lpd8-editor screenshot](doc/screenshot.png?raw=true "lpd8-editor")
 
