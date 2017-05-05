@@ -49,6 +49,7 @@ HEADERS += \
     src/lpd8_sysex.h \
     src/lpd8_types.h
 
-DISTFILES +=
+DISTFILES += \
+    README.md
 
 PKGCONFIG += alsa
