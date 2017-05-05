@@ -4,9 +4,11 @@
 #include "midiio.h"
 #include "utils.h"
 
+#include <QFileInfo>
 #include <QSettings>
 #include <QSqlTableModel>
 #include <QtDebug>
+#include <QUrl>
 
 #include <exception>
 
@@ -66,9 +68,12 @@ QAbstractItemModel* Application::knobs() const {
     return m_knobs;
 }
 
-void Application::newProgram() {
-    addProgram("New program");
+int Application::newProgram(const QString& name) {
+    int programId;
+    const bool ret = addProgram(name, programId);
+    Q_ASSERT(ret);
     m_programs->select();
+    return programId;
 }
 
 void Application::deleteProgram(int programId) {
@@ -153,6 +158,20 @@ void Application::sendProgram(int programId) {
     m_midi_io->sendProgram(p);
 }
 
+void Application::importProgram(const QString & origPath) {
+    const QString path(QUrl(origPath).toLocalFile());
+
+    pProgram p = readProgramFile(path);
+    if (!p) {
+        return;
+    }
+
+    const QString fileName(QFileInfo(path).baseName());
+    const int programId = newProgram(fileName);
+    setActiveProgramId(programId);
+    onProgramFetched(p);
+}
+
 void Application::onProgramFetched(pProgram p) {
     Q_CHECK_PTR(p);
 
@@ -178,13 +197,13 @@ void Application::onProgramFetched(pProgram p) {
         r.clear();
 
         r.append(QSqlField("cc", QVariant::Int));
-        r.setValue("cc", p->pads[i].cc);
+        r.setValue("cc", p->knobs[i].cc);
 
         r.append(QSqlField("low", QVariant::Int));
-        r.setValue("low", p->pads[i].cc);
+        r.setValue("low", p->knobs[i].low);
 
         r.append(QSqlField("high", QVariant::Int));
-        r.setValue("high", p->pads[i].cc);
+        r.setValue("high", p->knobs[i].high);
 
         if (!m_knobs->setRecord(i, r)) {
             qDebug() << "Cannot set knob" << programId << i << r;

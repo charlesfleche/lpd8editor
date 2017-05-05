@@ -1,6 +1,7 @@
 import QtQuick 2.7
 import QtQuick.Controls 2.1
-import QtQuick.Layouts 1.0
+import QtQuick.Dialogs 1.2
+import QtQuick.Layouts 1.1
 import QtQuick.Window 2.0
 
 ApplicationWindow {
@@ -84,9 +85,35 @@ ApplicationWindow {
                 }
             }
 
+            ToolSeparator {}
+
+            ToolButton {
+                text: "Import"
+                onClicked: {
+                    fileDialog.visible = true
+                }
+            }
+
             Item {
                 Layout.fillWidth: true
             }
+        }
+    }
+
+    FileDialog {
+        id: fileDialog
+        title: "Choose a preset"
+        folder: shortcuts.home
+        selectMultiple: true
+
+        onAccepted: {
+            fileDialog.fileUrls.map(function f(url) {
+                app.importProgram(url);
+            })
+            visible = false
+        }
+        onRejected: {
+            visible = false
         }
     }
 

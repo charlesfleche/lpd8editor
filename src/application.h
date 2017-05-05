@@ -27,11 +27,13 @@ public:
 public slots:
     void setActiveProgramId(int);
 
-    void newProgram();
+    int newProgram(const QString&);
     void deleteProgram(int);
 
     void fetchProgram(int) const;
     void sendProgram(int);
+
+    void importProgram(const QString&);
 
 signals:
     void activeProgramIdChanged(int);

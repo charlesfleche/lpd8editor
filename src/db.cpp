@@ -21,19 +21,27 @@ bool isInitialized(const QSqlDatabase& db) {
     return db.tables().contains("programs");
 }
 
-bool addProgram(const QString& name) {
+QString programName(const QString& name = QString()) {
+    return name.isEmpty() ? "default" : name;
+}
+
+bool addProgram(const QString& name, int& programId) {
     QSqlQuery q;
     if (!q.prepare("insert into programs(name, channel) values(?, ?)")) return false;
-    q.addBindValue(name);
+    q.addBindValue(programName(name));
     q.addBindValue(10);
-    return q.exec();
+    if (!q.exec()) {
+        return false;
+    }
+    programId = q.lastInsertId().toInt();
+    return true;
 }
 
 bool addProgram(int programId) {
     QSqlQuery q;
     if (!q.prepare("insert into programs(programId, name, channel) values(?, ?, ?)")) return false;
     q.addBindValue(programId);
-    q.addBindValue("default");
+    q.addBindValue(programName());
     q.addBindValue(10);
     return q.exec();
 }
