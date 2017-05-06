@@ -117,45 +117,13 @@ char getChar(const QSqlRecord& r, const QString& name) {
 }
 
 void Application::sendProgram(int programId) {
-    Q_CHECK_PTR(m_midi_io);
+    m_midi_io->sendProgram(program(programId));
+}
 
-    pProgram p(new Program());
-    p->id = static_cast<char>(programId);
-    p->channel = 1;
+void Application::exportActiveProgram(const QString & origPath) const {
+    const QString path(QUrl(origPath).toLocalFile());
 
-    for (int i = 0 ; i < m_pads->rowCount() ; ++i ) {
-        QSqlRecord r = m_pads->record(i);
-
-        Q_ASSERT(r.contains("programId"));
-        Q_ASSERT(r.contains("note"));
-        Q_ASSERT(r.contains("pc"));
-        Q_ASSERT(r.contains("cc"));
-        Q_ASSERT(r.contains("toggle"));
-
-        const int padIndex = r.value("controlId").toInt()-1;
-        Pad& pad = p->pads[padIndex];
-        pad.note = getChar(r, "note");
-        pad.pc = getChar(r, "pc");
-        pad.cc = getChar(r, "cc");
-        pad.toggle = getChar(r, "toggle");
-    }
-
-    for (int i = 0 ; i < m_knobs->rowCount() ; ++i ) {
-        QSqlRecord r = m_knobs->record(i);
-
-        Q_ASSERT(r.contains("programId"));
-        Q_ASSERT(r.contains("cc"));
-        Q_ASSERT(r.contains("low"));
-        Q_ASSERT(r.contains("high"));
-
-        const int knobIndex = r.value("controlId").toInt()-1;
-        Knob& knob = p->knobs[knobIndex];
-        knob.cc = getChar(r, "cc");
-        knob.low = getChar(r, "low");
-        knob.high = getChar(r, "high");
-    }
-
-    m_midi_io->sendProgram(p);
+    writeProgramFile(program(activeProgramId()), path);
 }
 
 void Application::importProgram(const QString & origPath) {
@@ -211,4 +179,46 @@ void Application::onProgramFetched(pProgram p) {
     }
 
     refreshModels();
+}
+
+pProgram Application::program(int programId) const {
+    Q_CHECK_PTR(m_midi_io);
+
+    pProgram p(new Program());
+    p->id = static_cast<char>(programId);
+    p->channel = 1;
+
+    for (int i = 0 ; i < m_pads->rowCount() ; ++i ) {
+        QSqlRecord r = m_pads->record(i);
+
+        Q_ASSERT(r.contains("programId"));
+        Q_ASSERT(r.contains("note"));
+        Q_ASSERT(r.contains("pc"));
+        Q_ASSERT(r.contains("cc"));
+        Q_ASSERT(r.contains("toggle"));
+
+        const int padIndex = r.value("controlId").toInt()-1;
+        Pad& pad = p->pads[padIndex];
+        pad.note = getChar(r, "note");
+        pad.pc = getChar(r, "pc");
+        pad.cc = getChar(r, "cc");
+        pad.toggle = getChar(r, "toggle");
+    }
+
+    for (int i = 0 ; i < m_knobs->rowCount() ; ++i ) {
+        QSqlRecord r = m_knobs->record(i);
+
+        Q_ASSERT(r.contains("programId"));
+        Q_ASSERT(r.contains("cc"));
+        Q_ASSERT(r.contains("low"));
+        Q_ASSERT(r.contains("high"));
+
+        const int knobIndex = r.value("controlId").toInt()-1;
+        Knob& knob = p->knobs[knobIndex];
+        knob.cc = getChar(r, "cc");
+        knob.low = getChar(r, "low");
+        knob.high = getChar(r, "high");
+    }
+
+    return p;
 }

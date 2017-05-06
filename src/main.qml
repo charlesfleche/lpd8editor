@@ -94,6 +94,13 @@ ApplicationWindow {
                 }
             }
 
+            ToolButton {
+                text: "Export"
+                onClicked: {
+                    fileDialogExport.open();
+                }
+            }
+
             Item {
                 Layout.fillWidth: true
             }
@@ -106,9 +113,20 @@ ApplicationWindow {
         folder: shortcuts.home
 
         onAccepted: {
-            fileDialog.fileUrls.map(function f(url) {
+            fileUrls.map(function f(url) {
                 app.importProgram(url);
             })
+        }
+    }
+
+    FileDialog {
+        id: fileDialogExport
+        title: "Export a LPD8 preset"
+        selectExisting: false
+        folder: shortcuts.home
+
+        onAccepted: {
+            app.exportActiveProgram(fileUrl);
         }
     }
 

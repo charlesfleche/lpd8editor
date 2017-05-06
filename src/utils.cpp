@@ -85,3 +85,51 @@ pProgram readProgramFile(const QString& path) {
 
     return ret;
 }
+
+#define WRITE_CHECK_OR_RETURN(out, v, path) \
+    out << static_cast<int>(v) << " "; \
+    if (out.status() != QTextStream::Ok) { \
+        qWarning() << "Failed to write" << path; \
+        return; \
+    }
+
+void writeProgramFile(pProgram p, const QString &path) {
+    Q_CHECK_PTR(p);
+
+    QFile data(path);
+    if (!data.open(QFile::WriteOnly | QFile::Truncate)) {
+        qWarning() << "Failed to open" << path;
+        return;
+    }
+
+    QTextStream out(&data);
+
+    // Header
+
+    WRITE_CHECK_OR_RETURN(out, 240, path);
+    WRITE_CHECK_OR_RETURN(out, 71, path);
+    WRITE_CHECK_OR_RETURN(out, 127, path);
+    WRITE_CHECK_OR_RETURN(out, 117, path);
+    WRITE_CHECK_OR_RETURN(out, 97, path);
+    WRITE_CHECK_OR_RETURN(out, 0, path);
+    WRITE_CHECK_OR_RETURN(out, 58, path);
+
+    WRITE_CHECK_OR_RETURN(out, p->id, path);
+    WRITE_CHECK_OR_RETURN(out, p->channel, path);
+
+    for (int i = 0 ; i < 8 ; ++i) {
+        WRITE_CHECK_OR_RETURN(out, p->pads[i].note, path);
+        WRITE_CHECK_OR_RETURN(out, p->pads[i].pc, path);
+        WRITE_CHECK_OR_RETURN(out, p->pads[i].cc, path);
+        WRITE_CHECK_OR_RETURN(out, p->pads[i].toggle, path);
+    }
+    for (int i = 0 ; i < 8 ; ++i) {
+        WRITE_CHECK_OR_RETURN(out, p->knobs[i].cc, path);
+        WRITE_CHECK_OR_RETURN(out, p->knobs[i].low, path);
+        WRITE_CHECK_OR_RETURN(out, p->knobs[i].high, path);
+    }
+
+    // Footer
+
+    WRITE_CHECK_OR_RETURN(out, 247, path);
+}

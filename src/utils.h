@@ -8,5 +8,6 @@
 bool initFilesystem();
 QString defaultDbPath();
 pProgram readProgramFile(const QString&);
+void writeProgramFile(pProgram, const QString&);
 
 #endif // UTILS_H

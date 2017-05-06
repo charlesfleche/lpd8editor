@@ -33,6 +33,7 @@ public slots:
     void fetchProgram(int) const;
     void sendProgram(int);
 
+    void exportActiveProgram(const QString&) const;
     void importProgram(const QString&);
 
 signals:
@@ -45,6 +46,8 @@ private slots:
     void onProgramFetched(pProgram);
 
 private:
+    pProgram program(int) const;
+
     QSqlTableModel* m_programs;
     QSqlTableModel* m_pads;
     QSqlTableModel* m_knobs;
