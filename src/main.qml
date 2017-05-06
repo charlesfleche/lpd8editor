@@ -90,7 +90,7 @@ ApplicationWindow {
             ToolButton {
                 text: "Import"
                 onClicked: {
-                    fileDialog.visible = true
+                    fileDialog.open();
                 }
             }
 
@@ -104,16 +104,11 @@ ApplicationWindow {
         id: fileDialog
         title: "Choose a preset"
         folder: shortcuts.home
-        selectMultiple: true
 
         onAccepted: {
             fileDialog.fileUrls.map(function f(url) {
                 app.importProgram(url);
             })
-            visible = false
-        }
-        onRejected: {
-            visible = false
         }
     }
 
