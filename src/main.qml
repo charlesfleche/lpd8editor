@@ -90,7 +90,7 @@ ApplicationWindow {
             ToolButton {
                 text: "Import"
                 onClicked: {
-                    fileDialog.open();
+                    fileDialogImport.open();
                 }
             }
 
@@ -101,8 +101,8 @@ ApplicationWindow {
     }
 
     FileDialog {
-        id: fileDialog
-        title: "Choose a preset"
+        id: fileDialogImport
+        title: "Import a LPD8 preset"
         folder: shortcuts.home
 
         onAccepted: {
