@@ -1,14 +1,14 @@
 #include "application.h"
 #include "qmltablemodelproxy.h"
 
-#include <QGuiApplication>
+#include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    QGuiApplication application(argc, argv);
+    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QApplication application(argc, argv);
     application.setOrganizationName("lpd8-editor");
     application.setApplicationName("lpd8-editor");
     application.setApplicationVersion("0.0.0");

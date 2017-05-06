@@ -1,4 +1,4 @@
-QT += qml quick sql
+QT += qml quick sql widgets
 
 CONFIG += c++11 link_pkgconfig
 

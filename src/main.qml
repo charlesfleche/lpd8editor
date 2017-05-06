@@ -1,8 +1,9 @@
 import QtQuick 2.7
 import QtQuick.Controls 2.1
-import QtQuick.Dialogs 1.2
 import QtQuick.Layouts 1.1
 import QtQuick.Window 2.0
+
+import Qt.labs.platform 1.0
 
 ApplicationWindow {
     visible: true
@@ -110,10 +111,12 @@ ApplicationWindow {
     FileDialog {
         id: fileDialogImport
         title: "Import a LPD8 preset"
-        folder: shortcuts.home
+        acceptLabel: 'Import'
+        fileMode: FileDialog.OpenFiles
+        folder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
 
         onAccepted: {
-            fileUrls.map(function f(url) {
+            files.map(function f(url) {
                 app.importProgram(url);
             })
         }
@@ -122,12 +125,11 @@ ApplicationWindow {
     FileDialog {
         id: fileDialogExport
         title: "Export a LPD8 preset"
-        selectExisting: false
-        folder: shortcuts.home
+        acceptLabel: 'Export'
+        fileMode: FileDialog.SaveFile
+        folder: StandardPaths.writableLocation(StandardPaths.HomeLocation)
 
-        onAccepted: {
-            app.exportActiveProgram(fileUrl);
-        }
+        onAccepted: app.exportActiveProgram(file);
     }
 
     RowLayout {
