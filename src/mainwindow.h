@@ -19,8 +19,11 @@ public:
 
 private slots:
     void on_actionNewProgram_triggered();
+    void on_actionDeleteProgram_triggered();
 
-    void on_programsView_clicked(const QModelIndex&);
+    void on_programsView_activated(const QModelIndex&);
+
+    void refreshActionDeleteProgram();
 
 private:
     int programModelColumn() const;

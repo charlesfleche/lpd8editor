@@ -90,6 +90,7 @@
      <string>Edit</string>
     </property>
     <addaction name="actionNewProgram"/>
+    <addaction name="actionDeleteProgram"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -111,6 +112,11 @@
    </property>
    <property name="text">
     <string>New program</string>
+   </property>
+  </action>
+  <action name="actionDeleteProgram">
+   <property name="text">
+    <string>Delete program</string>
    </property>
   </action>
  </widget>

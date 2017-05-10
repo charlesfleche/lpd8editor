@@ -18,6 +18,14 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ui->programsView->setModelColumn(programModelColumn());
     ui->padsView->setModel(app->pads());
     ui->knobsView->setModel(app->knobs());
+
+    connect(app,
+            &Application::activeProgramIdChanged,
+            this,
+            &MainWindow::refreshActionDeleteProgram
+    );
+
+    refreshActionDeleteProgram();
 }
 
 MainWindow::~MainWindow()
@@ -37,7 +45,7 @@ void MainWindow::on_actionNewProgram_triggered()
     app->newProgram("New program");
 }
 
-void MainWindow::on_programsView_clicked(const QModelIndex& idx)
+void MainWindow::on_programsView_activated(const QModelIndex& idx)
 {
     Q_ASSERT(idx.isValid());
     Q_CHECK_PTR(idx.model());
@@ -50,4 +58,18 @@ void MainWindow::on_programsView_clicked(const QModelIndex& idx)
     const int programId = idx.model()->data(programIdIndex).toInt();
 
     app->setActiveProgramId(programId);
+}
+
+void MainWindow::on_actionDeleteProgram_triggered()
+{
+    Q_CHECK_PTR(app);
+
+    app->deleteProgram(app->activeProgramId());
+}
+
+void MainWindow::refreshActionDeleteProgram()
+{
+    Q_CHECK_PTR(app);
+
+    ui->actionDeleteProgram->setEnabled(app->activeProgramId() != 0);
 }
