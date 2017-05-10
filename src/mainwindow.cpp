@@ -19,8 +19,8 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ui->padsView->setModel(app->pads());
     ui->knobsView->setModel(app->knobs());
 
-    connect(app,
-            &Application::activeProgramIdChanged,
+    connect(app->programs(),
+            &QAbstractItemModel::modelReset,
             this,
             &MainWindow::refreshActionDeleteProgram
     );
@@ -71,5 +71,5 @@ void MainWindow::refreshActionDeleteProgram()
 {
     Q_CHECK_PTR(app);
 
-    ui->actionDeleteProgram->setEnabled(app->activeProgramId() != 0);
+    ui->actionDeleteProgram->setEnabled(app->programs()->rowCount() > 1);
 }
