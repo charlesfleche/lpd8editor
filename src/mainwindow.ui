@@ -79,11 +79,38 @@
      <height>33</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionNewProgram"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action_Quit">
    <property name="text">
     <string>&amp;Quit</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionNewProgram">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>New program</string>
    </property>
   </action>
  </widget>

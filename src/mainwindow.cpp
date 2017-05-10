@@ -27,3 +27,10 @@ int MainWindow::programModelColumn() const
 {
     return 1;
 }
+
+void MainWindow::on_actionNewProgram_triggered()
+{
+    Q_CHECK_PTR(app);
+
+    app->newProgram("New program");
+}

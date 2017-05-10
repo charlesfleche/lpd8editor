@@ -17,6 +17,9 @@ public:
     explicit MainWindow(Application*, QWidget *parent = 0);
     ~MainWindow();
 
+private slots:
+    void on_actionNewProgram_triggered();
+
 private:
     int programModelColumn() const;
 
