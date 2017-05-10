@@ -20,6 +20,8 @@ public:
 private slots:
     void on_actionNewProgram_triggered();
 
+    void on_programsView_clicked(const QModelIndex&);
+
 private:
     int programModelColumn() const;
 
