@@ -1,4 +1,4 @@
-QT += qml quick sql widgets
+QT += sql widgets
 
 CONFIG += c++11 link_pkgconfig
 
@@ -9,11 +9,11 @@ SOURCES += src/main.cpp \
     src/qmltablemodelproxy.cpp \
     src/midiio.cpp \
     src/lpd8controller.cpp \
-    src/lpd8_sysex.cpp
+    src/lpd8_sysex.cpp \
+    src/mainwindow.cpp
 
-RESOURCES += src/qml.qrc \
-    src/sql.qrc \
-    src/qtquickcontrols2.conf
+RESOURCES += \
+    src/sql.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
@@ -47,9 +47,13 @@ HEADERS += \
     src/midiio.h \
     src/lpd8controller.h \
     src/lpd8_sysex.h \
-    src/lpd8_types.h
+    src/lpd8_types.h \
+    src/mainwindow.h
 
 DISTFILES += \
     README.md
 
 PKGCONFIG += alsa
+
+FORMS += \
+    src/mainwindow.ui

@@ -16,6 +16,7 @@ ApplicationWindow {
 
     header: ToolBar {
         id: toolBar
+
         RowLayout {
             anchors.fill: parent
 
