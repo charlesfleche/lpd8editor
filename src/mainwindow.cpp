@@ -28,7 +28,6 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             programsProxyModel,
             &ProgramProxyModel::setActiveProgramId);
 
-
     ui->programsView->setModelColumn(programModelColumn());
 
     ui->padsView->setModel(app->pads());
@@ -46,6 +45,16 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     );
 
     refreshActionDeleteProgram();
+
+    connect(app,
+            &Application::activeProgramChannelChanged,
+            ui->channelSpinBox,
+            &QSpinBox::setValue);
+    connect(ui->channelSpinBox,
+            static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
+            app,
+            &Application::setActiveProgramChannel);
+    ui->channelSpinBox->setValue(app->activeProgramChannel());
 }
 
 MainWindow::~MainWindow()
