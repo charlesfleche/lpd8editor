@@ -28,9 +28,16 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             programsProxyModel,
             &ProgramProxyModel::setActiveProgramId);
 
+
     ui->programsView->setModelColumn(programModelColumn());
+
     ui->padsView->setModel(app->pads());
+    ui->padsView->hideColumn(0);
+    ui->padsView->hideColumn(1);
+
     ui->knobsView->setModel(app->knobs());
+    ui->knobsView->hideColumn(0);
+    ui->knobsView->hideColumn(1);
 
     connect(app->programs(),
             &QAbstractItemModel::modelReset,
