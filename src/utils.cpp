@@ -8,7 +8,11 @@
 #include <QtDebug>
 
 QDir dataDir() {
-    return QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+    QStandardPaths::StandardLocation location = QStandardPaths::DataLocation;
+#if QT_VERSION >= 0x050400
+    location = QStandardPaths::AppDataLocation;
+#endif
+    return QDir(QStandardPaths::writableLocation(location));
 }
 
 bool initFilesystem() {
