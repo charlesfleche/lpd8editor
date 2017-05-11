@@ -6,7 +6,9 @@
 
 int main(int argc, char *argv[])
 {
-//    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#if QT_VERSION >= 0x050600
+    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
     QApplication app(argc, argv);
     app.setOrganizationName("lpd8-editor");
     app.setApplicationName("lpd8-editor");
@@ -16,8 +18,6 @@ int main(int argc, char *argv[])
 
     MainWindow win(&application);
     win.show();
-
-//    Application app;
 
     return app.exec();
 }
