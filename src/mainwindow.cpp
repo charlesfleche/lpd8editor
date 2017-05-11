@@ -48,6 +48,11 @@ void MainWindow::on_actionNewProgram_triggered()
     app->newProgram("New program");
 }
 
+void MainWindow::on_actionQuit_triggered()
+{
+    qApp->quit();
+}
+
 void MainWindow::on_programsView_activated(const QModelIndex& idx)
 {
     Q_ASSERT(idx.isValid());

@@ -20,6 +20,7 @@ public:
 private slots:
     void on_actionNewProgram_triggered();
     void on_actionDeleteProgram_triggered();
+    void on_actionQuit_triggered();
 
     void on_programsView_activated(const QModelIndex&);
 
