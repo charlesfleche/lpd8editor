@@ -3,6 +3,9 @@
 
 #include "application.h"
 
+#include <QFileDialog>
+#include <QStandardPaths>
+
 #include <QtDebug>
 
 MainWindow::MainWindow(Application* app, QWidget *parent) :
@@ -72,6 +75,36 @@ void MainWindow::refreshActionDeleteProgram()
     Q_CHECK_PTR(app);
 
     ui->actionDeleteProgram->setEnabled(app->programs()->rowCount() > 1);
+}
+
+void MainWindow::on_actionImportProgram_triggered()
+{
+    Q_CHECK_PTR(app);
+
+    const QString path(
+                QFileDialog::getOpenFileName(
+                    this,
+                    "Import LPD8 program",
+                    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)));
+    if (path.isEmpty()) {
+        return;
+    }
+    app->importProgram(path);
+}
+
+void MainWindow::on_actionExportProgram_triggered()
+{
+    Q_CHECK_PTR(app);
+
+    const QString path(
+                QFileDialog::getSaveFileName(
+                    this,
+                    "Export LPD8 program",
+                    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)));
+    if (path.isEmpty()) {
+        return;
+    }
+    app->exportActiveProgram(path);
 }
 
 void MainWindow::on_actionGetProgram1_triggered()

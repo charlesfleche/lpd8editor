@@ -8,7 +8,6 @@
 #include <QSettings>
 #include <QSqlTableModel>
 #include <QtDebug>
-#include <QUrl>
 
 #include <exception>
 
@@ -120,15 +119,11 @@ void Application::sendProgram(int programId) {
     m_midi_io->sendProgram(program(programId));
 }
 
-void Application::exportActiveProgram(const QString & origPath) const {
-    const QString path(QUrl(origPath).toLocalFile());
-
+void Application::exportActiveProgram(const QString & path) const {
     writeProgramFile(program(activeProgramId()), path);
 }
 
-void Application::importProgram(const QString & origPath) {
-    const QString path(QUrl(origPath).toLocalFile());
-
+void Application::importProgram(const QString & path) {
     pProgram p = readProgramFile(path);
     if (!p) {
         return;

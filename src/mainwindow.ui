@@ -83,6 +83,9 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionImportProgram"/>
+    <addaction name="actionExportProgram"/>
+    <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
@@ -172,6 +175,16 @@
   <action name="actionSendToProgram4">
    <property name="text">
     <string>Send to program 4</string>
+   </property>
+  </action>
+  <action name="actionImportProgram">
+   <property name="text">
+    <string>Import program</string>
+   </property>
+  </action>
+  <action name="actionExportProgram">
+   <property name="text">
+    <string>Export program</string>
    </property>
   </action>
  </widget>
