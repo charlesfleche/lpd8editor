@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 
 #include "application.h"
+#include "programproxymodel.h"
+#include "utils.h"
 
 #include <QFileDialog>
 #include <QStandardPaths>
@@ -17,7 +19,15 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 
     ui->setupUi(this);
 
-    ui->programsView->setModel(app->programs());
+    ProgramProxyModel* programsProxyModel = new ProgramProxyModel(this);
+    programsProxyModel->setSourceModel(app->programs());
+    programsProxyModel->setActiveProgramId(app->activeProgramId());
+    ui->programsView->setModel(programsProxyModel);
+    connect(app,
+            &Application::activeProgramIdChanged,
+            programsProxyModel,
+            &ProgramProxyModel::setActiveProgramId);
+
     ui->programsView->setModelColumn(programModelColumn());
     ui->padsView->setModel(app->pads());
     ui->knobsView->setModel(app->knobs());
@@ -59,13 +69,7 @@ void MainWindow::on_programsView_activated(const QModelIndex& idx)
     Q_CHECK_PTR(idx.model());
     Q_CHECK_PTR(app);
 
-    // Because 0 is the programId column
-    // This kind of int finding based on the name should be extracted
-    // to another funtion
-    const QModelIndex programIdIndex = idx.model()->index(idx.row(), 0);
-    const int programId = idx.model()->data(programIdIndex).toInt();
-
-    app->setActiveProgramId(programId);
+    app->setActiveProgramId(getProgramId(idx.model(), idx.row()));
 }
 
 void MainWindow::on_actionDeleteProgram_triggered()

@@ -10,7 +10,8 @@ SOURCES += src/main.cpp \
     src/midiio.cpp \
     src/lpd8controller.cpp \
     src/lpd8_sysex.cpp \
-    src/mainwindow.cpp
+    src/mainwindow.cpp \
+    programproxymodel.cpp
 
 RESOURCES += \
     src/sql.qrc
@@ -48,7 +49,8 @@ HEADERS += \
     src/lpd8controller.h \
     src/lpd8_sysex.h \
     src/lpd8_types.h \
-    src/mainwindow.h
+    src/mainwindow.h \
+    programproxymodel.h
 
 DISTFILES += \
     README.md

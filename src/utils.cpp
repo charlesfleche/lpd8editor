@@ -1,5 +1,6 @@
 #include "utils.h"
 
+#include <QAbstractItemModel>
 #include <QDir>
 #include <QStandardPaths>
 #include <QTextStream>
@@ -132,4 +133,12 @@ void writeProgramFile(pProgram p, const QString &path) {
     // Footer
 
     WRITE_CHECK_OR_RETURN(out, 247, path);
+}
+
+int getProgramId(const QAbstractItemModel* model, int row)
+{
+    Q_CHECK_PTR(model);
+    Q_ASSERT(row >= 0);
+
+    return model->data(model->index(row, 0)).toInt();
 }
