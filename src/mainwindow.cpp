@@ -73,3 +73,59 @@ void MainWindow::refreshActionDeleteProgram()
 
     ui->actionDeleteProgram->setEnabled(app->programs()->rowCount() > 1);
 }
+
+void MainWindow::on_actionGetProgram1_triggered()
+{
+    Q_CHECK_PTR(app);
+
+    app->fetchProgram(1);
+}
+
+void MainWindow::on_actionGetProgram2_triggered()
+{
+    Q_CHECK_PTR(app);
+
+    app->fetchProgram(2);
+}
+
+void MainWindow::on_actionGetProgram3_triggered()
+{
+    Q_CHECK_PTR(app);
+
+    app->fetchProgram(3);
+}
+
+void MainWindow::on_actionGetProgram4_triggered()
+{
+    Q_CHECK_PTR(app);
+
+    app->fetchProgram(4);
+}
+
+void MainWindow::on_actionSendToProgram1_triggered()
+{
+    Q_CHECK_PTR(app);
+
+    app->sendProgram(1);
+}
+
+void MainWindow::on_actionSendToProgram2_triggered()
+{
+    Q_CHECK_PTR(app);
+
+    app->sendProgram(2);
+}
+
+void MainWindow::on_actionSendToProgram3_triggered()
+{
+    Q_CHECK_PTR(app);
+
+    app->sendProgram(3);
+}
+
+void MainWindow::on_actionSendToProgram4_triggered()
+{
+    Q_CHECK_PTR(app);
+
+    app->sendProgram(4);
+}

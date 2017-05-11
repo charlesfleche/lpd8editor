@@ -23,6 +23,16 @@ private slots:
 
     void on_programsView_activated(const QModelIndex&);
 
+    void on_actionGetProgram1_triggered();
+    void on_actionGetProgram2_triggered();
+    void on_actionGetProgram3_triggered();
+    void on_actionGetProgram4_triggered();
+
+    void on_actionSendToProgram1_triggered();
+    void on_actionSendToProgram2_triggered();
+    void on_actionSendToProgram3_triggered();
+    void on_actionSendToProgram4_triggered();
+
     void refreshActionDeleteProgram();
 
 private:
