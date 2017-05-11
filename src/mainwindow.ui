@@ -48,10 +48,18 @@
        </layout>
       </item>
       <item>
-       <widget class="QTableView" name="padsView"/>
+       <widget class="QTableView" name="padsView">
+        <property name="selectionMode">
+         <enum>QAbstractItemView::SingleSelection</enum>
+        </property>
+       </widget>
       </item>
       <item>
-       <widget class="QTableView" name="knobsView"/>
+       <widget class="QTableView" name="knobsView">
+        <property name="selectionMode">
+         <enum>QAbstractItemView::SingleSelection</enum>
+        </property>
+       </widget>
       </item>
       <item>
        <spacer name="verticalSpacer">
