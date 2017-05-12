@@ -6,6 +6,7 @@
 #include "utils.h"
 
 #include <QFileDialog>
+#include <QPushButton>
 #include <QStandardPaths>
 
 #include <QtDebug>
@@ -46,20 +47,45 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 
     refreshActionDeleteProgram();
 
+    QGridLayout* l = new QGridLayout;
+    for (int i=1 ; i <= 16 ; ++i) {
+        QPushButton* b = new QPushButton(this);
+        b->setText(QString::number(i));
+        b->setCheckable(true);
+        b->setAutoExclusive(true);
+        connect(b,
+                &QPushButton::clicked,
+                [=](){
+            Q_CHECK_PTR(app);
+            app->setActiveProgramChannel(i);
+        });
+        const int row = (i - 1) < 8 ? 0 : 1;
+        const int col = (i - 1) % 8;
+        l->addWidget(b, row, col, 1, 1);
+        midiChannelButtons.append(b);
+    }
+
     connect(app,
             &Application::activeProgramChannelChanged,
-            ui->channelSpinBox,
-            &QSpinBox::setValue);
-    connect(ui->channelSpinBox,
-            static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged),
-            app,
-            &Application::setActiveProgramChannel);
-    ui->channelSpinBox->setValue(app->activeProgramChannel());
+            this,
+            &MainWindow::setMidiChannel);
+
+    setMidiChannel(app->activeProgramChannel());
+    ui->groupBoxMidiChannel->setLayout(l);
+
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::setMidiChannel(int channel)
+{
+    Q_ASSERT(channel >= 1 || channel <= 16);
+
+    --channel;
+    midiChannelButtons[channel]->setChecked(true);
 }
 
 int MainWindow::programModelColumn() const

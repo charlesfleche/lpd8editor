@@ -8,6 +8,7 @@ class MainWindow;
 }
 
 class Application;
+class QPushButton;
 
 class MainWindow : public QMainWindow
 {
@@ -37,6 +38,7 @@ private slots:
     void on_actionSendToProgram3_triggered();
     void on_actionSendToProgram4_triggered();
 
+    void setMidiChannel(int);
     void refreshActionDeleteProgram();
 
 private:
@@ -44,6 +46,7 @@ private:
 
     Ui::MainWindow *ui;
     Application* app;
+    QList<QPushButton*> midiChannelButtons;
 };
 
 #endif // MAINWINDOW_H
