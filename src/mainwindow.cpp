@@ -34,10 +34,12 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ui->padsView->setModel(app->pads());
     ui->padsView->hideColumn(0);
     ui->padsView->hideColumn(1);
+    ui->padsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->knobsView->setModel(app->knobs());
     ui->knobsView->hideColumn(0);
     ui->knobsView->hideColumn(1);
+    ui->knobsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     connect(app->programs(),
             &QAbstractItemModel::modelReset,
