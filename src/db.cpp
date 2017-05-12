@@ -47,8 +47,6 @@ bool addProgram(int programId) {
 }
 
 bool deleteProgram(int programId) {
-    Q_ASSERT(programId > 0);
-
     QSqlQuery q;
     if(!q.prepare("delete from programs where programId = ?")) return false;
     q.addBindValue(programId);
@@ -79,6 +77,22 @@ bool isValidProgramId(int programId) {
     return false;
 }
 
+int programsCount() {
+    QSqlQuery q;
+    if (!q.exec("select programId from programs;")) {
+        qWarning() << "Cannot select programs";
+        qWarning() << q.lastError().text();
+        return false;
+    }
+    int ret = 0;
+
+    // sqlite driver doesn't support query sizes
+    while (q.next()) {
+        ++ret;
+    }
+    return ret;
+}
+
 bool initialize() {
     QSqlQuery q;
     if (!q.exec(readTextFile(":/create_table_programs.sql"))) return false;
@@ -90,10 +104,11 @@ bool initialize() {
 }
 
 bool ensureDefaultProgram() {
-    if (isValidProgramId(0)) {
+    if (programsCount() > 0) {
         return true;
     }
-    return addProgram(0);
+    int programId;
+    return addProgram(programName(), programId);
 }
 
 QSqlError initDb(const QString& path) {

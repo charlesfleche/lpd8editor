@@ -1,5 +1,6 @@
 #include "utils.h"
 
+#include <QAbstractItemModel>
 #include <QDir>
 #include <QStandardPaths>
 #include <QTextStream>
@@ -7,7 +8,11 @@
 #include <QtDebug>
 
 QDir dataDir() {
-    return QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+    QStandardPaths::StandardLocation location = QStandardPaths::DataLocation;
+#if QT_VERSION >= 0x050400
+    location = QStandardPaths::AppDataLocation;
+#endif
+    return QDir(QStandardPaths::writableLocation(location));
 }
 
 bool initFilesystem() {
@@ -132,4 +137,12 @@ void writeProgramFile(pProgram p, const QString &path) {
     // Footer
 
     WRITE_CHECK_OR_RETURN(out, 247, path);
+}
+
+int getProgramId(const QAbstractItemModel* model, int row)
+{
+    Q_CHECK_PTR(model);
+    Q_ASSERT(row >= 0);
+
+    return model->data(model->index(row, 0)).toInt();
 }

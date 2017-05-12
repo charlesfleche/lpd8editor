@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>486</width>
+    <height>528</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="dockOptions">
+   <set>QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks</set>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QGroupBox" name="groupBoxPrograms">
+      <property name="title">
+       <string>Programs</string>
+      </property>
+      <property name="flat">
+       <bool>true</bool>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QListView" name="programsView">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <layout class="QVBoxLayout" name="activeProgramLayout">
+      <item>
+       <widget class="QGroupBox" name="groupBoxPads">
+        <property name="title">
+         <string>Pads</string>
+        </property>
+        <property name="flat">
+         <bool>false</bool>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QTableView" name="padsView">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="sizeAdjustPolicy">
+            <enum>QAbstractScrollArea::AdjustToContents</enum>
+           </property>
+           <property name="alternatingRowColors">
+            <bool>true</bool>
+           </property>
+           <property name="selectionMode">
+            <enum>QAbstractItemView::SingleSelection</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="groupBoxKnobs">
+        <property name="title">
+         <string>Knobs</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QTableView" name="knobsView">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="sizeAdjustPolicy">
+            <enum>QAbstractScrollArea::AdjustToContents</enum>
+           </property>
+           <property name="alternatingRowColors">
+            <bool>true</bool>
+           </property>
+           <property name="selectionMode">
+            <enum>QAbstractItemView::SingleSelection</enum>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="groupBoxMidiChannel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="title">
+         <string>Midi channel</string>
+        </property>
+        <property name="flat">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>486</width>
+     <height>33</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionImportProgram"/>
+    <addaction name="actionExportProgram"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionNewProgram"/>
+    <addaction name="actionDeleteProgram"/>
+   </widget>
+   <widget class="QMenu" name="menuLPD8">
+    <property name="title">
+     <string>Lpd8</string>
+    </property>
+    <addaction name="actionGetProgram1"/>
+    <addaction name="actionGetProgram2"/>
+    <addaction name="actionGetProgram3"/>
+    <addaction name="actionGetProgram4"/>
+    <addaction name="separator"/>
+    <addaction name="actionSendToProgram1"/>
+    <addaction name="actionSendToProgram2"/>
+    <addaction name="actionSendToProgram3"/>
+    <addaction name="actionSendToProgram4"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuLPD8"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="action_Quit">
+   <property name="text">
+    <string>&amp;Quit</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionNewProgram">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>New program</string>
+   </property>
+  </action>
+  <action name="actionDeleteProgram">
+   <property name="text">
+    <string>Delete program</string>
+   </property>
+  </action>
+  <action name="actionGetProgram1">
+   <property name="text">
+    <string>Get program 1</string>
+   </property>
+  </action>
+  <action name="actionGetProgram2">
+   <property name="text">
+    <string>Get program 2</string>
+   </property>
+  </action>
+  <action name="actionGetProgram3">
+   <property name="text">
+    <string>Get program 3</string>
+   </property>
+  </action>
+  <action name="actionGetProgram4">
+   <property name="text">
+    <string>Get program 4</string>
+   </property>
+  </action>
+  <action name="actionSendToProgram1">
+   <property name="text">
+    <string>Send to program 1</string>
+   </property>
+  </action>
+  <action name="actionSendToProgram2">
+   <property name="text">
+    <string>Send to program 2</string>
+   </property>
+  </action>
+  <action name="actionSendToProgram3">
+   <property name="text">
+    <string>Send to program 3</string>
+   </property>
+  </action>
+  <action name="actionSendToProgram4">
+   <property name="text">
+    <string>Send to program 4</string>
+   </property>
+  </action>
+  <action name="actionImportProgram">
+   <property name="text">
+    <string>Import program</string>
+   </property>
+  </action>
+  <action name="actionExportProgram">
+   <property name="text">
+    <string>Export program</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

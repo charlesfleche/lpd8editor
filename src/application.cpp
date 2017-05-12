@@ -8,7 +8,6 @@
 #include <QSettings>
 #include <QSqlTableModel>
 #include <QtDebug>
-#include <QUrl>
 
 #include <exception>
 
@@ -87,12 +86,44 @@ int Application::activeProgramId() const {
     return isValidProgramId(programId) ? programId : 1;
 }
 
+int Application::activeProgramChannel() const
+{
+    Q_CHECK_PTR(programs());
+
+    for (int row = 0 ; row < programs()->rowCount() ; ++row) {
+        const int programId(getProgramId(programs(), row));
+        if (programId == activeProgramId()) {
+            return programs()->data(programs()->index(row, 2)).toInt();
+        }
+    }
+    Q_ASSERT(false);
+    return -1;
+}
+
 void Application::setActiveProgramId(int programId) {
     if (activeProgramId() == programId) {
         return;
     }
     QSettings().setValue(SETTINGS_KEY_ACTIVE_PROGRAM_ID, programId);
-    emit activeProgramIdChanged(programId);;
+    emit activeProgramIdChanged(programId);
+    emit activeProgramChannelChanged(activeProgramChannel());
+}
+
+void Application::setActiveProgramChannel(int channel)
+{
+    Q_CHECK_PTR(programs());
+
+    for (int row = 0 ; row < programs()->rowCount() ; ++row) {
+        const int programId(getProgramId(programs(), row));
+        if (programId == activeProgramId()) {
+            const QModelIndex idx(programs()->index(row, 2));
+            const int curChannel(programs()->data(idx).toInt());
+            if (channel != curChannel) {
+                programs()->setData(idx, channel);
+                emit activeProgramChannelChanged(channel);
+            }
+        }
+    }
 }
 
 void Application::refreshModels() {
@@ -120,15 +151,11 @@ void Application::sendProgram(int programId) {
     m_midi_io->sendProgram(program(programId));
 }
 
-void Application::exportActiveProgram(const QString & origPath) const {
-    const QString path(QUrl(origPath).toLocalFile());
-
+void Application::exportActiveProgram(const QString & path) const {
     writeProgramFile(program(activeProgramId()), path);
 }
 
-void Application::importProgram(const QString & origPath) {
-    const QString path(QUrl(origPath).toLocalFile());
-
+void Application::importProgram(const QString & path) {
     pProgram p = readProgramFile(path);
     if (!p) {
         return;

@@ -14,11 +14,13 @@ class Application : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(int activeProgramId READ activeProgramId WRITE setActiveProgramId NOTIFY activeProgramIdChanged)
+    Q_PROPERTY(int activeProgramChannel READ activeProgramChannel WRITE setActiveProgramChannel NOTIFY activeProgramChannelChanged)
 
 public:
     explicit Application(QObject *parent = 0);
 
     int activeProgramId() const;
+    int activeProgramChannel() const;
 
     QAbstractItemModel* programs() const;
     QAbstractItemModel* pads() const;
@@ -26,6 +28,7 @@ public:
 
 public slots:
     void setActiveProgramId(int);
+    void setActiveProgramChannel(int);
 
     int newProgram(const QString&);
     void deleteProgram(int);
@@ -38,6 +41,7 @@ public slots:
 
 signals:
     void activeProgramIdChanged(int);
+    void activeProgramChannelChanged(int);
     void connectedChanged(bool);
 
 private slots:
