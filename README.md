@@ -8,7 +8,7 @@ A Linux editor for the [Akai LPD8 pad controller](http://www.akaipro.com/product
 
 ## Dependencies
 
-- Qt 5.8
+- Qt5
 - Alsa
 
 ## Build and run
