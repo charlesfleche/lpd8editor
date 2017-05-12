@@ -48,7 +48,7 @@
          <string>Pads</string>
         </property>
         <property name="flat">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout">
          <item>
@@ -77,6 +77,9 @@
        <widget class="QGroupBox" name="groupBoxKnobs">
         <property name="title">
          <string>Knobs</string>
+        </property>
+        <property name="flat">
+         <bool>true</bool>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
@@ -113,7 +116,7 @@
          <string>Midi channel</string>
         </property>
         <property name="flat">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
        </widget>
       </item>
