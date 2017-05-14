@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>807</width>
-    <height>1069</height>
+    <width>622</width>
+    <height>351</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,41 +26,18 @@
       <property name="flat">
        <bool>true</bool>
       </property>
-      <widget class="QListView" name="programsView">
-       <property name="geometry">
-        <rect>
-         <x>17</x>
-         <y>48</y>
-         <width>256</width>
-         <height>192</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="pushButton">
-       <property name="geometry">
-        <rect>
-         <x>60</x>
-         <y>350</y>
-         <width>128</width>
-         <height>39</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>1</string>
-       </property>
-      </widget>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QListView" name="programsView">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </item>
     <item>
@@ -165,7 +142,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>807</width>
+     <width>622</width>
      <height>33</height>
     </rect>
    </property>
