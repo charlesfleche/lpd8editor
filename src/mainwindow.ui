@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>486</width>
-    <height>528</height>
+    <width>807</width>
+    <height>1069</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,23 +26,46 @@
       <property name="flat">
        <bool>true</bool>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_3">
-       <item>
-        <widget class="QListView" name="programsView">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-        </widget>
-       </item>
-      </layout>
+      <widget class="QListView" name="programsView">
+       <property name="geometry">
+        <rect>
+         <x>17</x>
+         <y>48</y>
+         <width>256</width>
+         <height>192</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton">
+       <property name="geometry">
+        <rect>
+         <x>60</x>
+         <y>350</y>
+         <width>128</width>
+         <height>39</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>1</string>
+       </property>
+      </widget>
      </widget>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="activeProgramLayout">
-      <item>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="0">
        <widget class="QGroupBox" name="groupBoxPads">
         <property name="title">
          <string>Pads</string>
@@ -73,7 +96,7 @@
         </layout>
        </widget>
       </item>
-      <item>
+      <item row="0" column="1">
        <widget class="QGroupBox" name="groupBoxKnobs">
         <property name="title">
          <string>Knobs</string>
@@ -104,7 +127,7 @@
         </layout>
        </widget>
       </item>
-      <item>
+      <item row="1" column="0" colspan="2">
        <widget class="QGroupBox" name="groupBoxMidiChannel">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -120,7 +143,7 @@
         </property>
        </widget>
       </item>
-      <item>
+      <item row="2" column="0" colspan="2">
        <spacer name="verticalSpacer">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
@@ -142,7 +165,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>486</width>
+     <width>807</width>
      <height>33</height>
     </rect>
    </property>

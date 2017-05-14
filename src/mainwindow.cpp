@@ -50,8 +50,10 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     refreshActionDeleteProgram();
 
     QGridLayout* l = new QGridLayout;
+    l->setSizeConstraint(QLayout::SetMinimumSize);
     for (int i=1 ; i <= 16 ; ++i) {
         QPushButton* b = new QPushButton(this);
+        b->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
         b->setText(QString::number(i));
         b->setCheckable(true);
         b->setAutoExclusive(true);
