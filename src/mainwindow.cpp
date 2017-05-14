@@ -53,6 +53,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     l->setSizeConstraint(QLayout::SetMinimumSize);
     for (int i=1 ; i <= 16 ; ++i) {
         QPushButton* b = new QPushButton(this);
+        b->setMaximumWidth(b->height()*3);
         b->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
         b->setText(QString::number(i));
         b->setCheckable(true);
