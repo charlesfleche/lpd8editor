@@ -19,6 +19,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     Q_CHECK_PTR(app);
 
     ui->setupUi(this);
+    setStatusBar(Q_NULLPTR);
 
     ProgramProxyModel* programsProxyModel = new ProgramProxyModel(this);
     programsProxyModel->setSourceModel(app->programs());
