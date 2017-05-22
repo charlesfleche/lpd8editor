@@ -2,6 +2,7 @@
 
 #include "db.h"
 #include "midiio.h"
+#include "padproxymodel.h"
 #include "utils.h"
 
 #include <QFileInfo>
@@ -17,6 +18,7 @@ Application::Application(QObject *parent):
     QObject(parent),
     m_programs(Q_NULLPTR),
     m_pads(Q_NULLPTR),
+    m_pads_proxy(Q_NULLPTR),
     m_knobs(Q_NULLPTR),
     m_midi_io(Q_NULLPTR)
 {
@@ -36,6 +38,9 @@ Application::Application(QObject *parent):
     m_pads->setTable("pads");
     m_pads->setEditStrategy(QSqlTableModel::OnFieldChange);
     m_pads->select();
+
+    m_pads_proxy = new PadProxyModel(this);
+    m_pads_proxy->setSourceModel(m_pads);
 
     m_knobs = new QSqlTableModel(this);
     m_knobs->setTable("knobs");
@@ -60,7 +65,7 @@ QAbstractItemModel* Application::programs() const {
 }
 
 QAbstractItemModel* Application::pads() const {
-    return m_pads;
+    return m_pads_proxy;
 }
 
 QAbstractItemModel* Application::knobs() const {
