@@ -1,6 +1,6 @@
 QT += sql widgets
 
-CONFIG += c++11 link_pkgconfig
+CONFIG += c++11 link_pkgconfig warn_on
 
 SOURCES += src/main.cpp \
     src/application.cpp \
