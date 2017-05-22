@@ -15,7 +15,7 @@ QVariant PadProxyModel::data(const QModelIndex &proxyIndex, int role) const
     const bool toggle = QIdentityProxyModel::data(proxyIndex, Qt::DisplayRole).toBool();
     switch (role) {
     case Qt::DisplayRole:
-        ret = toggle ? "Toggle" : "Momentary";
+        ret = QVariant();
         break;
     case Qt::CheckStateRole:
         ret = toggle ? Qt::Checked : Qt::Unchecked;
