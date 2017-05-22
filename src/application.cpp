@@ -69,8 +69,9 @@ QAbstractItemModel* Application::knobs() const {
 
 int Application::newProgram(const QString& name) {
     int programId;
-    const bool ret = addProgram(name, programId);
-    Q_ASSERT(ret);
+    if (!addProgram(name, programId)) {
+        throw std::runtime_error("Failed to add program");
+    }
     m_programs->select();
     return programId;
 }
