@@ -8,6 +8,7 @@ class QString;
 QSqlError initDb(const QString&);
 bool addProgram(const QString&, int&);
 bool deleteProgram(int);
+int nextProgramId(int);
 bool setProgramName(int, const QString&);
 bool isValidProgramId(int);
 

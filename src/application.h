@@ -23,6 +23,8 @@ public:
     int activeProgramId() const;
     int activeProgramChannel() const;
 
+    bool isValidActiveProgram() const;
+
     QAbstractItemModel* programs() const;
     QAbstractItemModel* pads() const;
     QAbstractItemModel* knobs() const;

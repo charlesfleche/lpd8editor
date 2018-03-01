@@ -53,6 +53,37 @@ bool deleteProgram(int programId) {
     return q.exec();
 }
 
+bool programsIds(QList<int>& ids) {
+    QSqlQuery q;
+    if (!q.exec("select programId from programs;")) {
+        qWarning() << "Cannot get programs IDs";
+        qWarning() << q.lastError().text();
+        return false;
+    }
+
+    ids.clear();
+    // sqlite driver doesn't support query sizes
+    while (q.next()) {
+        ids.append(q.value(0).toInt());
+    }
+    return true;
+}
+
+int nextProgramId(int programId) {
+    QList<int> ids;
+    if (!programsIds(ids)) {
+        return -1;
+    }
+    int i = ids.indexOf(programId);
+    if (i == -1 || ids.count() == 1) {
+        return -1;
+    }
+    if (i > 0) {
+        return ids[i-1];
+    }
+    return ids[i+1];
+}
+
 bool setProgramName(int programId, const QString& name) {
     QSqlQuery q;
     if(!q.prepare("update programs set name = ? where programId = ?")) return false;
@@ -62,35 +93,8 @@ bool setProgramName(int programId, const QString& name) {
 }
 
 bool isValidProgramId(int programId) {
-    QSqlQuery q;
-    if (!q.exec("select programId from programs;")) {
-        qWarning() << "Cannot select programs";
-        qWarning() << q.lastError().text();
-        return false;
-    }
-
-    while (q.next()) {
-        if (programId == q.value(0)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-int programsCount() {
-    QSqlQuery q;
-    if (!q.exec("select programId from programs;")) {
-        qWarning() << "Cannot select programs";
-        qWarning() << q.lastError().text();
-        return false;
-    }
-    int ret = 0;
-
-    // sqlite driver doesn't support query sizes
-    while (q.next()) {
-        ++ret;
-    }
-    return ret;
+    QList<int> ids;
+    return programsIds(ids) ? ids.contains(programId) : false;
 }
 
 bool initialize() {
@@ -101,14 +105,6 @@ bool initialize() {
     if (!q.exec(readTextFile(":/create_trigger_add_program.sql"))) return false;
     if (!q.exec(readTextFile(":/create_trigger_delete_program.sql"))) return false;
     return true;
-}
-
-bool ensureDefaultProgram() {
-    if (programsCount() > 0) {
-        return true;
-    }
-    int programId;
-    return addProgram(programName(), programId);
 }
 
 QSqlError initDb(const QString& path) {
@@ -125,11 +121,6 @@ QSqlError initDb(const QString& path) {
             qWarning() << "Failed to initialize db" << path;
             goto end;
         }
-    }
-
-    if (!ensureDefaultProgram()) {
-        qWarning() << "Failed to ensure default program in db" << path;
-        goto end;
     }
 
     end:

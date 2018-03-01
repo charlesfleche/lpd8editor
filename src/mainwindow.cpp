@@ -21,14 +21,20 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ui->setupUi(this);
     setStatusBar(Q_NULLPTR);
 
+    ui->newProgramButton->setDefaultAction(ui->actionNewProgram);
+    ui->deleteProgramButton->setDefaultAction(ui->actionDeleteProgram);
+
     ProgramProxyModel* programsProxyModel = new ProgramProxyModel(this);
     programsProxyModel->setSourceModel(app->programs());
     programsProxyModel->setActiveProgramId(app->activeProgramId());
     ui->programsView->setModel(programsProxyModel);
+
     connect(app,
             &Application::activeProgramIdChanged,
-            programsProxyModel,
-            &ProgramProxyModel::setActiveProgramId);
+            [=](int programId) {
+                programsProxyModel->setActiveProgramId(programId);
+                refreshWidgetStack();
+            });
 
     ui->programsView->setModelColumn(programModelColumn());
 
@@ -49,6 +55,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     );
 
     refreshActionDeleteProgram();
+    refreshWidgetStack();
 
     QGridLayout* l = new QGridLayout;
     l->setSizeConstraint(QLayout::SetMinimumSize);
@@ -76,7 +83,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             this,
             &MainWindow::setMidiChannel);
 
-    setMidiChannel(app->activeProgramChannel());
+//    setMidiChannel(app->activeProgramChannel());
     ui->groupBoxMidiChannel->setLayout(l);
 
 }
@@ -88,15 +95,28 @@ MainWindow::~MainWindow()
 
 void MainWindow::setMidiChannel(int channel)
 {
-    Q_ASSERT(channel >= 1 || channel <= 16);
+    Q_ASSERT(channel == -1 || (channel >= 1 && channel <= 16));
 
-    --channel;
-    midiChannelButtons[channel]->setChecked(true);
+    QPushButton* b;
+    if (channel == -1) {
+        foreach (b, midiChannelButtons) {
+            b->setChecked(false);
+        }
+    } else {
+        midiChannelButtons[--channel]->setChecked(true);
+    }
 }
 
 int MainWindow::programModelColumn() const
 {
     return 1;
+}
+
+void MainWindow::refreshWidgetStack() {
+    Q_CHECK_PTR(app);
+
+    QWidget* w = app->activeProgramId() > 0 ? ui->pageEditor : ui->pageDefault;
+    ui->stackedWidget->setCurrentWidget(w);
 }
 
 void MainWindow::on_actionNewProgram_triggered()
@@ -131,7 +151,7 @@ void MainWindow::refreshActionDeleteProgram()
 {
     Q_CHECK_PTR(app);
 
-    ui->actionDeleteProgram->setEnabled(app->programs()->rowCount() > 1);
+    ui->actionDeleteProgram->setEnabled(app->programs()->rowCount() > 0);
 }
 
 void MainWindow::on_actionImportProgram_triggered()

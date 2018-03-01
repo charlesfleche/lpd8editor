@@ -78,18 +78,20 @@ int Application::newProgram(const QString& name) {
         throw std::runtime_error("Failed to add program");
     }
     m_programs->select();
+    setActiveProgramId(programId);
     return programId;
 }
 
 void Application::deleteProgram(int programId) {
+    const int nextId = nextProgramId(programId);
     ::deleteProgram(programId);
-    setActiveProgramId(0);
+    setActiveProgramId(nextId);
     m_programs->select();
 }
 
 int Application::activeProgramId() const {
-    const int programId = QSettings().value(SETTINGS_KEY_ACTIVE_PROGRAM_ID, 0).toInt();
-    return isValidProgramId(programId) ? programId : 1;
+    const int programId = QSettings().value(SETTINGS_KEY_ACTIVE_PROGRAM_ID, -1).toInt();
+    return isValidProgramId(programId) ? programId : -1;
 }
 
 int Application::activeProgramChannel() const
@@ -102,12 +104,12 @@ int Application::activeProgramChannel() const
             return programs()->data(programs()->index(row, 2)).toInt();
         }
     }
-    Q_ASSERT(false);
+
     return -1;
 }
 
 void Application::setActiveProgramId(int programId) {
-    if (activeProgramId() == programId) {
+    if (QSettings().value(SETTINGS_KEY_ACTIVE_PROGRAM_ID).toInt() == programId) {
         return;
     }
     QSettings().setValue(SETTINGS_KEY_ACTIVE_PROGRAM_ID, programId);

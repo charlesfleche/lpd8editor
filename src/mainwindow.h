@@ -39,7 +39,9 @@ private slots:
     void on_actionSendToProgram4_triggered();
 
     void setMidiChannel(int);
+
     void refreshActionDeleteProgram();
+    void refreshWidgetStack();
 
 private:
     int programModelColumn() const;

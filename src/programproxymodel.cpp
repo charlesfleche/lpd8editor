@@ -31,8 +31,6 @@ void ProgramProxyModel::setActiveProgramId(int programId)
 
 QVariant ProgramProxyModel::data(const QModelIndex &proxyIndex, int role) const
 {
-    Q_ASSERT(m_active_program_id >= 0);
-
     QVariant d = QIdentityProxyModel::data(proxyIndex, role);
     int programId = getProgramId(sourceModel(), proxyIndex.row());
 
