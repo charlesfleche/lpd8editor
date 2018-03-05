@@ -1,0 +1,14 @@
+- Rescan
+- Do not connect if already connected
+- Filter connections for own client
+- Filter system connections
+- ComboBox connection selection
+- Deactivate ComboBox when externally managed
+- Allow GET when input is connected
+- Allow POST when output is connected
+- Slider / clamping / editor delegates
+- Undo commands
+- Single data model tree
+- Widget wrappers
+- Tests
+- Debian package
