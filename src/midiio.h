@@ -7,9 +7,8 @@
 
 #include <asoundlib.h>
 
-class MidiPortsModel;
-
 class QAbstractItemModel;
+class QStandardItemModel;
 
 class MidiIO : public QObject
 {
@@ -23,7 +22,11 @@ public:
     void getPrograms() const;
     void sendProgram(pProgram) const;
 
-    QAbstractItemModel* midiPortsModel();
+    QAbstractItemModel* midiPortsModel() const;
+
+public slots:
+    void rescanPorts();
+    void connectPort(const QModelIndex&);
 
 signals:
     void sysexReceived(QByteArray);
@@ -42,7 +45,7 @@ private:
     snd_seq_t* m_seq_handle;
     struct pollfd* m_pfds;
     int m_seq_port;
-    MidiPortsModel* m_ports_model;
+    QStandardItemModel* m_ports_model;
 };
 
 #endif // MIDIIO_H

@@ -6,6 +6,7 @@
 #include <QGuiApplication>
 #include <QSocketNotifier>
 #include <QtDebug>
+#include <QStandardItemModel>
 #include <QThread>
 
 #include <exception>
@@ -62,7 +63,8 @@ MidiIO::MidiIO(QObject *parent) : QObject(parent),
         throw std::runtime_error("Failed setting sequencer port");
     }
 
-    m_ports_model = new MidiPortsModel(m_seq_handle, m_seq_port, this);
+//    m_ports_model = new MidiPortsModel(m_seq_handle, m_seq_port, this);
+    m_ports_model = new QStandardItemModel(this);
 }
 
 MidiIO::~MidiIO() {
@@ -78,6 +80,12 @@ MidiIO::~MidiIO() {
     } else {
         qWarning() << "Failed closing sequencer";
     }
+}
+
+QAbstractItemModel* MidiIO::midiPortsModel() const {
+    Q_CHECK_PTR(m_ports_model);
+
+    return m_ports_model;
 }
 
 void MidiIO::readEvents()
@@ -184,8 +192,78 @@ void MidiIO::getProgram(int id) const {
     QThread::sleep(1);
 }
 
-QAbstractItemModel* MidiIO::midiPortsModel() {
+enum MidiPortRole {
+    ClientRole = Qt::UserRole + 1,
+    PortRole
+};
+
+// Template it, baby
+void setClient(QStandardItem* item, int client) {
+    Q_CHECK_PTR(item);
+
+    item->setData(client, ClientRole);
+}
+
+int client(const QStandardItem* item) {
+    Q_CHECK_PTR(item);
+
+    return item->data(ClientRole).toInt();
+}
+
+void setPort(QStandardItem* item, int port) {
+    Q_CHECK_PTR(item);
+
+    item->setData(port, PortRole);
+}
+
+int port(const QStandardItem* item) {
+    Q_CHECK_PTR(item);
+
+    return item->data(PortRole).toInt();
+}
+
+void MidiIO::rescanPorts() {
+    Q_CHECK_PTR(m_seq_handle);
     Q_CHECK_PTR(m_ports_model);
 
-    return m_ports_model;
+    snd_seq_client_info_t *cinfo;
+    snd_seq_port_info_t *pinfo;
+
+    snd_seq_client_info_alloca(&cinfo);
+    snd_seq_port_info_alloca(&pinfo);
+    snd_seq_client_info_set_client(cinfo, -1);
+    while (snd_seq_query_next_client(m_seq_handle, cinfo) >= 0) {
+        const int id = snd_seq_client_info_get_client(cinfo);
+        snd_seq_port_info_set_client(pinfo, id);
+        snd_seq_port_info_set_port(pinfo, -1);
+
+        while (snd_seq_query_next_port(m_seq_handle, pinfo) >= 0) {
+            QStandardItem* item = new QStandardItem();
+            item->setText(snd_seq_port_info_get_name(pinfo));
+            const snd_seq_addr_t* addr = snd_seq_port_info_get_addr(pinfo);
+            Q_CHECK_PTR(addr);
+            setClient(item, addr->client);
+            setPort(item, addr->port);
+            m_ports_model->appendRow(item);
+        }
+    }
+}
+
+void MidiIO::connectPort(const QModelIndex& index) {
+    Q_CHECK_PTR(m_ports_model);
+    Q_ASSERT(m_seq_port >= 0);
+
+    QStandardItem* item = m_ports_model->itemFromIndex(index);
+    Q_CHECK_PTR(item);
+
+    const int c = client(item);
+    const int p = port(item);
+
+    if (snd_seq_connect_from(m_seq_handle, m_seq_port, c, p) < 0) {
+        qDebug() << "Cannot connect from";
+    }
+
+    if (snd_seq_connect_to(m_seq_handle, m_seq_port, c, p) < 0) {
+        qDebug() << "Cannot connect to";
+    }
 }
