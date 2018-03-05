@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>828</width>
-    <height>407</height>
+    <height>635</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,8 +17,8 @@
    <set>QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks</set>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout">
-    <item>
+   <layout class="QGridLayout" name="gridLayout_2">
+    <item row="0" column="0">
      <widget class="QGroupBox" name="groupBoxPrograms">
       <property name="title">
        <string>Programs</string>
@@ -71,7 +71,7 @@
       </layout>
      </widget>
     </item>
-    <item>
+    <item row="0" column="1" rowspan="2">
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
        <number>1</number>
@@ -187,6 +187,16 @@
       </widget>
      </widget>
     </item>
+    <item row="1" column="0">
+     <widget class="QListView" name="listView"/>
+    </item>
+    <item row="2" column="0">
+     <widget class="QPushButton" name="rescanPortsButton">
+      <property name="text">
+       <string>Rescan</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -235,7 +245,8 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionQuit">
    <property name="icon">
-    <iconset theme="application-exit"/>
+    <iconset theme="application-exit">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Quit</string>
@@ -272,6 +283,10 @@
    </property>
   </action>
   <action name="actionGetProgram1">
+   <property name="icon">
+    <iconset theme="go-bottom">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
    <property name="text">
     <string>Get program &amp;1</string>
    </property>
@@ -280,6 +295,10 @@
    </property>
   </action>
   <action name="actionGetProgram2">
+   <property name="icon">
+    <iconset theme="go-bottom">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
    <property name="text">
     <string>Get program &amp;2</string>
    </property>
@@ -288,6 +307,10 @@
    </property>
   </action>
   <action name="actionGetProgram3">
+   <property name="icon">
+    <iconset theme="go-bottom">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
    <property name="text">
     <string>Get program &amp;3</string>
    </property>
@@ -296,6 +319,10 @@
    </property>
   </action>
   <action name="actionGetProgram4">
+   <property name="icon">
+    <iconset theme="go-bottom">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
    <property name="text">
     <string>Get program &amp;4</string>
    </property>
@@ -304,6 +331,10 @@
    </property>
   </action>
   <action name="actionSendToProgram1">
+   <property name="icon">
+    <iconset theme="go-top">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
    <property name="text">
     <string>Send to program &amp;1</string>
    </property>
@@ -312,6 +343,10 @@
    </property>
   </action>
   <action name="actionSendToProgram2">
+   <property name="icon">
+    <iconset theme="go-top">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
    <property name="text">
     <string>Send to program &amp;2</string>
    </property>
@@ -320,6 +355,10 @@
    </property>
   </action>
   <action name="actionSendToProgram3">
+   <property name="icon">
+    <iconset theme="go-top">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
    <property name="text">
     <string>Send to program &amp;3</string>
    </property>
@@ -328,6 +367,10 @@
    </property>
   </action>
   <action name="actionSendToProgram4">
+   <property name="icon">
+    <iconset theme="go-top">
+     <normaloff>.</normaloff>.</iconset>
+   </property>
    <property name="text">
     <string>Send to program &amp;4</string>
    </property>

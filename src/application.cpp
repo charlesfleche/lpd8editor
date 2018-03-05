@@ -94,6 +94,12 @@ int Application::activeProgramId() const {
     return isValidProgramId(programId) ? programId : -1;
 }
 
+MidiIO* Application::midiIO() const {
+    Q_CHECK_PTR(m_midi_io);
+
+    return m_midi_io;
+}
+
 int Application::activeProgramChannel() const
 {
     Q_CHECK_PTR(programs());

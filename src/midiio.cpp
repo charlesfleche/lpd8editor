@@ -1,6 +1,8 @@
 #include "midiio.h"
 
-#include <lpd8_sysex.h>
+#include "lpd8_sysex.h"
+#include "midiportsmodel.h"
+
 #include <QGuiApplication>
 #include <QSocketNotifier>
 #include <QtDebug>
@@ -11,40 +13,13 @@
 MidiIO::MidiIO(QObject *parent) : QObject(parent),
     m_seq_handle(Q_NULLPTR),
     m_pfds(Q_NULLPTR),
-    m_seq_port_in(-1),
-    m_seq_port_out(-1)
+    m_seq_port(-1),
+    m_ports_model(Q_NULLPTR)
 {
     qDebug() << "Opening MIDI sequencer";
 
     if (snd_seq_open(&m_seq_handle, "hw", SND_SEQ_OPEN_DUPLEX, 0) < 0) {
         throw std::runtime_error("Failed opening sequencer");
-    }
-
-    snd_seq_set_client_event_filter(m_seq_handle, SND_SEQ_EVENT_SYSEX);
-
-    // Try qUtf8Printable
-    if (snd_seq_set_client_name(m_seq_handle, qPrintable(qApp->applicationName())) < 0) {
-        throw std::runtime_error("Failed setting sequencer name");
-    }
-
-    // In port
-    m_seq_port_in = snd_seq_create_simple_port(
-                m_seq_handle,
-                qPrintable(qGuiApp->applicationName() + ":in"),
-                SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE,
-                SND_SEQ_PORT_TYPE_APPLICATION);
-    if (m_seq_port_in < 0) {
-        throw std::runtime_error("Failed setting sequencer port IN");
-    }
-
-    // Out port
-    m_seq_port_out = snd_seq_create_simple_port(
-                m_seq_handle,
-                qPrintable(qGuiApp->applicationName() + ":out"),
-                SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_SUBS_READ,
-                SND_SEQ_PORT_TYPE_APPLICATION);
-    if (m_seq_port_out < 0) {
-        throw std::runtime_error("Failed setting sequencer port OUT");
     }
 
     // Poll
@@ -69,25 +44,45 @@ MidiIO::MidiIO(QObject *parent) : QObject(parent),
                 &MidiIO::readEvents
         );
     }
+
+    //    snd_seq_set_client_event_filter(m_seq_handle, SND_SEQ_EVENT_SYSEX);
+
+    // Try qUtf8Printable
+    if (snd_seq_set_client_name(m_seq_handle, qPrintable(qApp->applicationName())) < 0) {
+        throw std::runtime_error("Failed setting sequencer name");
+    }
+
+    // In port
+    m_seq_port = snd_seq_create_simple_port(
+                m_seq_handle,
+                qPrintable(qGuiApp->applicationName()),
+                SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_DUPLEX | SND_SEQ_PORT_CAP_SUBS_READ | SND_SEQ_PORT_CAP_SUBS_WRITE,
+                SND_SEQ_PORT_TYPE_APPLICATION);
+    if (m_seq_port < 0) {
+        throw std::runtime_error("Failed setting sequencer port");
+    }
+
+    m_ports_model = new MidiPortsModel(m_seq_handle, m_seq_port, this);
 }
 
 MidiIO::~MidiIO() {
     qDebug() << "Closing MIDI sequencer";
-    if (snd_seq_delete_simple_port(m_seq_handle, m_seq_port_in) < 0) {
-        qWarning() << "Failed deleting sequencer port IN";
+    if (snd_seq_delete_simple_port(m_seq_handle, m_seq_port) >= 0) {
+        m_seq_port = -1;
+    } else {
+        qWarning() << "Failed deleting sequencer port";
     }
 
-    if (snd_seq_delete_simple_port(m_seq_handle, m_seq_port_out) < 0) {
-        qWarning() << "Failed deleting sequencer port OUT";
-    }
-
-    if (snd_seq_close(m_seq_handle) < 0) {
+    if (snd_seq_close(m_seq_handle) >= 0) {
+        m_seq_handle = Q_NULLPTR;
+    } else {
         qWarning() << "Failed closing sequencer";
     }
 }
 
 void MidiIO::readEvents()
 {
+    qDebug();
     while (snd_seq_event_input_pending(m_seq_handle, 1) > 0) {
         snd_seq_event_t *ev;
         snd_seq_event_input(m_seq_handle, &ev);
@@ -154,7 +149,7 @@ void MidiIO::sendSysex(QByteArray sysex) const
     snd_seq_ev_clear(&ev);
     snd_seq_ev_set_subs(&ev);
     snd_seq_ev_set_direct(&ev);
-    snd_seq_ev_set_source(&ev, m_seq_port_out);
+    snd_seq_ev_set_source(&ev, m_seq_port);
     snd_seq_ev_set_sysex(&ev, sysex.length(), sysex.data());
 
     int err = snd_seq_event_output(m_seq_handle, &ev);
@@ -187,4 +182,10 @@ void MidiIO::getProgram(int id) const {
 
     sendSysex(sysex::getProgram(id));
     QThread::sleep(1);
+}
+
+QAbstractItemModel* MidiIO::midiPortsModel() {
+    Q_CHECK_PTR(m_ports_model);
+
+    return m_ports_model;
 }

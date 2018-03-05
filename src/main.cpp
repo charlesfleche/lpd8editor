@@ -4,6 +4,8 @@
 #include <QApplication>
 #include <QMainWindow>
 
+#include <QtDebug>
+
 int main(int argc, char *argv[])
 {
 #if QT_VERSION >= 0x050600
@@ -15,9 +17,7 @@ int main(int argc, char *argv[])
     app.setApplicationVersion("0.0.0");
 
     Application application;
-
     MainWindow win(&application);
     win.show();
-
     return app.exec();
 }

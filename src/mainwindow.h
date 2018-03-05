@@ -38,6 +38,9 @@ private slots:
     void on_actionSendToProgram3_triggered();
     void on_actionSendToProgram4_triggered();
 
+    void on_listView_activated(const QModelIndex&);
+    void on_rescanPortsButton_clicked();
+
     void setMidiChannel(int);
 
     void refreshActionDeleteProgram();

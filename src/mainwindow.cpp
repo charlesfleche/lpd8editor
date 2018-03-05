@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 
 #include "application.h"
+#include "midiio.h"
+#include "midiportsmodel.h"
 #include "programproxymodel.h"
 #include "utils.h"
 
@@ -86,6 +88,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 //    setMidiChannel(app->activeProgramChannel());
     ui->groupBoxMidiChannel->setLayout(l);
 
+    ui->listView->setModel(app->midiIO()->midiPortsModel());
 }
 
 MainWindow::~MainWindow()
@@ -238,4 +241,22 @@ void MainWindow::on_actionSendToProgram4_triggered()
     Q_CHECK_PTR(app);
 
     app->sendProgram(4);
+}
+
+void MainWindow::on_listView_activated(const QModelIndex& index) {
+    Q_CHECK_PTR(app);
+
+    MidiPortsModel* portsModel = qobject_cast<MidiPortsModel*>(app->midiIO()->midiPortsModel());
+    Q_CHECK_PTR(portsModel);
+
+    portsModel->connect(index);
+}
+
+void MainWindow::on_rescanPortsButton_clicked() {
+    Q_CHECK_PTR(app);
+
+    MidiPortsModel* portsModel = qobject_cast<MidiPortsModel*>(app->midiIO()->midiPortsModel());
+    Q_CHECK_PTR(portsModel);
+
+    portsModel->rescanPorts();
 }

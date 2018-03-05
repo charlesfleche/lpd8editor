@@ -25,6 +25,8 @@ public:
 
     bool isValidActiveProgram() const;
 
+    MidiIO* midiIO() const;
+
     QAbstractItemModel* programs() const;
     QAbstractItemModel* pads() const;
     QAbstractItemModel* knobs() const;
