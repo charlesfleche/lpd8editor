@@ -310,8 +310,27 @@ void MidiIO::connectPort(const QModelIndex& index) {
     QStandardItem* item = m_ports_model->itemFromIndex(index);
     Q_CHECK_PTR(item);
 
+    const snd_seq_addr_t ownaddr = {
+        static_cast<unsigned char>(snd_seq_client_id(m_seq_handle)),
+        static_cast<unsigned char>(m_seq_port)
+    };
+
     const int c = client(item);
     const int p = port(item);
+    const snd_seq_addr_t addr = {
+        static_cast<unsigned char>(c),
+        static_cast<unsigned char>(p)
+    };
+
+    snd_seq_port_subscribe_t *subs;
+    snd_seq_port_subscribe_alloca(&subs);
+
+    snd_seq_port_subscribe_set_sender(subs, &ownaddr);
+    snd_seq_port_subscribe_set_dest(subs, &addr);
+    if (snd_seq_get_port_subscription(m_seq_handle, subs) == 0) {
+        qDebug() << "Already connected from" << item->text();
+        return;
+    }
 
     if (snd_seq_connect_from(m_seq_handle, m_seq_port, c, p) < 0) {
         qDebug() << "Cannot connect from";
