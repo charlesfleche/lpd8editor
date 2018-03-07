@@ -18,7 +18,7 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2">
-    <item row="0" column="0">
+    <item row="0" column="0" colspan="2">
      <widget class="QGroupBox" name="groupBoxPrograms">
       <property name="title">
        <string>Programs</string>
@@ -71,7 +71,7 @@
       </layout>
      </widget>
     </item>
-    <item row="0" column="1" rowspan="2">
+    <item row="0" column="2" rowspan="2">
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
        <number>1</number>
@@ -188,12 +188,12 @@
      </widget>
     </item>
     <item row="1" column="0">
-     <widget class="QListView" name="listView"/>
+     <widget class="QComboBox" name="clientComboBox"/>
     </item>
-    <item row="2" column="0">
-     <widget class="QPushButton" name="rescanPortsButton">
+    <item row="1" column="1">
+     <widget class="QToolButton" name="rescanButton">
       <property name="text">
-       <string>Rescan</string>
+       <string>...</string>
       </property>
      </widget>
     </item>
@@ -205,7 +205,7 @@
      <x>0</x>
      <y>0</y>
      <width>828</width>
-     <height>35</height>
+     <height>42</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -226,7 +226,7 @@
    </widget>
    <widget class="QMenu" name="menuLPD8">
     <property name="title">
-     <string>Lpd8</string>
+     <string>&amp;Lpd8</string>
     </property>
     <addaction name="actionGetProgram1"/>
     <addaction name="actionGetProgram2"/>
@@ -336,7 +336,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Send to program &amp;1</string>
+    <string>&amp;Send to program 1</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Alt+1</string>
@@ -348,7 +348,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Send to program &amp;2</string>
+    <string>Send to &amp;program 2</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Alt+2</string>
@@ -360,7 +360,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Send to program &amp;3</string>
+    <string>S&amp;end to program 3</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Alt+3</string>
@@ -372,7 +372,7 @@
      <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
-    <string>Send to program &amp;4</string>
+    <string>Se&amp;nd to program 4</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Alt+4</string>
@@ -392,6 +392,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+E</string>
+   </property>
+  </action>
+  <action name="actionRescan">
+   <property name="icon">
+    <iconset theme="system-reboot"/>
+   </property>
+   <property name="text">
+    <string>Rescan MIDI devices</string>
    </property>
   </action>
  </widget>

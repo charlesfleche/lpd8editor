@@ -25,6 +25,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 
     ui->newProgramButton->setDefaultAction(ui->actionNewProgram);
     ui->deleteProgramButton->setDefaultAction(ui->actionDeleteProgram);
+    ui->rescanButton->setDefaultAction(ui->actionRescan);
 
     ProgramProxyModel* programsProxyModel = new ProgramProxyModel(this);
     programsProxyModel->setSourceModel(app->programs());
@@ -85,20 +86,23 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             this,
             &MainWindow::setMidiChannel);
 
-//    setMidiChannel(app->activeProgramChannel());
     ui->groupBoxMidiChannel->setLayout(l);
 
-    connect(ui->listView,
-            &QListView::activated,
-            app->midiIO(),
-            &MidiIO::connectPort);
+    connect(ui->clientComboBox,
+            QOverload<int>::of(&QComboBox::activated),
+            [=](int row) {
+                Q_CHECK_PTR(app->midiIO());
+                QAbstractItemModel* midiPortsModel = app->midiIO()->midiPortsModel();
+                const QModelIndex index(midiPortsModel->index(row, 0));
+                app->midiIO()->connectPort(index);
+            });
 
-    ui->listView->setModel(app->midiIO()->midiPortsModel());
+    ui->clientComboBox->setModel(app->midiIO()->midiPortsModel());
 
-    connect(ui->rescanPortsButton,
-            &QPushButton::clicked,
-            app->midiIO(),
-            &MidiIO::rescanPorts);
+//    connect(ui->rescanPortsButton,
+//            &QPushButton::clicked,
+//            app->midiIO(),
+//            &MidiIO::rescanPorts);
 }
 
 MainWindow::~MainWindow()
@@ -253,6 +257,12 @@ void MainWindow::on_actionSendToProgram4_triggered()
     app->sendProgram(4);
 }
 
+void MainWindow::on_rescanButton_triggered() {
+    Q_CHECK_PTR(app->midiIO());
+
+    app->midiIO()->rescanPorts();
+}
+
 //void MainWindow::on_listView_activated(const QModelIndex& index) {
 //    Q_CHECK_PTR(app);
 
@@ -260,14 +270,4 @@ void MainWindow::on_actionSendToProgram4_triggered()
 //    Q_CHECK_PTR(portsModel);
 
 //    portsModel->connect(index);
-//}
-
-//void MainWindow::on_rescanPortsButton_clicked() {
-//    Q_CHECK_PTR(app);
-
-//    MidiPortsModel* portsModel = qobject_cast<MidiPortsModel*>(app->midiIO()->midiPortsModel());
-//    Q_CHECK_PTR(portsModel);
-
-//    portsModel->rescanPorts();
-
 //}

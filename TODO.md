@@ -1,5 +1,3 @@
-- Do not connect if already connected
-- Filter system connections
 - ComboBox connection selection
 - Deactivate ComboBox when externally managed
 - Reset combobox if current connection is deleted
