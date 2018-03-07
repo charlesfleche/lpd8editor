@@ -315,27 +315,30 @@ void MidiIO::connectPort(const QModelIndex& index) {
         static_cast<unsigned char>(m_seq_port)
     };
 
-    const int c = client(item);
-    const int p = port(item);
-    snd_seq_addr_t addr = {
-        static_cast<unsigned char>(c),
-        static_cast<unsigned char>(p)
+    const snd_seq_addr_t targetaddr = {
+        static_cast<unsigned char>(client(item)),
+        static_cast<unsigned char>(port(item))
     };
+
+    // Check if already connected
 
     snd_seq_port_subscribe_t *subs;
     snd_seq_port_subscribe_alloca(&subs);
 
-    snd_seq_query_subscribe_t *qsubs;
-    snd_seq_query_subscribe_alloca(&qsubs);
-
     snd_seq_port_subscribe_set_sender(subs, &ownaddr);
-    snd_seq_port_subscribe_set_dest(subs, &addr);
+    snd_seq_port_subscribe_set_dest(subs, &targetaddr);
     if (snd_seq_get_port_subscription(m_seq_handle, subs) == 0) {
         qDebug() << "Already connected from" << item->text();
         return;
     }
 
     // Disconnect all
+
+    snd_seq_query_subscribe_t *qsubs;
+    snd_seq_query_subscribe_alloca(&qsubs);
+
+    snd_seq_addr_t addr;;
+
     snd_seq_query_subscribe_set_root(qsubs, &ownaddr);
 
     snd_seq_query_subscribe_set_index(qsubs, 0);
@@ -357,11 +360,11 @@ void MidiIO::connectPort(const QModelIndex& index) {
 
     // Connect target
 
-    if (snd_seq_connect_from(m_seq_handle, m_seq_port, c, p) < 0) {
+    if (snd_seq_connect_from(m_seq_handle, m_seq_port, targetaddr.client, targetaddr.port) < 0) {
         qDebug() << "Cannot connect from";
     }
 
-    if (snd_seq_connect_to(m_seq_handle, m_seq_port, c, p) < 0) {
+    if (snd_seq_connect_to(m_seq_handle, m_seq_port, targetaddr.client, targetaddr.port) < 0) {
         qDebug() << "Cannot connect to";
     }
 }
