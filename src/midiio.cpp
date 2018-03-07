@@ -198,33 +198,49 @@ enum MidiPortRole {
 };
 
 // Template it, baby
-void setClient(QStandardItem* item, int client) {
+template<typename T, int Role>
+void set(QStandardItem* item, T v) {
     Q_CHECK_PTR(item);
 
-    item->setData(client, ClientRole);
+    item->setData(v, Role);
 }
 
-int client(const QStandardItem* item) {
+template<typename T, int Role>
+T get(const QStandardItem* item) {
     Q_CHECK_PTR(item);
 
-    return item->data(ClientRole).toInt();
+    return item->data(Role).value<T>();
 }
 
-void setPort(QStandardItem* item, int port) {
-    Q_CHECK_PTR(item);
+void (&setClient)(QStandardItem*, int) = set<int, ClientRole>;
+void (&setPort)(QStandardItem*, int) = set<int, PortRole>;
+int (&client)(const QStandardItem*) = get<int, ClientRole>;
+int (&port)(const QStandardItem*) = get<int, PortRole>;
 
-    item->setData(port, PortRole);
-}
+QStandardItem* takeItemFromAlsaAddress(QList<QStandardItem*>& items, const snd_seq_addr_t* addr) {
+    Q_CHECK_PTR(addr);
 
-int port(const QStandardItem* item) {
-    Q_CHECK_PTR(item);
-
-    return item->data(PortRole).toInt();
+    QStandardItem* item = Q_NULLPTR;
+    foreach (item, items) {
+        if (client(item) == addr->client && port(item) == addr->port) {
+            break;
+        }
+    }
+    if (item) {
+        items.removeAt(items.indexOf(item));
+    }
+    return item;
 }
 
 void MidiIO::rescanPorts() {
     Q_CHECK_PTR(m_seq_handle);
     Q_CHECK_PTR(m_ports_model);
+
+    // Existing items
+    QList<QStandardItem*> existing;
+    for (int i = 0 ; i < m_ports_model->rowCount() ; ++i) {
+        existing << m_ports_model->item(i);
+    }
 
     snd_seq_client_info_t *cinfo;
     snd_seq_port_info_t *pinfo;
@@ -238,14 +254,34 @@ void MidiIO::rescanPorts() {
         snd_seq_port_info_set_port(pinfo, -1);
 
         while (snd_seq_query_next_port(m_seq_handle, pinfo) >= 0) {
-            QStandardItem* item = new QStandardItem();
-            item->setText(snd_seq_port_info_get_name(pinfo));
             const snd_seq_addr_t* addr = snd_seq_port_info_get_addr(pinfo);
             Q_CHECK_PTR(addr);
-            setClient(item, addr->client);
-            setPort(item, addr->port);
-            m_ports_model->appendRow(item);
+
+            QStandardItem* item = takeItemFromAlsaAddress(existing, addr);
+            if (!item) {
+                item = new QStandardItem();
+                setClient(item, addr->client);
+                setPort(item, addr->port);
+                m_ports_model->appendRow(item);
+            }
+            item->setText(snd_seq_port_info_get_name(pinfo));
         }
+    }
+
+    // Remove old items
+    int rc = m_ports_model->rowCount();
+    QStandardItem* item = Q_NULLPTR;
+    foreach (item, existing) {
+        const QModelIndex index = m_ports_model->indexFromItem(item);
+        Q_ASSERT(index.isValid());
+
+        QStandardItem* rowItem = Q_NULLPTR;
+        foreach (rowItem, m_ports_model->takeRow(index.row())) {
+            Q_CHECK_PTR(rowItem);
+            delete rowItem;
+        }
+        rc = m_ports_model->rowCount();
+        Q_UNUSED(rc);
     }
 }
 
