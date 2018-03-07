@@ -254,8 +254,8 @@ void MidiIO::rescanPorts() {
     while (snd_seq_query_next_client(m_seq_handle, cinfo) >= 0) {
         const int id = snd_seq_client_info_get_client(cinfo);
 
-        // Filter current client out
-        if (id == current_client_id) {
+        // Filter current client and system client (0)
+        if (id == current_client_id || id == 0) {
             continue;
         }
 
@@ -263,8 +263,17 @@ void MidiIO::rescanPorts() {
         snd_seq_port_info_set_port(pinfo, -1);
 
         while (snd_seq_query_next_port(m_seq_handle, pinfo) >= 0) {
+            const unsigned int caps = snd_seq_port_info_get_capability(pinfo);
+
             const snd_seq_addr_t* addr = snd_seq_port_info_get_addr(pinfo);
             Q_CHECK_PTR(addr);
+
+            // Filter non exportable and non read / write ports
+            if ((caps & SND_SEQ_PORT_CAP_NO_EXPORT) > 0 ||
+                (caps & SND_SEQ_PORT_CAP_READ) == 0 ||
+                (caps & SND_SEQ_PORT_CAP_WRITE) == 0) {
+                continue;
+            }
 
             QStandardItem* item = takeItemFromAlsaAddress(existing, addr);
             if (!item) {
