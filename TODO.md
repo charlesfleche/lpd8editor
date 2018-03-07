@@ -1,4 +1,3 @@
-- ComboBox connection selection
 - Deactivate ComboBox when externally managed
 - Reset combobox if current connection is deleted
 - Allow GET when input is connected
