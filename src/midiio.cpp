@@ -19,7 +19,7 @@ MidiIO::MidiIO(QObject *parent) : QObject(parent),
 {
     qDebug() << "Opening MIDI sequencer";
 
-    if (snd_seq_open(&m_seq_handle, "hw", SND_SEQ_OPEN_DUPLEX, 0) < 0) {
+    if (snd_seq_open(&m_seq_handle, "default", SND_SEQ_OPEN_DUPLEX, 0) < 0) {
         throw std::runtime_error("Failed opening sequencer");
     }
 
@@ -247,9 +247,18 @@ void MidiIO::rescanPorts() {
 
     snd_seq_client_info_alloca(&cinfo);
     snd_seq_port_info_alloca(&pinfo);
+
+    const int current_client_id = snd_seq_client_id(m_seq_handle);
+
     snd_seq_client_info_set_client(cinfo, -1);
     while (snd_seq_query_next_client(m_seq_handle, cinfo) >= 0) {
         const int id = snd_seq_client_info_get_client(cinfo);
+
+        // Filter current client out
+        if (id == current_client_id) {
+            continue;
+        }
+
         snd_seq_port_info_set_client(pinfo, id);
         snd_seq_port_info_set_port(pinfo, -1);
 
