@@ -93,7 +93,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ui->groupBoxMidiChannel->setLayout(l);
 
     connect(clientComboBox,
-            QOverload<int>::of(&QComboBox::activated),
+            QOverload<int>::of(&QComboBox::currentIndexChanged),
             [=](int row) {
                 Q_CHECK_PTR(app->midiIO());
                 QAbstractItemModel* midiPortsModel = app->midiIO()->midiPortsModel();
