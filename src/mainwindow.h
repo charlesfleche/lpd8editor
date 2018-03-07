@@ -38,7 +38,7 @@ private slots:
     void on_actionSendToProgram3_triggered();
     void on_actionSendToProgram4_triggered();
 
-    void on_rescanButton_triggered();
+    void on_actionRescan_triggered();
 
 //    void on_listView_activated(const QModelIndex&);
 

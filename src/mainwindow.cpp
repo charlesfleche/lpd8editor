@@ -7,6 +7,7 @@
 #include "programproxymodel.h"
 #include "utils.h"
 
+#include <QComboBox>
 #include <QFileDialog>
 #include <QPushButton>
 #include <QStandardPaths>
@@ -23,9 +24,12 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ui->setupUi(this);
     setStatusBar(Q_NULLPTR);
 
+    QComboBox* clientComboBox = new QComboBox(this);
+    ui->toolBar->addWidget(clientComboBox);
+    ui->toolBar->addAction(ui->actionRescan);
+
     ui->newProgramButton->setDefaultAction(ui->actionNewProgram);
     ui->deleteProgramButton->setDefaultAction(ui->actionDeleteProgram);
-    ui->rescanButton->setDefaultAction(ui->actionRescan);
 
     ProgramProxyModel* programsProxyModel = new ProgramProxyModel(this);
     programsProxyModel->setSourceModel(app->programs());
@@ -88,7 +92,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 
     ui->groupBoxMidiChannel->setLayout(l);
 
-    connect(ui->clientComboBox,
+    connect(clientComboBox,
             QOverload<int>::of(&QComboBox::activated),
             [=](int row) {
                 Q_CHECK_PTR(app->midiIO());
@@ -97,12 +101,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
                 app->midiIO()->connectPort(index);
             });
 
-    ui->clientComboBox->setModel(app->midiIO()->midiPortsModel());
-
-//    connect(ui->rescanPortsButton,
-//            &QPushButton::clicked,
-//            app->midiIO(),
-//            &MidiIO::rescanPorts);
+    clientComboBox->setModel(app->midiIO()->midiPortsModel());
 }
 
 MainWindow::~MainWindow()
@@ -257,7 +256,7 @@ void MainWindow::on_actionSendToProgram4_triggered()
     app->sendProgram(4);
 }
 
-void MainWindow::on_rescanButton_triggered() {
+void MainWindow::on_actionRescan_triggered() {
     Q_CHECK_PTR(app->midiIO());
 
     app->midiIO()->rescanPorts();
