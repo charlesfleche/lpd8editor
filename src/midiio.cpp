@@ -317,7 +317,7 @@ void MidiIO::connectPort(const QModelIndex& index) {
 
     const int c = client(item);
     const int p = port(item);
-    const snd_seq_addr_t addr = {
+    snd_seq_addr_t addr = {
         static_cast<unsigned char>(c),
         static_cast<unsigned char>(p)
     };
@@ -325,12 +325,37 @@ void MidiIO::connectPort(const QModelIndex& index) {
     snd_seq_port_subscribe_t *subs;
     snd_seq_port_subscribe_alloca(&subs);
 
+    snd_seq_query_subscribe_t *qsubs;
+    snd_seq_query_subscribe_alloca(&qsubs);
+
     snd_seq_port_subscribe_set_sender(subs, &ownaddr);
     snd_seq_port_subscribe_set_dest(subs, &addr);
     if (snd_seq_get_port_subscription(m_seq_handle, subs) == 0) {
         qDebug() << "Already connected from" << item->text();
         return;
     }
+
+    // Disconnect all
+    snd_seq_query_subscribe_set_root(qsubs, &ownaddr);
+
+    snd_seq_query_subscribe_set_index(qsubs, 0);
+    snd_seq_query_subscribe_set_type(qsubs, SND_SEQ_QUERY_SUBS_READ);
+    while (snd_seq_query_port_subscribers(m_seq_handle, qsubs) >= 0) {
+        addr = *snd_seq_query_subscribe_get_addr(qsubs);
+        if (snd_seq_disconnect_to(m_seq_handle, m_seq_port, addr.client, addr.port)) {
+            qDebug() << "Cannot disconnect to" << addr.client << addr.port;
+        }
+    }
+    snd_seq_query_subscribe_set_index(qsubs, 0);
+    snd_seq_query_subscribe_set_type(qsubs, SND_SEQ_QUERY_SUBS_WRITE);
+    while (snd_seq_query_port_subscribers(m_seq_handle, qsubs) >= 0) {
+        addr = *snd_seq_query_subscribe_get_addr(qsubs);
+        if (snd_seq_disconnect_from(m_seq_handle, m_seq_port, addr.client, addr.port)) {
+            qDebug() << "Cannot disconnect from" << addr.client << addr.port;
+        }
+    }
+
+    // Connect target
 
     if (snd_seq_connect_from(m_seq_handle, m_seq_port, c, p) < 0) {
         qDebug() << "Cannot connect from";
