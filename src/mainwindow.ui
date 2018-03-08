@@ -59,11 +59,32 @@
              <property name="sizeAdjustPolicy">
               <enum>QAbstractScrollArea::AdjustToContents</enum>
              </property>
+             <property name="editTriggers">
+              <set>QAbstractItemView::AllEditTriggers</set>
+             </property>
+             <property name="showDropIndicator" stdset="0">
+              <bool>false</bool>
+             </property>
+             <property name="dragDropOverwriteMode">
+              <bool>false</bool>
+             </property>
              <property name="alternatingRowColors">
               <bool>true</bool>
              </property>
              <property name="selectionMode">
-              <enum>QAbstractItemView::SingleSelection</enum>
+              <enum>QAbstractItemView::NoSelection</enum>
+             </property>
+             <property name="selectionBehavior">
+              <enum>QAbstractItemView::SelectItems</enum>
+             </property>
+             <property name="textElideMode">
+              <enum>Qt::ElideNone</enum>
+             </property>
+             <property name="wordWrap">
+              <bool>false</bool>
+             </property>
+             <property name="cornerButtonEnabled">
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -90,11 +111,20 @@
              <property name="sizeAdjustPolicy">
               <enum>QAbstractScrollArea::AdjustToContents</enum>
              </property>
+             <property name="editTriggers">
+              <set>QAbstractItemView::AllEditTriggers</set>
+             </property>
+             <property name="showDropIndicator" stdset="0">
+              <bool>false</bool>
+             </property>
+             <property name="dragDropOverwriteMode">
+              <bool>false</bool>
+             </property>
              <property name="alternatingRowColors">
               <bool>true</bool>
              </property>
              <property name="selectionMode">
-              <enum>QAbstractItemView::SingleSelection</enum>
+              <enum>QAbstractItemView::NoSelection</enum>
              </property>
             </widget>
            </item>
@@ -397,13 +427,21 @@
   </action>
   <action name="actionRescan">
    <property name="icon">
-    <iconset theme="system-reboot"/>
+    <iconset theme="system-reboot">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Rescan MIDI devices</string>
    </property>
   </action>
  </widget>
+ <tabstops>
+  <tabstop>programsView</tabstop>
+  <tabstop>deleteProgramButton</tabstop>
+  <tabstop>newProgramButton</tabstop>
+  <tabstop>padsView</tabstop>
+  <tabstop>knobsView</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
