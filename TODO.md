@@ -1,7 +1,4 @@
-- Deactivate ComboBox when externally managed
 - Reset combobox if current connection is deleted
-- Allow GET when input is connected
-- Allow POST when output is connected
 - Slider / clamping / editor delegates
 - Undo commands
 - Single data model tree
