@@ -40,8 +40,6 @@ private slots:
 
     void on_actionRescan_triggered();
 
-//    void on_listView_activated(const QModelIndex&);
-
     void setMidiChannel(int);
 
     void refreshActionDeleteProgram();

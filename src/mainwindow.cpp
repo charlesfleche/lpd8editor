@@ -47,15 +47,13 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 
     ui->programsView->setModelColumn(programModelColumn());
 
-    MidiValueDelegate* midiValueDelegate = new MidiValueDelegate(this);
-
-    ui->padsView->setItemDelegate(midiValueDelegate);
+    ui->padsView->setItemDelegate(new MidiValueDelegate(this));
     ui->padsView->setModel(app->pads());
     ui->padsView->hideColumn(0);
     ui->padsView->hideColumn(1);
     ui->padsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
-    ui->knobsView->setItemDelegate(midiValueDelegate);
+    ui->knobsView->setItemDelegate(new MidiValueDelegate(this));
     ui->knobsView->setModel(app->knobs());
     ui->knobsView->hideColumn(0);
     ui->knobsView->hideColumn(1);
@@ -288,12 +286,3 @@ void MainWindow::on_actionRescan_triggered() {
 
     app->midiIO()->rescanPorts();
 }
-
-//void MainWindow::on_listView_activated(const QModelIndex& index) {
-//    Q_CHECK_PTR(app);
-
-//    MidiPortsModel* portsModel = qobject_cast<MidiPortsModel*>(app->midiIO()->midiPortsModel());
-//    Q_CHECK_PTR(portsModel);
-
-//    portsModel->connect(index);
-//}
