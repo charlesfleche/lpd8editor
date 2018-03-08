@@ -1,5 +1,7 @@
 #include "midivaluedelegate.h"
 
+#include "enums.h"
+
 #include <QSpinBox>
 
 MidiValueDelegate::MidiValueDelegate(QObject* parent):
@@ -11,14 +13,24 @@ MidiValueDelegate::MidiValueDelegate(QObject* parent):
 QWidget* MidiValueDelegate::createEditor(
         QWidget* parent,
         const QStyleOptionViewItem&,
-        const QModelIndex&) const {
+        const QModelIndex& index) const {
     Q_CHECK_PTR(parent);
+    Q_CHECK_PTR(index.model());
 
-    QSpinBox* editor = new QSpinBox(parent);
-    editor->setFrame(false);
-    editor->setMinimum(0);
-    editor->setMaximum(127);
-    return editor;
+    QWidget* ret = Q_NULLPTR;
+
+    switch (index.model()->data(index, MidiDataRole::MidiValueType).toInt()) {
+    default:
+        QSpinBox* editor = new QSpinBox(parent);
+        editor->setFrame(false);
+        editor->setMinimum(0);
+        editor->setMaximum(127);
+        ret = editor;
+        break;
+    }
+
+    Q_CHECK_PTR(ret);
+    return ret;
 }
 
 void MidiValueDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const {

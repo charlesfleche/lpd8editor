@@ -13,23 +13,17 @@ QVariant PadProxyModel::data(const QModelIndex &proxyIndex, int role) const
         return proxyIndex.column() == 5 ? MidiType::ToggleType : MidiType::DefaultType;
     }
 
-    QVariant ret = QIdentityProxyModel::data(proxyIndex, role);
-    if (data(proxyIndex, MidiDataRole::MidiValueType) != MidiType::ToggleType) {
-        return ret;
+    if (data(proxyIndex, MidiDataRole::MidiValueType) == MidiType::ToggleType) {
+        const bool toggle = QIdentityProxyModel::data(proxyIndex, Qt::DisplayRole).toBool();
+        switch (role) {
+        case Qt::DisplayRole:
+            return toggle ? "Toggle" : "Momentary";
+        case Qt::CheckStateRole:
+            return toggle ? Qt::Checked : Qt::Unchecked;
+        }
     }
 
-    const bool toggle = QIdentityProxyModel::data(proxyIndex, Qt::DisplayRole).toBool();
-    switch (role) {
-    case Qt::DisplayRole:
-        ret = QVariant();
-        break;
-    case Qt::CheckStateRole:
-        ret = toggle ? Qt::Checked : Qt::Unchecked;
-        break;
-    default:
-        break;
-    }
-    return ret;
+    return QIdentityProxyModel::data(proxyIndex, role);
 }
 
 bool PadProxyModel::setData(const QModelIndex &index, const QVariant &value, int role)
