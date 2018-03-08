@@ -11,6 +11,7 @@
 #include <QFileDialog>
 #include <QPushButton>
 #include <QStandardPaths>
+#include <QStandardItemModel>
 
 #include <QtDebug>
 
@@ -20,6 +21,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     app(app)
 {
     Q_CHECK_PTR(app);
+    Q_CHECK_PTR(app->midiIO());
 
     ui->setupUi(this);
     setStatusBar(Q_NULLPTR);
@@ -92,10 +94,22 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 
     ui->groupBoxMidiChannel->setLayout(l);
 
+    connect(app->midiIO(),
+            &MidiIO::thirdPartyModifiedConnections,
+            [=]() {
+                clientComboBox->disconnect();
+                clientComboBox->setModel(new QStandardItemModel(this));
+                clientComboBox->addItem("Managed by third party");
+                clientComboBox->setEnabled(false);
+                ui->actionRescan->setEnabled(false);
+            }
+    );
+
     connect(clientComboBox,
             QOverload<int>::of(&QComboBox::currentIndexChanged),
             [=](int row) {
                 Q_CHECK_PTR(app->midiIO());
+
                 QAbstractItemModel* midiPortsModel = app->midiIO()->midiPortsModel();
                 const QModelIndex index(midiPortsModel->index(row, 0));
                 app->midiIO()->connectPort(index);

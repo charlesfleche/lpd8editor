@@ -32,12 +32,13 @@ signals:
     void sysexReceived(QByteArray);
     void programReceived(pProgram);
 
+    void thirdPartyModifiedConnections();
+
 private slots:
     void readEvents();
     void processEvent(snd_seq_event_t *);
 
 private:
-    void processPortSubscribed(snd_seq_event_t*);
     void processSysex(snd_seq_event_t*);
 
     void sendIdRequest() const;

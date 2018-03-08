@@ -102,28 +102,14 @@ void MidiIO::processEvent(snd_seq_event_t* ev)
 {
     switch (ev->type) {
     case SND_SEQ_EVENT_PORT_SUBSCRIBED:
-        processPortSubscribed(ev);
-        break;
     case SND_SEQ_EVENT_PORT_UNSUBSCRIBED:
-        break;
-    case SND_SEQ_EVENT_PORT_START:
-        break;
-    case SND_SEQ_EVENT_PORT_EXIT:
-        break;
-    case SND_SEQ_EVENT_PORT_CHANGE:
+        emit thirdPartyModifiedConnections();
         break;
     case SND_SEQ_EVENT_SYSEX:
         processSysex(ev);
     default:
         break;
     }
-}
-
-void MidiIO::processPortSubscribed(snd_seq_event_t* ev) {
-    Q_CHECK_PTR(ev);
-    Q_ASSERT(ev->type == SND_SEQ_EVENT_PORT_SUBSCRIBED);
-
-//    sendIdRequest();
 }
 
 void MidiIO::processSysex(snd_seq_event_t* ev) {
