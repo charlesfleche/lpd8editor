@@ -1,5 +1,7 @@
 #include "padproxymodel.h"
 
+#include "enums.h"
+
 PadProxyModel::PadProxyModel(QObject *parent) : QIdentityProxyModel(parent)
 {
 
@@ -7,8 +9,12 @@ PadProxyModel::PadProxyModel(QObject *parent) : QIdentityProxyModel(parent)
 
 QVariant PadProxyModel::data(const QModelIndex &proxyIndex, int role) const
 {
+    if (role == MidiDataRole::MidiValueType) {
+        return proxyIndex.column() == 5 ? MidiType::ToggleType : MidiType::DefaultType;
+    }
+
     QVariant ret = QIdentityProxyModel::data(proxyIndex, role);
-    if (proxyIndex.column() != 5) { // 5 is the toggle column
+    if (data(proxyIndex, MidiDataRole::MidiValueType) != MidiType::ToggleType) {
         return ret;
     }
 
@@ -41,7 +47,7 @@ bool PadProxyModel::setData(const QModelIndex &index, const QVariant &value, int
 Qt::ItemFlags PadProxyModel::flags(const QModelIndex &index) const
 {
     Qt::ItemFlags ret = QIdentityProxyModel::flags(index);
-    if (index.column() == 5) { // 5 is the toggle column
+    if (data(index, MidiDataRole::MidiValueType) == MidiType::ToggleType) {
         ret &= ~Qt::ItemIsEditable;
         ret |= Qt::ItemIsUserCheckable;
     }

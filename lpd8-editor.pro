@@ -53,7 +53,8 @@ HEADERS += \
     src/mainwindow.h \
     src/programproxymodel.h \
     src/padproxymodel.h \
-    src/midivaluedelegate.h
+    src/midivaluedelegate.h \
+    src/enums.h
 
 DISTFILES += \
     README.md \
