@@ -1,7 +1,6 @@
 #include "midiio.h"
 
 #include "lpd8_sysex.h"
-#include "midiportsmodel.h"
 
 #include <QGuiApplication>
 #include <QSocketNotifier>

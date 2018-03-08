@@ -1,4 +1,3 @@
-- Reset combobox if current connection is deleted
 - Slider / clamping / editor delegates
 - Undo commands
 - Single data model tree

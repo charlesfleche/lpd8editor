@@ -3,7 +3,7 @@
 
 #include "application.h"
 #include "midiio.h"
-#include "midiportsmodel.h"
+#include "midivaluedelegate.h"
 #include "programproxymodel.h"
 #include "utils.h"
 
@@ -47,11 +47,15 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 
     ui->programsView->setModelColumn(programModelColumn());
 
+    MidiValueDelegate* midiValueDelegate = new MidiValueDelegate(this);
+
+    ui->padsView->setItemDelegate(midiValueDelegate);
     ui->padsView->setModel(app->pads());
     ui->padsView->hideColumn(0);
     ui->padsView->hideColumn(1);
     ui->padsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
+    ui->knobsView->setItemDelegate(midiValueDelegate);
     ui->knobsView->setModel(app->knobs());
     ui->knobsView->hideColumn(0);
     ui->knobsView->hideColumn(1);
@@ -97,6 +101,15 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     connect(app->midiIO(),
             &MidiIO::thirdPartyModifiedConnections,
             [=]() {
+                Q_CHECK_PTR(clientComboBox);
+                Q_CHECK_PTR(app->midiIO());
+                Q_CHECK_PTR(app->midiIO()->midiPortsModel());
+
+                // Check if connections are already managed by third party
+                if (clientComboBox->model() != app->midiIO()->midiPortsModel()) {
+                    return;
+                }
+
                 clientComboBox->disconnect();
                 clientComboBox->setModel(new QStandardItemModel(this));
                 clientComboBox->addItem("Managed by third party");

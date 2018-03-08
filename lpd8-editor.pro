@@ -12,7 +12,8 @@ SOURCES += src/main.cpp \
     src/lpd8_sysex.cpp \
     src/mainwindow.cpp \
     src/programproxymodel.cpp \
-    src/padproxymodel.cpp
+    src/padproxymodel.cpp \
+    src/midivaluedelegate.cpp
 
 RESOURCES += \
     src/sql.qrc
@@ -51,7 +52,8 @@ HEADERS += \
     src/lpd8_types.h \
     src/mainwindow.h \
     src/programproxymodel.h \
-    src/padproxymodel.h
+    src/padproxymodel.h \
+    src/midivaluedelegate.h
 
 DISTFILES += \
     README.md \
