@@ -155,8 +155,6 @@ void Application::fetchProgram(int programId) const {
     m_midi_io->getProgram(programId);
 }
 
-#define GET_CHAR(record, name) record.value(name).toChar().toLatin1();
-
 char getChar(const QSqlRecord& r, const QString& name) {
     return r.value(name).toChar().toLatin1();
 }

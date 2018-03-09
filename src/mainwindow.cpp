@@ -190,6 +190,13 @@ void MainWindow::on_actionNewProgram_triggered()
     m_undo_stack->push(new CreateProgramCommand(app, "New program"));
 }
 
+void MainWindow::on_actionDeleteProgram_triggered()
+{
+    Q_CHECK_PTR(app);
+
+    m_undo_stack->push(new DeleteProgramCommand(app, app->activeProgramId()));
+}
+
 void MainWindow::on_actionQuit_triggered()
 {
     qApp->quit();
@@ -202,13 +209,6 @@ void MainWindow::on_programsView_activated(const QModelIndex& idx)
     Q_CHECK_PTR(app);
 
     app->setActiveProgramId(getProgramId(idx.model(), idx.row()));
-}
-
-void MainWindow::on_actionDeleteProgram_triggered()
-{
-    Q_CHECK_PTR(app);
-
-    app->deleteProgram(app->activeProgramId());
 }
 
 void MainWindow::refreshActionDeleteProgram()

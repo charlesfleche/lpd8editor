@@ -23,3 +23,27 @@ void CreateProgramCommand::undo() {
 
     m_app->deleteProgram(m_program_id);
 }
+
+DeleteProgramCommand::DeleteProgramCommand(Application* app, int program_id, QUndoCommand *parent) :
+    QUndoCommand(parent),
+    m_app(app),
+    m_program_id(program_id) {
+    setText("Delete program");
+}
+
+void DeleteProgramCommand::redo() {
+    Q_CHECK_PTR(m_app);
+    Q_ASSERT(m_program_id > -1);
+
+    m_program = m_app->program(m_program_id);
+    m_app->deleteProgram(m_program_id);
+}
+
+void DeleteProgramCommand::undo() {
+    Q_CHECK_PTR(m_app);
+    Q_ASSERT(!m_program.isNull());
+
+    m_program_id = m_app->newProgram("Not implemented yet");
+    m_program->id = m_program_id;
+    m_app->onProgramFetched(m_program);
+}

@@ -44,6 +44,9 @@ public slots:
     void exportActiveProgram(const QString&) const;
     void importProgram(const QString&);
 
+    pProgram program(int) const;
+    void onProgramFetched(pProgram);
+
 signals:
     void activeProgramIdChanged(int);
     void activeProgramChannelChanged(int);
@@ -52,11 +55,7 @@ signals:
 private slots:
     void refreshModels();
 
-    void onProgramFetched(pProgram);
-
 private:
-    pProgram program(int) const;
-
     QSqlTableModel* m_programs;
     QSqlTableModel* m_pads;
     PadProxyModel* m_pads_proxy;
