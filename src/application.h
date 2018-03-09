@@ -6,6 +6,7 @@
 #include <QObject>
 
 class PadProxyModel;
+class ProgramsModel;
 class MidiIO;
 
 class QAbstractItemModel;
@@ -56,6 +57,7 @@ private slots:
     void refreshModels();
 
 private:
+    ProgramsModel* m_my_programs;
     QSqlTableModel* m_programs;
     QSqlTableModel* m_pads;
     PadProxyModel* m_pads_proxy;

@@ -12,6 +12,8 @@ ProgramProxyModel::ProgramProxyModel(QObject* parent) : QIdentityProxyModel(pare
 
 void ProgramProxyModel::setActiveProgramId(int programId)
 {
+    //
+    return;
     Q_CHECK_PTR(sourceModel());
 
     if (m_active_program_id == programId) {

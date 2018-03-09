@@ -55,7 +55,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ui->deleteProgramButton->setDefaultAction(ui->actionDeleteProgram);
 
     ProgramProxyModel* programsProxyModel = new ProgramProxyModel(this);
-    programsProxyModel->setSourceModel(app->programs());
+//    programsProxyModel->setSourceModel(app->programs());
     programsProxyModel->setActiveProgramId(app->activeProgramId());
 //    ui->programsView->setModel(programsProxyModel);
 
