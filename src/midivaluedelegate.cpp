@@ -8,17 +8,15 @@
 
 #include <QtDebug>
 
+MidiType midiType(const QModelIndex& index) {
+    return static_cast<MidiType>(index.data(MidiDataRole::MidiValueType).toInt());
+}
+
 QWidget* createDefaultEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex&) {
     QSpinBox* ret = new QSpinBox(parent);
     ret->setFrame(false);
     ret->setMinimum(0);
     ret->setMaximum(127);
-    return ret;
-}
-
-QWidget* createToggleEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex&) {
-    QPushButton* ret = new QPushButton(parent);
-    ret->setCheckable(true);
     return ret;
 }
 
@@ -34,18 +32,6 @@ void setDefaultEditorData(QWidget* editor, const QModelIndex& index) {
     spinBox->setValue(value);
 }
 
-void setToggleEditorData(QWidget* editor, const QModelIndex& index) {
-    Q_CHECK_PTR(editor);
-
-    QPushButton* button = qobject_cast<QPushButton*>(editor);
-    Q_CHECK_PTR(button);
-
-    Q_CHECK_PTR(index.model());
-    const bool value = index.model()->data(index, Qt::EditRole).toBool();
-
-    button->setChecked(value);
-}
-
 void setDefaultModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) {
     Q_CHECK_PTR(editor);
     Q_CHECK_PTR(model);
@@ -55,16 +41,6 @@ void setDefaultModelData(QWidget* editor, QAbstractItemModel* model, const QMode
 
     spinBox->interpretText();
     model->setData(index, spinBox->value(), Qt::EditRole);
-}
-
-void setToggleModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) {
-    Q_CHECK_PTR(editor);
-    Q_CHECK_PTR(model);
-
-    QPushButton* button = qobject_cast<QPushButton*>(editor);
-    Q_CHECK_PTR(button);
-
-    model->setData(index, button->isChecked(), Qt::EditRole);
 }
 
 void paintToggle(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) {
@@ -91,14 +67,12 @@ MidiValueDelegate::MidiValueDelegate(QObject* parent):
 void MidiValueDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
     Q_CHECK_PTR(index.model());
 
-    switch (index.model()->data(index, MidiDataRole::MidiValueType).toInt()) {
-    case MidiType::DefaultType:
-    case MidiType::NoteType:
-        QStyledItemDelegate::paint(painter, option, index);
-        break;
+    switch (midiType(index)) {
     case MidiType::ToggleType:
         paintToggle(painter, option, index);
-        break;
+        return;
+    default:
+        return QStyledItemDelegate::paint(painter, option, index);
     }
 }
 
@@ -108,29 +82,30 @@ QWidget* MidiValueDelegate::createEditor(
         const QModelIndex& index) const {
     Q_CHECK_PTR(index.model());
 
-    switch (index.model()->data(index, MidiDataRole::MidiValueType).toInt()) {
+    QWidget* ret = Q_NULLPTR;
+
+    switch (midiType(index)) {
     case MidiType::DefaultType:
     case MidiType::NoteType:
-        return createDefaultEditor(parent, style, index);
-    case MidiType::ToggleType:
-        return Q_NULLPTR;
-//        return createToggleEditor(parent, style, index);
+        ret = createDefaultEditor(parent, style, index);
+        break;
+    default:
+        ret = Q_NULLPTR;
+        break;
     }
 
-    Q_ASSERT(false); // Should never reach this point
-    return Q_NULLPTR;
+    return ret;
 }
 
 void MidiValueDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const {
     Q_CHECK_PTR(index.model());
 
-    switch (index.model()->data(index, MidiDataRole::MidiValueType).toInt()) {
+    switch (midiType(index)) {
     case MidiType::DefaultType:
     case MidiType::NoteType:
         setDefaultEditorData(editor, index);
         break;
-    case MidiType::ToggleType:
-        setToggleEditorData(editor, index);
+    default:
         break;
     }
 }
@@ -139,13 +114,12 @@ void MidiValueDelegate::setModelData(QWidget* editor, QAbstractItemModel* model,
     Q_CHECK_PTR(editor);
     Q_CHECK_PTR(model);
 
-    switch (index.model()->data(index, MidiDataRole::MidiValueType).toInt()) {
+    switch (midiType(index)) {
     case MidiType::DefaultType:
     case MidiType::NoteType:
         setDefaultModelData(editor, model, index);
         break;
-    case MidiType::ToggleType:
-        setToggleModelData(editor, model, index);
+    default:
         break;
     }
 }
@@ -163,12 +137,15 @@ bool MidiValueDelegate::editorEvent(QEvent* event, QAbstractItemModel* model, co
     Q_CHECK_PTR(event);
     Q_CHECK_PTR(model);
 
-    if (model->data(index, MidiDataRole::MidiValueType) != MidiType::ToggleType) {
-        return QStyledItemDelegate::editorEvent(event, model, option, index);
+    switch (midiType(index)) {
+    case MidiType::ToggleType:
+        if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonDblClick) {
+            model->setData(index, !model->data(index).toBool());
+            return true;
+        }
+    default:
+        break;
     }
-    if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonDblClick) {
-        model->setData(index, !model->data(index).toBool());
-        return true;
-    }
-    return false;
+
+    return QStyledItemDelegate::editorEvent(event, model, option, index);
 }
