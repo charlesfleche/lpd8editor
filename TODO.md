@@ -1,4 +1,3 @@
-- Slider / clamping / editor delegates
 - Undo commands
 - Single data model tree
 - Widget wrappers
