@@ -12,19 +12,39 @@
 #include <QPushButton>
 #include <QStandardPaths>
 #include <QStandardItemModel>
+#include <QUndoStack>
 
 #include <QtDebug>
 
 MainWindow::MainWindow(Application* app, QWidget *parent) :
     QMainWindow(parent),
+    m_undo_stack(Q_NULLPTR),
     ui(new Ui::MainWindow),
     app(app)
 {
     Q_CHECK_PTR(app);
     Q_CHECK_PTR(app->midiIO());
 
+    m_undo_stack = new QUndoStack(this);
+
     ui->setupUi(this);
     setStatusBar(Q_NULLPTR);
+
+    // Undo
+
+    ui->undoListView->setStack(m_undo_stack);
+
+    QAction* undoAction = m_undo_stack->createUndoAction(this, "&Undo");
+    undoAction->setShortcuts(QKeySequence::Undo);
+
+    QAction* redoAction = m_undo_stack->createRedoAction(this, tr("&Redo"));
+    redoAction->setShortcuts(QKeySequence::Redo);
+
+    ui->menuEdit->insertAction(ui->actionNewProgram, redoAction);
+    ui->menuEdit->insertAction(redoAction, undoAction);
+    ui->menuEdit->insertSeparator(ui->actionNewProgram);
+
+    // Client selection combo box
 
     QComboBox* clientComboBox = new QComboBox(this);
     ui->toolBar->addWidget(clientComboBox);
@@ -127,6 +147,8 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             });
 
     clientComboBox->setModel(app->midiIO()->midiPortsModel());
+
+
 }
 
 MainWindow::~MainWindow()

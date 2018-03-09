@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>828</width>
-    <height>635</height>
+    <height>609</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -39,6 +39,19 @@
       </widget>
       <widget class="QWidget" name="pageEditor">
        <layout class="QGridLayout" name="gridLayout">
+        <item row="2" column="0" colspan="2">
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>440</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
         <item row="0" column="0">
          <widget class="QGroupBox" name="groupBoxPads">
           <property name="title">
@@ -147,18 +160,8 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="0" colspan="2">
-         <spacer name="verticalSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>440</height>
-           </size>
-          </property>
-         </spacer>
+        <item row="3" column="0" colspan="2">
+         <widget class="QUndoView" name="undoListView"/>
         </item>
        </layout>
       </widget>
@@ -435,6 +438,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QUndoView</class>
+   <extends>QListView</extends>
+   <header location="global">QUndoView</header>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>programsView</tabstop>
   <tabstop>deleteProgramButton</tabstop>

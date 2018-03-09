@@ -8,7 +8,9 @@ class MainWindow;
 }
 
 class Application;
+
 class QPushButton;
+class QUndoStack;
 
 class MainWindow : public QMainWindow
 {
@@ -48,6 +50,7 @@ private slots:
 private:
     int programModelColumn() const;
 
+    QUndoStack* m_undo_stack;
     Ui::MainWindow *ui;
     Application* app;
     QList<QPushButton*> midiChannelButtons;
