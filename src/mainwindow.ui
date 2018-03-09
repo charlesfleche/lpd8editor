@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>828</width>
+    <width>1932</width>
     <height>609</height>
    </rect>
   </property>
@@ -220,6 +220,9 @@
       </layout>
      </widget>
     </item>
+    <item row="1" column="3">
+     <widget class="QTreeView" name="treeView"/>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -227,7 +230,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>828</width>
+     <width>1932</width>
      <height>42</height>
     </rect>
    </property>

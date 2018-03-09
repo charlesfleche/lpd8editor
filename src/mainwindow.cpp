@@ -57,7 +57,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ProgramProxyModel* programsProxyModel = new ProgramProxyModel(this);
     programsProxyModel->setSourceModel(app->programs());
     programsProxyModel->setActiveProgramId(app->activeProgramId());
-    ui->programsView->setModel(programsProxyModel);
+//    ui->programsView->setModel(programsProxyModel);
 
     connect(app,
             &Application::activeProgramIdChanged,
@@ -69,13 +69,13 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ui->programsView->setModelColumn(programModelColumn());
 
     ui->padsView->setItemDelegate(new MidiValueDelegate(this));
-    ui->padsView->setModel(app->pads());
+//    ui->padsView->setModel(app->pads());
     ui->padsView->hideColumn(0);
     ui->padsView->hideColumn(1);
     ui->padsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->knobsView->setItemDelegate(new MidiValueDelegate(this));
-    ui->knobsView->setModel(app->knobs());
+//    ui->knobsView->setModel(app->knobs());
     ui->knobsView->hideColumn(0);
     ui->knobsView->hideColumn(1);
     ui->knobsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
@@ -149,7 +149,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 
     clientComboBox->setModel(app->midiIO()->midiPortsModel());
 
-
+    ui->treeView->setModel(app->programs());
 }
 
 MainWindow::~MainWindow()
