@@ -13,36 +13,13 @@ QVariant PadProxyModel::data(const QModelIndex &proxyIndex, int role) const
         return proxyIndex.column() == 5 ? MidiType::ToggleType : MidiType::DefaultType;
     }
 
-    if (data(proxyIndex, MidiDataRole::MidiValueType) == MidiType::ToggleType) {
-        const bool toggle = QIdentityProxyModel::data(proxyIndex, Qt::DisplayRole).toBool();
-        switch (role) {
-        case Qt::DisplayRole:
-            return toggle ? "Toggle" : "Momentary";
-        case Qt::CheckStateRole:
-            return toggle ? Qt::Checked : Qt::Unchecked;
-        }
-    }
-
     return QIdentityProxyModel::data(proxyIndex, role);
-}
-
-bool PadProxyModel::setData(const QModelIndex &index, const QVariant &value, int role)
-{
-    QVariant newValue = value;
-
-    if (index.column() == 5) {
-        newValue = newValue.toInt() > 0 ? 1 : 0;
-        role = role == Qt::CheckStateRole ? Qt::EditRole : role;
-    }
-
-    return QIdentityProxyModel::setData(index, newValue, role);
 }
 
 Qt::ItemFlags PadProxyModel::flags(const QModelIndex &index) const
 {
     Qt::ItemFlags ret = QIdentityProxyModel::flags(index);
     if (data(index, MidiDataRole::MidiValueType) == MidiType::ToggleType) {
-        ret &= ~Qt::ItemIsEditable;
         ret |= Qt::ItemIsUserCheckable;
     }
     return ret;
