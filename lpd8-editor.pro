@@ -13,7 +13,8 @@ SOURCES += src/main.cpp \
     src/mainwindow.cpp \
     src/programproxymodel.cpp \
     src/padproxymodel.cpp \
-    src/midivaluedelegate.cpp
+    src/midivaluedelegate.cpp \
+    src/commands.cpp
 
 RESOURCES += \
     src/sql.qrc
@@ -54,7 +55,8 @@ HEADERS += \
     src/programproxymodel.h \
     src/padproxymodel.h \
     src/midivaluedelegate.h \
-    src/enums.h
+    src/enums.h \
+    src/commands.h
 
 DISTFILES += \
     README.md \

@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include "application.h"
+#include "commands.h"
 #include "midiio.h"
 #include "midivaluedelegate.h"
 #include "programproxymodel.h"
@@ -186,7 +187,7 @@ void MainWindow::on_actionNewProgram_triggered()
 {
     Q_CHECK_PTR(app);
 
-    app->newProgram("New program");
+    m_undo_stack->push(new CreateProgramCommand(app, "New program"));
 }
 
 void MainWindow::on_actionQuit_triggered()
