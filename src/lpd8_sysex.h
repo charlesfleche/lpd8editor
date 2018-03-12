@@ -12,10 +12,16 @@ enum Type {
     TypeProgram
 };
 
+int padsCount();
+int knobsCount();
+
 Type type(const QByteArray&);
+void addHeader(QByteArray&);
+void addFooter(QByteArray&);
 QByteArray getProgram(int);
 QByteArray setProgram(pProgram);
 pProgram toProgram(const QByteArray&);
+void addProgramHeader(QByteArray&, int);
 
 char channel(const QByteArray&);
 }

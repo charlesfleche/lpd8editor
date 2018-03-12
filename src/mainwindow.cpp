@@ -206,7 +206,12 @@ void MainWindow::on_actionDeleteProgram_triggered()
 {
     Q_CHECK_PTR(app);
 
-    m_undo_stack->push(new DeleteProgramCommand(app, app->activeProgramId()));
+    QUndoCommand *cmd = new DeleteProgramCommand(
+        app->myPrograms(),
+//        app->activeProgramId()
+        1
+    );
+    m_undo_stack->push(cmd);
 }
 
 void MainWindow::on_actionQuit_triggered()

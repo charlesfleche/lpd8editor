@@ -93,8 +93,8 @@ bool initialize() {
     if (!q.exec(readTextFile(":/create_table_programs.sql"))) return false;
     if (!q.exec(readTextFile(":/create_table_pads.sql"))) return false;
     if (!q.exec(readTextFile(":/create_table_knobs.sql"))) return false;
-    if (!q.exec(readTextFile(":/create_trigger_add_program.sql"))) return false;
-    if (!q.exec(readTextFile(":/create_trigger_delete_program.sql"))) return false;
+//    if (!q.exec(readTextFile(":/create_trigger_add_program.sql"))) return false;
+//    if (!q.exec(readTextFile(":/create_trigger_delete_program.sql"))) return false;
     return true;
 }
 

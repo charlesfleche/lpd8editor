@@ -16,12 +16,16 @@ public:
     Q_INVOKABLE int createProgram(const QString &name, const QByteArray &sysex);
     Q_INVOKABLE bool deleteProgram(int programId);
 
-private:
-//    QSortFilterProxyModel* padsModel(int program_id);
-//    QSortFilterProxyModel* knobsModel(int program_id);
+    Q_INVOKABLE QString name(int programId) const;
+    Q_INVOKABLE QByteArray sysex(int programId) const;
 
-//    QHash<int, QSortFilterProxyModel*> m_pads_models;
-//    QHash<int, QSortFilterProxyModel*> m_knobs_models;
+private:
+    int programRow(int programId) const;
+    QList<int> padsRows(int programId) const;
+    QList<int> knobsRows(int programId) const;
+
+    QSqlTableModel* m_pads;
+    QSqlTableModel* m_knobs;
 };
 
 #endif // PROGRAMSMODEL_H

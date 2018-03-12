@@ -22,6 +22,14 @@ static const char sysex_set_program_req[] = {'\x61', '\x00', '\x3a'};
 
 namespace sysex {
 
+int padsCount() {
+    return 8;
+}
+
+int knobsCount() {
+    return 8;
+}
+
 // Caller handle bound exceptions
 bool is(const QByteArray& b, const char* code, int size) {
     for (int i = 0 ; i < 3 ; ++i) {
@@ -53,6 +61,14 @@ void addHeader(QByteArray& b) {
 
 void addFooter(QByteArray& b) {
     b += sysex_end;
+}
+
+void addProgramHeader(QByteArray& b, int programId) {
+    addHeader(b);
+    b += sysex_program_req[0];
+    b += sysex_program_req[1];
+    b += sysex_program_req[2];
+    b += '\x00' + programId;
 }
 
 QByteArray getProgram(int programId) {

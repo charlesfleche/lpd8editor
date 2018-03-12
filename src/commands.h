@@ -16,7 +16,7 @@ public:
     void redo() Q_DECL_OVERRIDE;
 
 private:
-    ProgramsModel* m_programs_model;
+    ProgramsModel* m_programs;
     const QString m_name;
     const QByteArray m_sysex;
     int m_program_id;
@@ -24,15 +24,16 @@ private:
 
 class DeleteProgramCommand : public QUndoCommand {
 public:
-    DeleteProgramCommand(Application*, int, QUndoCommand* parent = Q_NULLPTR);
+    DeleteProgramCommand(ProgramsModel*, int, QUndoCommand* parent = Q_NULLPTR);
 
     void undo() Q_DECL_OVERRIDE;
     void redo() Q_DECL_OVERRIDE;
 
 private:
-    Application* m_app;
+    ProgramsModel* m_programs;
     int m_program_id;
-    pProgram m_program;
+    QString m_name;
+    QByteArray m_sysex;
 };
 
 #endif // COMMANDS_H
