@@ -22,6 +22,7 @@ void CreateProgramCommand::redo() {
 void CreateProgramCommand::undo() {
     Q_CHECK_PTR(m_programs_model);
 
+    m_programs_model->deleteProgram(m_program_id);
 //    m_app->deleteProgram(m_program_id);
 }
 

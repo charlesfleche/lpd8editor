@@ -30,7 +30,21 @@ int ProgramsModel::createProgram(const QString &name, const QByteArray &sysex) {
 
     if (!insertRecord(-1, r)) {
          qWarning() << "Cannot create program:" << lastError().text();
+         return -1;
     }
 
     return query().lastInsertId().toInt();
+}
+
+bool ProgramsModel::deleteProgram(int programId) {
+    QModelIndexList indices(match(index(0, 0), Qt::DisplayRole, programId));
+    Q_ASSERT(indices.count() == 1);
+
+    const bool ret = removeRow(indices[0].row());
+    if (ret) {
+        select();
+    } else {
+        qWarning() << "Failed to delete program" << programId;
+    }
+    return ret;
 }
