@@ -22,7 +22,7 @@ ProgramsModel::ProgramsModel(QObject *parent) :
     select();
 }
 
-int ProgramsModel::createProject(const QString &name, const QByteArray &sysex) {
+int ProgramsModel::createProgram(const QString &name, const QByteArray &sysex) {
     QSqlRecord r(record());
     r.remove(r.indexOf(program_id_field_name));
     r.setValue(name_field_name, name);

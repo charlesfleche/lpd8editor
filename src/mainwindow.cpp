@@ -194,7 +194,12 @@ void MainWindow::on_actionNewProgram_triggered()
 {
     Q_CHECK_PTR(app);
 
-    m_undo_stack->push(new CreateProgramCommand(app, "New program", fromSysexTextFile(":/default-sysex.txt")));
+    QUndoCommand* cmd = new CreateProgramCommand(
+        app->myPrograms(),
+        "New program",
+        fromSysexTextFile(":/default-sysex.txt")
+    );
+    m_undo_stack->push(cmd);
 }
 
 void MainWindow::on_actionDeleteProgram_triggered()

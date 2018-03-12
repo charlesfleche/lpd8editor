@@ -13,7 +13,7 @@ class ProgramsModel : public QSqlTableModel
 public:
     ProgramsModel(QObject* parent = Q_NULLPTR);
 
-    Q_INVOKABLE int createProject(const QString &name, const QByteArray &sysex);
+    Q_INVOKABLE int createProgram(const QString &name, const QByteArray &sysex);
 
 private:
 //    QSortFilterProxyModel* padsModel(int program_id);

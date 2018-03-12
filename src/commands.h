@@ -6,16 +6,17 @@
 #include <QUndoCommand>
 
 class Application;
+class ProgramsModel;
 
 class CreateProgramCommand : public QUndoCommand {
 public:
-    CreateProgramCommand(Application*, const QString&, const QByteArray&, QUndoCommand* parent = Q_NULLPTR);
+    CreateProgramCommand(ProgramsModel*, const QString&, const QByteArray&, QUndoCommand* parent = Q_NULLPTR);
 
     void undo() Q_DECL_OVERRIDE;
     void redo() Q_DECL_OVERRIDE;
 
 private:
-    Application* m_app;
+    ProgramsModel* m_programs_model;
     const QString m_name;
     const QByteArray m_sysex;
     int m_program_id;

@@ -80,6 +80,7 @@ QAbstractItemModel* Application::knobs() const {
     return m_knobs;
 }
 
+// XXX to remove
 int Application::newProgram(const QString& name, const QByteArray& sysex) {
 //    int programId;
 //    if (!addProgram(name, programId)) {
@@ -88,8 +89,7 @@ int Application::newProgram(const QString& name, const QByteArray& sysex) {
 //    m_programs->select();
 //    setActiveProgramId(programId);
 //    return programId;
-    m_my_programs->createProject(name, sysex);
-    return 666;
+    return m_my_programs->createProgram(name, sysex);
 }
 
 void Application::deleteProgram(int programId) {
