@@ -21,8 +21,6 @@ public:
 
 private:
     int programRow(int programId) const;
-    QList<int> padsRows(int programId) const;
-    QList<int> knobsRows(int programId) const;
 
     QSqlTableModel* m_pads;
     QSqlTableModel* m_knobs;

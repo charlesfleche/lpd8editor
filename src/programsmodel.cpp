@@ -234,25 +234,3 @@ int ProgramsModel::programRow(int programId) const {
     Q_ASSERT(indices.count() == 1);
     return indices[0].row();
 }
-
-QList<int> ProgramsModel::padsRows(int programId) const {
-    const QModelIndexList indices(m_pads->match(index(0, 0), Qt::DisplayRole, programId));
-    Q_ASSERT(indices.count() == sysex::padsCount());
-
-    QList<int> ret;
-    for (auto index : indices) {
-        ret << index.row();
-    }
-    return ret;
-}
-
-QList<int> ProgramsModel::knobsRows(int programId) const {
-    const QModelIndexList indices(match(index(0, 0), Qt::DisplayRole, programId));
-    Q_ASSERT(indices.count() == sysex::padsCount());
-
-    QList<int> ret;
-    for (auto index : indices) {
-        ret << index.row();
-    }
-    return ret;
-}
