@@ -5,5 +5,6 @@
         <file>create_table_knobs.sql</file>
         <file>create_trigger_add_program.sql</file>
         <file>create_trigger_delete_program.sql</file>
+        <file>default-sysex.txt</file>
     </qresource>
 </RCC>

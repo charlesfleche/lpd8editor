@@ -6,6 +6,8 @@ static const char sysex_model_byte_1 = '\x7f';
 static const char sysex_model_byte_2 = '\x75';
 static const char sysex_end = '\xf7';
 
+static const int channel_offset = 8;
+
 static const int opcode_offset = 4;
 static const int minimum_rep_sysex_size = 9;
 
@@ -110,6 +112,10 @@ QByteArray setProgram(pProgram p) {
     }
     addFooter(ret);
     return ret;
+}
+
+char channel(const QByteArray &sysex) {
+    return sysex[channel_offset];
 }
 
 }

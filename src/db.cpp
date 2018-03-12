@@ -1,17 +1,8 @@
 #include "db.h"
 
-#include <exception>
+#include "utils.h"
 
-QString readTextFile(const QString& path) {
-    QFile f(path);
-    if (!f.open(QFile::ReadOnly | QFile::Text)) {
-        QString msg("Failed to read file: ");
-        msg += path;
-        throw std::runtime_error(msg.toStdString());
-    }
-    QTextStream ts(&f);
-    return ts.readAll();
-}
+#include <exception>
 
 QString sqlErrorMessage(const QString& msg, const QSqlError& err) {
     return msg + QString("\n") + err.text();

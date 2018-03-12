@@ -29,6 +29,7 @@ public:
     MidiIO* midiIO() const;
 
     QAbstractItemModel* programs() const;
+    ProgramsModel* myPrograms() const;
     QAbstractItemModel* pads() const;
     QAbstractItemModel* knobs() const;
 
@@ -36,7 +37,7 @@ public slots:
     void setActiveProgramId(int);
     void setActiveProgramChannel(int);
 
-    int newProgram(const QString&);
+    int newProgram(const QString&, const QByteArray&);
     void deleteProgram(int);
 
     void fetchProgram(int) const;

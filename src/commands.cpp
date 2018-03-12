@@ -2,10 +2,11 @@
 
 #include "application.h"
 
-CreateProgramCommand::CreateProgramCommand(Application* app, const QString& name, QUndoCommand* parent) :
+CreateProgramCommand::CreateProgramCommand(Application* app, const QString& name, const QByteArray& sysex, QUndoCommand* parent) :
     QUndoCommand(parent),
     m_app(app),
     m_name(name),
+    m_sysex(sysex),
     m_program_id(-1)
 {
     setText("Create program");
@@ -14,7 +15,7 @@ CreateProgramCommand::CreateProgramCommand(Application* app, const QString& name
 void CreateProgramCommand::redo() {
     Q_CHECK_PTR(m_app);
 
-    m_program_id = m_app->newProgram(m_name);
+    m_program_id = m_app->newProgram(m_name, m_sysex);
 }
 
 void CreateProgramCommand::undo() {
@@ -43,7 +44,7 @@ void DeleteProgramCommand::undo() {
     Q_CHECK_PTR(m_app);
     Q_ASSERT(!m_program.isNull());
 
-    m_program_id = m_app->newProgram("Not implemented yet");
+    m_program_id = m_app->newProgram("Not implemented yet", QByteArray());
     m_program->id = m_program_id;
     m_app->onProgramFetched(m_program);
 }

@@ -7,6 +7,8 @@
 
 class QAbstractItemModel;
 
+QString readTextFile(const QString& path);
+QByteArray fromSysexTextFile(const QString& path);
 bool initFilesystem();
 QString defaultDbPath();
 pProgram readProgramFile(const QString&);

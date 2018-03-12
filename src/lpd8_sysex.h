@@ -17,6 +17,7 @@ QByteArray getProgram(int);
 QByteArray setProgram(pProgram);
 pProgram toProgram(const QByteArray&);
 
+char channel(const QByteArray&);
 }
 
 #endif // LPD8_SYSEX_H

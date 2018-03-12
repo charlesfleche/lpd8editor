@@ -11,11 +11,14 @@
 #include <QComboBox>
 #include <QFileDialog>
 #include <QPushButton>
+#include <QSettings>
 #include <QStandardPaths>
 #include <QStandardItemModel>
 #include <QUndoStack>
 
 #include <QtDebug>
+
+static const QString SETTINGS_KEY_DEFAULT_SYSEX = "default/sysex";
 
 MainWindow::MainWindow(Application* app, QWidget *parent) :
     QMainWindow(parent),
@@ -183,11 +186,15 @@ void MainWindow::refreshWidgetStack() {
     ui->stackedWidget->setCurrentWidget(w);
 }
 
+QString defaultSysex() {
+    return readTextFile(":/default-sysex.sql");
+}
+
 void MainWindow::on_actionNewProgram_triggered()
 {
     Q_CHECK_PTR(app);
 
-    m_undo_stack->push(new CreateProgramCommand(app, "New program"));
+    m_undo_stack->push(new CreateProgramCommand(app, "New program", fromSysexTextFile(":/default-sysex.txt")));
 }
 
 void MainWindow::on_actionDeleteProgram_triggered()

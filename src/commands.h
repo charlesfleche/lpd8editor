@@ -9,7 +9,7 @@ class Application;
 
 class CreateProgramCommand : public QUndoCommand {
 public:
-    CreateProgramCommand(Application*, const QString&, QUndoCommand* parent = Q_NULLPTR);
+    CreateProgramCommand(Application*, const QString&, const QByteArray&, QUndoCommand* parent = Q_NULLPTR);
 
     void undo() Q_DECL_OVERRIDE;
     void redo() Q_DECL_OVERRIDE;
@@ -17,6 +17,7 @@ public:
 private:
     Application* m_app;
     const QString m_name;
+    const QByteArray m_sysex;
     int m_program_id;
 };
 

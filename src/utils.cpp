@@ -7,6 +7,17 @@
 
 #include <QtDebug>
 
+QString readTextFile(const QString& path) {
+    QFile f(path);
+    if (!f.open(QFile::ReadOnly | QFile::Text)) {
+        QString msg("Failed to read file: ");
+        msg += path;
+        throw std::runtime_error(msg.toStdString());
+    }
+    QTextStream ts(&f);
+    return ts.readAll();
+}
+
 QDir dataDir() {
     QStandardPaths::StandardLocation location = QStandardPaths::DataLocation;
 #if QT_VERSION >= 0x050400
@@ -34,6 +45,88 @@ bool checkValue(int v, int min, int max) {
         return pProgram(); \
     }
 
+char readAndValidateChar(QTextStream& in, char expected) {
+    if (in.atEnd()) {
+        throw std::runtime_error("Trying to read from an ended text stream");
+    }
+    int c = 0;
+    in >> c;
+    const char ret = static_cast<char>(c);
+    if (ret != expected) {
+        throw std::runtime_error("Check failed");
+    }
+    return static_cast<char>(ret);
+}
+
+char readAndValidateChar(QTextStream& in, char min, char max) {
+    if (in.atEnd()) {
+        throw std::runtime_error("Trying to read from an ended text stream");
+    }
+    int c = 0;
+    in >> c;
+    const char ret = static_cast<char>(c);
+    if (ret < min && ret > max) {
+        throw std::runtime_error("Check failed");
+    }
+    return static_cast<char>(ret);
+}
+
+char readAndValidateChar(QTextStream& in, const QList<char>& allowed) {
+    if (in.atEnd()) {
+        throw std::runtime_error("Trying to read from an ended text stream");
+    }
+    int c = 0;
+    in >> c;
+    const char ret = static_cast<char>(c);
+    if (!allowed.contains(ret)) {
+        throw std::runtime_error("Check failed");
+    }
+    return static_cast<char>(ret);
+}
+
+QByteArray fromSysexTextFile(const QString &path) {
+    QByteArray ret;
+
+    QFile data(path);
+    try {
+        if (!data.open(QFile::ReadOnly | QFile::Truncate)) {
+            throw std::runtime_error("Cannot open file");
+        }
+
+        QTextStream in(&data);
+
+        // Header
+
+        ret.append(readAndValidateChar(in, 0xf0)); // Sysex Start
+        ret.append(readAndValidateChar(in, 0x47)); // Manufacturer
+        ret.append(readAndValidateChar(in, 0x7f)); // Model byte 1
+        ret.append(readAndValidateChar(in, 0x75)); // Model byte 2
+        ret.append(readAndValidateChar(in, 0x61)); // Opcode set program: byte1
+        ret.append(readAndValidateChar(in, 0x00)); // Opcode set program: byte2
+        ret.append(readAndValidateChar(in, 0x3a)); // Opcode set program: byte3
+        ret.append(readAndValidateChar(in, 1, 4)); // program id
+        ret.append(readAndValidateChar(in, 0, 15)); // midi channel
+
+        for (int i = 0 ; i < 8 ; ++i) {
+            ret.append(readAndValidateChar(in, 0, 127)); // pad node
+            ret.append(readAndValidateChar(in, 0, 127)); // pad pc
+            ret.append(readAndValidateChar(in, 0, 127)); // pad cc
+            ret.append(readAndValidateChar(in, 0, 1));   // pad toggle
+        }
+
+        for (int i = 0 ; i < 8 ; ++i) {
+            ret.append(readAndValidateChar(in, 0, 127)); // knob cc
+            ret.append(readAndValidateChar(in, 0, 127)); // knob low
+            ret.append(readAndValidateChar(in, 0, 127)); // knob high
+        }
+    } catch (const std::runtime_error& e) {
+        qWarning() << "Failed to parse sysex text file:" << path << "[" << e.what() << "]";
+        return QByteArray();
+    }
+
+    return ret;
+}
+
 pProgram readProgramFile(const QString& path) {
     pProgram ret(new Program);
 
@@ -48,13 +141,13 @@ pProgram readProgramFile(const QString& path) {
 
     // Header
 
-    in >> v; // 240
-    in >> v; // 71
-    in >> v; // 127
-    in >> v; // 117
-    in >> v; // 97
-    in >> v; // 0
-    in >> v; // 58
+    in >> v; // 0xF0 240 Sysex Start
+    in >> v; // 0x47 71  Manufacturer
+    in >> v; // 0x7F 127 Model byte 1
+    in >> v; // 0x75 117 Model byte 2
+    in >> v; // 0x61 97  Opcode set program: byte1
+    in >> v; // 0x00 0   Opcode set program: byte2
+    in >> v; // 0x3A 58  Opcode set program: byte3
 
     READ_CHECK_OR_RETURN(in, v, 1, 4, path);
     ret->id = static_cast<char>(v);

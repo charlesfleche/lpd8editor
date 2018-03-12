@@ -1,1 +1,5 @@
-<RCC/>
+<RCC>
+    <qresource prefix="/">
+        <file>default-sysex.txt</file>
+    </qresource>
+</RCC>

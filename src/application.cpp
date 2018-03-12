@@ -68,6 +68,10 @@ QAbstractItemModel* Application::programs() const {
     return m_my_programs;
 }
 
+ProgramsModel* Application::myPrograms() const {
+    return m_my_programs;
+}
+
 QAbstractItemModel* Application::pads() const {
     return m_pads_proxy;
 }
@@ -76,14 +80,16 @@ QAbstractItemModel* Application::knobs() const {
     return m_knobs;
 }
 
-int Application::newProgram(const QString& name) {
-    int programId;
-    if (!addProgram(name, programId)) {
-        throw std::runtime_error("Failed to add program");
-    }
-    m_programs->select();
-    setActiveProgramId(programId);
-    return programId;
+int Application::newProgram(const QString& name, const QByteArray& sysex) {
+//    int programId;
+//    if (!addProgram(name, programId)) {
+//        throw std::runtime_error("Failed to add program");
+//    }
+//    m_programs->select();
+//    setActiveProgramId(programId);
+//    return programId;
+    m_my_programs->createProject(name, sysex);
+    return 666;
 }
 
 void Application::deleteProgram(int programId) {
@@ -178,7 +184,7 @@ void Application::importProgram(const QString & path) {
     }
 
     const QString fileName(QFileInfo(path).baseName());
-    const int programId = newProgram(fileName);
+    const int programId = newProgram(fileName, QByteArray());
     setActiveProgramId(programId);
     onProgramFetched(p);
 }
