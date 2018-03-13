@@ -55,6 +55,22 @@ ProgramsModel::ProgramsModel(QObject *parent) :
     m_knobs->setTable("knobs");
 }
 
+QVariant ProgramsModel::data(const QModelIndex &idx, int role) const {
+    return QSqlTableModel::data(idx, role);
+}
+
+Qt::ItemFlags ProgramsModel::flags(const QModelIndex &index) const {
+    return QSqlTableModel::flags(index);
+}
+
+int ProgramsModel::rowCount(const QModelIndex &parent) const {
+    return QSqlTableModel::rowCount(parent);
+}
+
+bool ProgramsModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+    return QSqlTableModel::setData(index, value, role);
+}
+
 int ProgramsModel::createProgram(const QString &name, const QByteArray &sysex) {
     Q_CHECK_PTR(m_pads);
     Q_CHECK_PTR(m_knobs);
