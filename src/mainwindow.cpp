@@ -232,7 +232,7 @@ void MainWindow::refreshActionDeleteProgram()
 {
     Q_CHECK_PTR(app);
 
-    ui->actionDeleteProgram->setEnabled(app->programs()->rowCount() > 0);
+//    ui->actionDeleteProgram->setEnabled(app->programs()->rowCount() > 0);
 }
 
 void MainWindow::on_actionImportProgram_triggered()

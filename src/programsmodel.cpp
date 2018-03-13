@@ -4,6 +4,7 @@
 
 #include <QDataStream>
 #include <QSortFilterProxyModel>
+#include <QStandardItemModel>
 #include <QSqlError>
 #include <QSqlField>
 #include <QSqlRecord>
@@ -40,38 +41,137 @@ bool deleteRecordsForProgramId(QSqlTableModel* model, const QString& table, int 
 
 
 ProgramsModel::ProgramsModel(QObject *parent) :
-    QSqlTableModel(parent),
+    QAbstractItemModel(parent),
+    m_groups(Q_NULLPTR),
     m_pads(Q_NULLPTR),
-    m_knobs(Q_NULLPTR)
+    m_knobs(Q_NULLPTR),
+    m_programs(Q_NULLPTR)
 {
-    setTable("programs");
-    setEditStrategy(QSqlTableModel::OnFieldChange);
-    select();
+    m_knobs = new QSqlTableModel(this);
+    m_knobs->setEditStrategy(QSqlTableModel::OnFieldChange);
+    m_knobs->setTable("knobs");
 
     m_pads = new QSqlTableModel(this);
+    m_pads->setEditStrategy(QSqlTableModel::OnFieldChange);
     m_pads->setTable("pads");
+    m_pads->select();
 
-    m_knobs = new QSqlTableModel(this);
-    m_knobs->setTable("knobs");
+    m_groups = new QStandardItemModel(this);
+    QStandardItem* it = new QStandardItem("Pads");
+//    it->setEditable(false);
+    m_groups->appendRow(it);
+    it = new QStandardItem("Knobs");
+//    it->setEditable(false);
+    m_groups->appendRow(it);
+
+    m_programs = new QSqlTableModel(this);
+    m_programs->setTable("programs");
+    m_programs->setEditStrategy(QSqlTableModel::OnFieldChange);
+    m_programs->select();
 }
 
-QVariant ProgramsModel::data(const QModelIndex &idx, int role) const {
-    return QSqlTableModel::data(idx, role);
+int ProgramsModel::columnCount(const QModelIndex &parent) const {
+    const QAbstractItemModel* m = modelFromParent(parent);
+    Q_CHECK_PTR(m);
+
+    qDebug() << "columnCount" << parent << m->columnCount(parent);
+    return m->columnCount(parent);
 }
 
-Qt::ItemFlags ProgramsModel::flags(const QModelIndex &index) const {
-    return QSqlTableModel::flags(index);
+QVariant ProgramsModel::data(const QModelIndex &index, int role) const {
+    const QAbstractItemModel* m = model(index);
+    Q_CHECK_PTR(m);
+
+//    QVariant ret = index.data(role);
+    QModelIndex idx = m->index(index.row(), index.column());
+    QVariant ret = m->data(idx, role);
+
+    qDebug() << "data" << index << role << ret;
+    return ret;
+}
+
+QModelIndex ProgramsModel::index(int row, int column, const QModelIndex &parent) const {
+    const QAbstractItemModel* m = modelFromParent(parent);
+    Q_CHECK_PTR(m);
+
+    qDebug() << "index" << row << column << parent << m->index(row, column, parent);
+//    return m->index(row, column, parent);
+    return createIndex(row, column, const_cast<QAbstractItemModel*>(m));
+}
+
+//QModelIndex ProgramsModel::createIndex(int row, int column, void *ptr) const {
+//    const QAbstractItemModel* m = modelFromParent(parent);
+//    Q_CHECK_PTR(m);
+
+//    qDebug() << "index" << row << column << parent << m->index(row, column, parent);
+//    return m->index(row, column, parent);
+//}
+
+//QModelIndex createIndex(int row, int column, quintptr id) const;
+
+//Qt::ItemFlags ProgramsModel::flags(const QModelIndex &index) const {
+//    const QAbstractItemModel* m = model(index);
+//    Q_CHECK_PTR(m);
+
+////    Qt::ItemFlags ret = index.flags();
+//    Qt::ItemFlags ret = m->flags(index);
+
+//    qDebug() << "flags" << index << ret;
+//    return ret;
+//}
+
+//bool ProgramsModel::hasChildren(const QModelIndex &parent) const {
+//    const QAbstractItemModel* m = model(parent);
+//    Q_CHECK_PTR(m);
+
+//    qDebug() << "hasChildren" << parent << m->hasChildren(parent);
+//    return m->hasChildren(parent);
+//}
+
+QModelIndex ProgramsModel::parent(const QModelIndex &child) const {
+    const QAbstractItemModel* m = model(child);
+    Q_CHECK_PTR(m);
+
+//    QModelIndex ret = child.parent();
+    QModelIndex ret = m->parent(child);
+
+    qDebug() << "parent" << child << ret;
+    return ret;
 }
 
 int ProgramsModel::rowCount(const QModelIndex &parent) const {
-    return QSqlTableModel::rowCount(parent);
+    const QAbstractItemModel* m = modelFromParent(parent);
+    Q_CHECK_PTR(m);
+
+    qDebug() << "rowCount" << parent << m->rowCount(parent);
+    return m->rowCount(parent);
 }
 
-bool ProgramsModel::setData(const QModelIndex &index, const QVariant &value, int role) {
-    return QSqlTableModel::setData(index, value, role);
-}
+//bool ProgramsModel::canFetchMore(const QModelIndex &parent) const {
+//    const QAbstractItemModel* m = modelFromParent(parent);
+//    Q_CHECK_PTR(m);
+
+//    qDebug() << "canFetchMore" << parent << m->canFetchMore(parent);
+//    return m->canFetchMore(parent);
+//}
+
+//void ProgramsModel::fetchMore(const QModelIndex &parent) {
+//    QAbstractItemModel* m = modelFromParent(parent);
+//    Q_CHECK_PTR(m);
+
+//    qDebug() << "fetchMore" << parent;
+//    m->fetchMore(parent);
+//}
+
+//bool ProgramsModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+//    QAbstractItemModel* m = model(index);
+//    Q_CHECK_PTR(m);
+
+//    return m->setData(index, value, role);
+//}
 
 int ProgramsModel::createProgram(const QString &name, const QByteArray &sysex) {
+#if 0
     Q_CHECK_PTR(m_pads);
     Q_CHECK_PTR(m_knobs);
 
@@ -154,9 +254,15 @@ int ProgramsModel::createProgram(const QString &name, const QByteArray &sysex) {
     }
 
     return programId;
+#else
+    Q_UNUSED(name);
+    Q_UNUSED(sysex);
+    return -1;
+#endif
 }
 
 bool ProgramsModel::deleteProgram(int programId) {
+#if 0
     QScopedPointer<QSqlTableModel> m(new QSqlTableModel());
 
     if (!deleteRecordsForProgramId(m.data(), tableName(), programId)) {
@@ -179,13 +285,23 @@ bool ProgramsModel::deleteProgram(int programId) {
     select();
 
     return true;
+#else
+    Q_UNUSED(programId);
+    return false;
+#endif
 }
 
 QString ProgramsModel::name(int programId) const {
+#if 0
     return record(programRow(programId)).value(name_field_name).toString();
+#else
+    Q_UNUSED(programId);
+    return "NIY";
+#endif
 }
 
 QByteArray ProgramsModel::sysex(int programId) const {
+#if 0
     Q_CHECK_PTR(m_pads);
     Q_CHECK_PTR(m_knobs);
 
@@ -243,10 +359,47 @@ QByteArray ProgramsModel::sysex(int programId) const {
     sysex::addFooter(ret);
 
     return ret;
+#else
+    Q_UNUSED(programId);
+    return QByteArray();
+#endif
 }
 
 int ProgramsModel::programRow(int programId) const {
+#if 0
     const QModelIndexList indices(match(index(0, 0), Qt::DisplayRole, programId));
     Q_ASSERT(indices.count() == 1);
     return indices[0].row();
+#else
+    Q_UNUSED(programId);
+    return -1;
+#endif
+}
+
+QAbstractItemModel* ProgramsModel::model(const QModelIndex &index)  {
+    Q_UNUSED(index);
+//    return m_groups;
+    return m_programs;
+//    return modelFromParent(index.parent());
+}
+
+const QAbstractItemModel* ProgramsModel::model(const QModelIndex &index) const {
+    Q_UNUSED(index);
+//    return m_groups;
+    return m_programs;
+//    return modelFromParent(index.parent());
+}
+
+QAbstractItemModel* ProgramsModel::modelFromParent(const QModelIndex &parent)  {
+    Q_UNUSED(parent);
+//    return m_groups;
+    return m_programs;
+//    return parent.isValid() ? qobject_cast<QAbstractItemModel*>(m_groups) : this;
+}
+
+const QAbstractItemModel* ProgramsModel::modelFromParent(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
+//    return m_groups;
+    return m_programs;
+//    return parent.isValid() ? qobject_cast<QAbstractItemModel*>(m_groups) : this;
 }
