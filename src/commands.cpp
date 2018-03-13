@@ -24,7 +24,6 @@ void CreateProgramCommand::undo() {
     Q_CHECK_PTR(m_programs);
 
     m_programs->deleteProgram(m_program_id);
-//    m_app->deleteProgram(m_program_id);
 }
 
 DeleteProgramCommand::DeleteProgramCommand(ProgramsModel* programs, int program_id, QUndoCommand *parent) :
@@ -33,7 +32,7 @@ DeleteProgramCommand::DeleteProgramCommand(ProgramsModel* programs, int program_
     m_program_id(program_id) {
     Q_CHECK_PTR(m_programs);
 
-    setText("Delete program");
+    setText("Delete program " + m_programs->name(m_program_id));
 }
 
 void DeleteProgramCommand::redo() {
