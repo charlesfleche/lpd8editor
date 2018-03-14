@@ -6,11 +6,11 @@
 - Import program with constraints
 - Show programs list on the left
 - Select current program for the list on the left
+- Widget wrappers
 - Export program
 - Send program to LPD8
 - Get program from LPD8 + undo
 - Editor generates commands
-- Widget wrappers
 - Undo delete puts program back at the same place
 - Tests
 - Debian package
