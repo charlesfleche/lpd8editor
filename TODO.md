@@ -1,8 +1,12 @@
-- Show model tree
+- Create program
+- Remove program
+- Edit tree model
+- Edit constraints
+- Import program+ undo
+- Import program with constraints
 - Show programs list on the left
 - Select current program for the list on the left
 - Export program
-- Import program + undo
 - Send program to LPD8
 - Get program from LPD8 + undo
 - Editor generates commands

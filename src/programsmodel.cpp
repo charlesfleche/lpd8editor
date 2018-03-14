@@ -24,6 +24,7 @@ static const QString program_id_field_name("programId");
 static const QString toggle_field_name("toggle");
 
 // XXX those are kinda nasty, and not data driven...
+
 static const int control_type_pad = 0;
 static const int control_type_knob = 1;
 static const int program_id_column_index = 0;
@@ -106,11 +107,13 @@ const QAbstractItemModel* ProgramsModel::modelFromParent(const QModelIndex &pare
     }
 
     // parent is the top level invalid index
+
     if (lvl == 0) {
         return m_programs;
     }
 
     // Only first column can have children
+
     if (parent.column() != 0) {
         return m_empty;
     }
@@ -118,12 +121,14 @@ const QAbstractItemModel* ProgramsModel::modelFromParent(const QModelIndex &pare
     const int programId = parent.data().toInt();
 
     // parent is in m_programs: returns a group proxy
+
     if (lvl == 1) {
         Q_ASSERT(m_groups_proxies.contains(programId));
         return m_groups_proxies[programId];
     }
 
     // parent is a group proxy
+
     if (lvl == 2) {
         switch (parent.row()) {
         case control_type_pad:
