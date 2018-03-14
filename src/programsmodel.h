@@ -49,6 +49,8 @@ private:
     void removeFilters(int programId);
 
     QHash<int, QSortFilterProxyModel*> m_groups_proxies;
+    QHash<int, QSortFilterProxyModel*> m_pads_proxies;
+    QHash<int, QSortFilterProxyModel*> m_knobs_proxies;
 
     QStandardItemModel* m_groups;
     QSqlTableModel* m_pads;

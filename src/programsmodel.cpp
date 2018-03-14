@@ -23,7 +23,12 @@ static const QString pc_field_name("pc");
 static const QString program_id_field_name("programId");
 static const QString toggle_field_name("toggle");
 
+// XXX those are kinda nasty, and not data driven...
+static const int control_type_pad = 0;
+static const int control_type_knob = 1;
 static const int program_id_column_index = 0;
+static const int program_pads_count = 8;
+static const int program_knobs_count = 8;
 
 
 QString programIdFilter(int projectId) {
@@ -55,6 +60,7 @@ ProgramsModel::ProgramsModel(QObject *parent) :
     m_knobs = new QSqlTableModel(this);
     m_knobs->setEditStrategy(QSqlTableModel::OnFieldChange);
     m_knobs->setTable("knobs");
+    m_knobs->select();
 
     m_pads = new QSqlTableModel(this);
     m_pads->setEditStrategy(QSqlTableModel::OnFieldChange);
@@ -63,11 +69,6 @@ ProgramsModel::ProgramsModel(QObject *parent) :
 
     m_groups = new QStandardItemModel(this);
     m_groups->setHorizontalHeaderLabels({program_id_field_name, name_field_name});
-//    m_groups->appendRow({new QStandardItem("Pads"), new QStandardItem("Knobs")});
-//    QStandardItem* it = new QStandardItem("Pads");
-//    m_groups->appendRow(it);
-//    it = new QStandardItem("Knobs");
-//    m_groups->appendRow(it);
 
     m_programs = new QSqlTableModel(this);
     m_programs->setTable("programs");
@@ -82,7 +83,16 @@ ProgramsModel::ProgramsModel(QObject *parent) :
     qDebug() << "m_programs" << m_programs;
     qDebug() << "m_groups" << m_groups;
     for (auto it = m_groups_proxies.keyBegin() ; it != m_groups_proxies.keyEnd() ; ++it) {
-        qDebug() << "m_groups_proxies" << *it << m_groups_proxies[*it];
+        QSortFilterProxyModel* m = m_groups_proxies[*it];
+        qDebug() << "m_groups_proxies" << *it << m << m->rowCount() ;
+    }
+    for (auto it = m_pads_proxies.keyBegin() ; it != m_pads_proxies.keyEnd() ; ++it) {
+        QSortFilterProxyModel* m = m_pads_proxies[*it];
+        qDebug() << "m_pads_proxies" << *it << m << m->rowCount();
+    }
+    for (auto it = m_knobs_proxies.keyBegin() ; it != m_knobs_proxies.keyEnd() ; ++it) {
+        QSortFilterProxyModel* m = m_knobs_proxies[*it];
+        qDebug() << "m_knobs_proxies" << *it << m << m->rowCount();
     }
     qDebug() << "m_empty" << m_empty;
 }
@@ -105,21 +115,26 @@ const QAbstractItemModel* ProgramsModel::modelFromParent(const QModelIndex &pare
         return m_empty;
     }
 
+    const int programId = parent.data().toInt();
+
     // parent is in m_programs: returns a group proxy
     if (lvl == 1) {
-        const int programId = parent.data().toInt();
-        if (programId == 2) {
-            QSortFilterProxyModel* m = m_groups_proxies[programId];
-            Q_ASSERT(m->rowCount() == 2);
-            Q_ASSERT(m->index(0, 1).data().toString() == "pads2");
-            Q_ASSERT(m->index(1, 1).data().toString() == "knobs2");
-        }
+        Q_ASSERT(m_groups_proxies.contains(programId));
         return m_groups_proxies[programId];
     }
 
-    // parent is a group proxy: returns the empty model
+    // parent is a group proxy
     if (lvl == 2) {
-        return m_empty;
+        switch (parent.row()) {
+        case control_type_pad:
+            Q_ASSERT(m_pads_proxies.contains(programId));
+            return m_pads_proxies[programId];
+        case control_type_knob:
+            Q_ASSERT(m_knobs_proxies.contains(programId));
+            return m_knobs_proxies[programId];
+        default:
+            break;
+        }
     }
 
     return m_empty;
@@ -171,24 +186,42 @@ QModelIndex ProgramsModel::parent(const QModelIndex &child) const {
 
     QModelIndex ret;
 
-    const QSortFilterProxyModel* program_proxy = qobject_cast<const QSortFilterProxyModel*>(m);
-    const int programId = m_groups_proxies.key(const_cast<QSortFilterProxyModel*>(program_proxy));
+    const QSortFilterProxyModel* const_program_proxy = qobject_cast<const QSortFilterProxyModel*>(m);
+    QSortFilterProxyModel* program_proxy = const_cast<QSortFilterProxyModel*>(const_program_proxy);
 
+    // Child is a know ? Return knob row of matching group model
+
+    int programId = m_knobs_proxies.key(program_proxy);
+    if (programId > 0) {
+        Q_ASSERT(m_groups_proxies.contains(programId));
+        ret = createIndex(control_type_knob, 0, m_groups_proxies[programId]);
+        goto end;
+    }
+
+    // Child is a pad ? Return pad row of matching group model
+
+    programId = m_pads_proxies.key(program_proxy);
+    if (programId > 0) {
+        Q_ASSERT(m_groups_proxies.contains(programId));
+        ret = createIndex(control_type_pad, 0, m_groups_proxies[programId]);
+        goto end;
+    }
+
+    // Child is group ? Return program row
+
+    programId = m_groups_proxies.key(program_proxy);
     if (programId > 0) {
         QModelIndexList indices = m_programs->match(
             m_programs->index(0, 0),
             Qt::DisplayRole,
             programId
         );
-        if (indices.count() != 1) {
-            for (int i = 0 ; m_groups_proxies.count() ; ++i) {
-                qDebug() << m_groups_proxies[i];
-            }
-        }
         Q_ASSERT(indices.count() == 1);
         ret = createIndex(indices[0].row(), 0, m_programs);
+        goto end;
     }
 
+end:
 //    qDebug() << "parent" << child << ret;
     return ret;
 }
@@ -428,7 +461,26 @@ void ProgramsModel::addFilters(int programId) {
     proxy->setSourceModel(m_groups);
     proxy->setFilterKeyColumn(program_id_column_index);
     proxy->setFilterRegExp(regex);
+    Q_ASSERT(proxy->rowCount() == 2);
     m_groups_proxies[programId] = proxy;
+
+    // Pads
+
+    proxy = new QSortFilterProxyModel(this);
+    proxy->setSourceModel(m_pads);
+    proxy->setFilterKeyColumn(program_id_column_index);
+    proxy->setFilterRegExp(regex);
+    Q_ASSERT(proxy->rowCount() == program_pads_count);
+    m_pads_proxies[programId] = proxy;
+
+    // Knobs
+
+    proxy = new QSortFilterProxyModel(this);
+    proxy->setSourceModel(m_knobs);
+    proxy->setFilterKeyColumn(program_id_column_index);
+    proxy->setFilterRegExp(regex);
+    Q_ASSERT(proxy->rowCount() == program_knobs_count);
+    m_knobs_proxies[programId] = proxy;
 }
 
 void ProgramsModel::removeFilters(int programId) {
@@ -447,4 +499,12 @@ void ProgramsModel::removeFilters(int programId) {
     Q_CHECK_PTR(items[1]);
     Q_ASSERT((items[1]->row() - items[0]->row()) == 1); // The two indices are contiguous
     m_groups->removeRows(items[0]->row(), items.count());
+
+    // Pads
+
+    m_pads_proxies.take(programId)->deleteLater();
+
+    // Knobs
+
+    m_knobs_proxies.take(programId)->deleteLater();
 }
