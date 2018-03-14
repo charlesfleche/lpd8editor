@@ -140,13 +140,18 @@ const QAbstractItemModel* ProgramsModel::modelFromParent(const QModelIndex &pare
     return m_empty;
 }
 
-int ProgramsModel::columnCount(const QModelIndex &parent) const {
-    const QAbstractItemModel* m = modelFromParent(parent);
-    Q_CHECK_PTR(m);
+int ProgramsModel::columnCount(const QModelIndex &) const {
+    Q_CHECK_PTR(m_programs);
+    Q_CHECK_PTR(m_groups);
+    Q_CHECK_PTR(m_pads);
+    Q_CHECK_PTR(m_knobs);
 
-    int ret = m->columnCount();
-    qDebug() << "columnCount" << parent << m << ret;
-    return ret;
+    return std::max({
+        m_programs->columnCount(),
+        m_groups->columnCount(),
+        m_pads->columnCount(),
+        m_knobs->columnCount()
+    });
 }
 
 int ProgramsModel::rowCount(const QModelIndex &parent) const {
