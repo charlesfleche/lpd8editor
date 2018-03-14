@@ -1,9 +1,11 @@
 #ifndef PROGRAMSMODEL_H
 #define PROGRAMSMODEL_H
 
+#include <QRegExp>
 #include <QSqlTableModel>
 
 class QAbstractItemModel;
+class QSortFilterProxyModel;
 class QSqlTableModel;
 class QStandardItemModel;
 
@@ -41,13 +43,18 @@ private:
 
     QAbstractItemModel* model(const QModelIndex &idx);
     const QAbstractItemModel* model(const QModelIndex &idx) const;
-    QAbstractItemModel* modelFromParent(const QModelIndex &parent);
     const QAbstractItemModel* modelFromParent(const QModelIndex &parent) const;
+
+    void addFilters(int programId);
+    void removeFilters(int programId);
+
+    QHash<int, QSortFilterProxyModel*> m_groups_proxies;
 
     QStandardItemModel* m_groups;
     QSqlTableModel* m_pads;
     QSqlTableModel* m_knobs;
     QSqlTableModel* m_programs;
+    QStandardItemModel* m_empty;
 };
 
 #endif // PROGRAMSMODEL_H
