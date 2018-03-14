@@ -1,6 +1,7 @@
 - Create program
 - Remove program
 - Edit tree model
+- Remove debug statements in model
 - Edit constraints
 - Import program+ undo
 - Import program with constraints
