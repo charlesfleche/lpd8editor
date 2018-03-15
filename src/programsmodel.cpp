@@ -322,15 +322,11 @@ bool ProgramsModel::deleteProgram(int programId) {
 }
 
 QString ProgramsModel::name(int programId) const {
-#if 0
-    return record(programRow(programId)).value(name_field_name).toString();
-#else
-    Q_UNUSED(programId);
-    return "NIY";
-#endif
+    return programName(programId);
 }
 
 QByteArray ProgramsModel::sysex(int programId) const {
+    return programSysex(programId);
 #if 0
     Q_CHECK_PTR(m_pads);
     Q_CHECK_PTR(m_knobs);

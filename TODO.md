@@ -1,4 +1,3 @@
-- Add constraint checks
 - Edit tree model
 - Remove debug statements in model
 - Edit constraints

@@ -19,6 +19,88 @@ QString programName(const QString& name = QString()) {
 
 #define GOTO_END_IF_FALSE(X) if (!X) goto end;
 
+QString programName(int programId) {
+    QString ret;
+    QSqlQuery q;
+    GOTO_END_IF_FALSE(q.prepare("select name from programs where programId = ?"));
+    q.addBindValue(programId);
+    GOTO_END_IF_FALSE(q.exec());
+
+    GOTO_END_IF_FALSE(q.first());
+    ret = q.value(0).toString();
+
+    Q_ASSERT(!q.next());
+
+end:
+    if (q.lastError().isValid()) {
+        qWarning() << "Failed to retrieve program" << programId << "name:" << q.lastError().text();
+    }
+    return ret;
+}
+
+QByteArray programSysex(int programId) {
+    QByteArray ret;
+    sysex::addProgramHeader(ret, 1);
+
+    int count = 0;
+
+    QSqlQuery q;
+
+    // channel
+
+    GOTO_END_IF_FALSE(q.prepare("select channel from programs where programId = ?"));
+    q.addBindValue(programId);
+    GOTO_END_IF_FALSE(q.exec());
+
+    GOTO_END_IF_FALSE(q.first());
+    ret += q.value(0).toChar();
+
+    Q_ASSERT(!q.next());
+
+    // pads
+
+    GOTO_END_IF_FALSE(q.prepare("select note, pc, cc, toggle from pads where programId = ? order by controlId"));
+    q.addBindValue(programId);
+    GOTO_END_IF_FALSE(q.exec());
+
+    count = 0;
+    while(q.next()) {
+        const QSqlRecord r = q.record();
+        for (int i = 0 ; i < r.count() ; ++i) {
+            ret += r.value(i).toChar();
+        }
+        ++count;
+    }
+
+    Q_ASSERT(count == sysex::padsCount());
+
+    // knobs
+
+    GOTO_END_IF_FALSE(q.prepare("select cc, low, high from knobs where programId = ? order by controlId"));
+    q.addBindValue(programId);
+    GOTO_END_IF_FALSE(q.exec());
+
+    count = 0;
+    while(q.next()) {
+        const QSqlRecord r = q.record();
+        for (int i = 0 ; i < r.count() ; ++i) {
+            ret += r.value(i).toChar();
+        }
+        ++count;
+    }
+
+    Q_ASSERT(count == sysex::knobsCount());
+
+    sysex::addFooter(ret);
+
+end:
+    if (q.lastError().isValid()) {
+        qWarning() << "Failed to generate sysex for program" << programId << ":" << q.lastError().text();
+        ret.clear();
+    }
+    return ret;
+}
+
 int createProgram(const QString &name, const QByteArray &sysex) {
     Q_UNUSED(name);
     Q_UNUSED(sysex);
@@ -96,6 +178,7 @@ int createProgram(const QString &name, const QByteArray &sysex) {
             GOTO_END_IF_FALSE(q.exec());
         }
     }
+
 end:
     if (q.lastError().isValid()) {
         qWarning() << "Failed to create program: " << q.lastError().text();
