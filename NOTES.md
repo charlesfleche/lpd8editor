@@ -13,4 +13,25 @@
     2. When sending to MIDI
     3. When storing in UndoStack
 
--
+- Forwarding private signals:
+
+```
+// Works
+
+connect(
+    m_programs,
+    &QSqlTableModel::rowsInserted,
+    this,
+    &ProgramsModel::rowsInserted
+);
+
+// Does not work
+
+connect(m_programs,
+        &QSqlTableModel::rowsInserted,
+        [=](const QModelIndex &parent, int first, int last) {
+            qDebug() << parent << first << last;
+            emit rowsInserted(index(-1, -1), first, last);
+        }
+);
+```
