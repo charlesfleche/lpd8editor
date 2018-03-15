@@ -96,6 +96,13 @@ ProgramsModel::ProgramsModel(QObject *parent) :
         qDebug() << "m_knobs_proxies" << *it << m << m->rowCount();
     }
     qDebug() << "m_empty" << m_empty;
+
+    connect(
+        m_programs,
+        &QSqlTableModel::rowsInserted,
+        this,
+        &ProgramsModel::rowsInserted
+    );
 }
 
 const QAbstractItemModel* ProgramsModel::modelFromParent(const QModelIndex &parent) const {
@@ -237,7 +244,7 @@ end:
 }
 
 int ProgramsModel::createProgram(const QString &name, const QByteArray &sysex) {
-#if 0
+    Q_CHECK_PTR(m_programs);
     Q_CHECK_PTR(m_pads);
     Q_CHECK_PTR(m_knobs);
 
@@ -257,18 +264,18 @@ int ProgramsModel::createProgram(const QString &name, const QByteArray &sysex) {
 
     // Program
 
-    QSqlRecord r(record());
+    QSqlRecord r(m_programs->record());
     r.remove(r.indexOf(program_id_field_name));
     r.setValue(name_field_name, name);
     s >> v;
     r.setValue(channel_field_name, v);
 
-    if (!insertRecord(-1, r)) {
-         qWarning() << "Cannot create program:" << lastError().text();
+    if (!m_programs->insertRecord(-1, r)) {
+         qWarning() << "Cannot create program:" << m_programs->lastError().text();
          return -1;
     }
 
-    const int programId = query().lastInsertId().toInt();
+    const int programId = m_programs->query().lastInsertId().toInt();
 
     // Pads
 
@@ -291,7 +298,7 @@ int ProgramsModel::createProgram(const QString &name, const QByteArray &sysex) {
         r.setValue(toggle_field_name, v);
 
         if (!m_pads->insertRecord(-1, r)) {
-             qWarning() << "Cannot create pad" << i << "for program:" << lastError().text();
+             qWarning() << "Cannot create pad" << i << "for program:" << m_pads->lastError().text();
              return -1;
         }
     }
@@ -314,7 +321,7 @@ int ProgramsModel::createProgram(const QString &name, const QByteArray &sysex) {
         r.setValue(high_field_name, v);
 
         if (!m_knobs->insertRecord(-1, r)) {
-             qWarning() << "Cannot create pad" << i << "for program:" << lastError().text();
+             qWarning() << "Cannot create pad" << i << "for program:" << m_knobs->lastError().text();
              return -1;
         }
     }
@@ -322,11 +329,6 @@ int ProgramsModel::createProgram(const QString &name, const QByteArray &sysex) {
     addFilters(programId);
 
     return programId;
-#else
-    Q_UNUSED(name);
-    Q_UNUSED(sysex);
-    return -1;
-#endif
 }
 
 bool ProgramsModel::deleteProgram(int programId) {
