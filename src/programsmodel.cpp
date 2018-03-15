@@ -158,7 +158,7 @@ void ProgramsModel::refresh() {
     m_knobs->select();
     m_pads->select();
 
-#if /*QT_DEBUG*/ 1
+#ifndef QT_NO_DEBUG
     Q_ASSERT(m_groups_proxies.count() == ids.count());
     Q_ASSERT(m_pads_proxies.count() == ids.count());
     Q_ASSERT(m_knobs_proxies.count() == ids.count());
