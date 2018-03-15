@@ -1,5 +1,5 @@
-- Create program
-- Remove program
+- Put triggers back
+- Add constraint checks
 - Edit tree model
 - Remove debug statements in model
 - Edit constraints
@@ -15,3 +15,7 @@
 - Undo delete puts program back at the same place
 - Tests
 - Debian package
+- Stream sysex:
+  - what is we receive huge forged sysex from ALSA ?
+  - txt representation -> binary repr -> handle sysex
+  - alsa representation -> read by chunk / byte -> handle sysex
