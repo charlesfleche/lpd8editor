@@ -462,7 +462,7 @@ void ProgramsModel::addFilters(int programId) {
 
     // Regexes
 
-    const QRegExp regex(QString::number(programId));
+    const QRegExp regex(QString("^%1$").arg(programId));
 
     // Groups
 
