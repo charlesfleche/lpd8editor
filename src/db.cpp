@@ -128,24 +128,14 @@ bool addProgram(int programId) {
 }
 
 bool deleteProgram(int programId) {
-    Q_ASSERT(programId > 0);
-
-    int count = 0;
-
     QSqlQuery q;
     GOTO_END_IF_FALSE(q.prepare("delete from programs where programId = ?"));
     q.addBindValue(programId);
     GOTO_END_IF_FALSE(q.exec());
 
-    GOTO_END_IF_FALSE(q.prepare("select changes()"));
-    GOTO_END_IF_FALSE(q.exec());
-    if (!q.first()) {
-        qWarning() << "Cannot get changes after deleting program" << programId;
-        return false;
-    }
-    count = q.value(0).toInt();
-    Q_ASSERT(count < 2);
-    if (count == 0) {
+    Q_ASSERT(q.numRowsAffected() < 2);
+
+    if (q.numRowsAffected() == 0) {
         qWarning() << "Cannot delete inexistant program" << programId;
         return false;
     }
