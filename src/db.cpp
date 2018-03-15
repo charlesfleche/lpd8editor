@@ -214,6 +214,16 @@ bool initialize() {
 
 QSqlError initDb(const QString& path) {
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    QSqlDriver *driver = db.driver();
+
+    Q_CHECK_PTR(driver);
+    Q_ASSERT(driver->hasFeature(QSqlDriver::Transactions));
+    Q_ASSERT(driver->hasFeature(QSqlDriver::Unicode));
+    Q_ASSERT(driver->hasFeature(QSqlDriver::PreparedQueries));
+    Q_ASSERT(driver->hasFeature(QSqlDriver::PositionalPlaceholders));
+    Q_ASSERT(driver->hasFeature(QSqlDriver::LastInsertId));
+    Q_ASSERT(driver->hasFeature(QSqlDriver::EventNotifications));
+
     db.setDatabaseName(path);
 
     if (!db.open()) {
