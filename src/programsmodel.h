@@ -38,6 +38,9 @@ protected:
 //    QModelIndex createIndex(int row, int column, void *ptr = Q_NULLPTR) const;
 //    QModelIndex createIndex(int row, int column, quintptr id) const;
 
+private slots:
+    void refresh();
+
 private:
     int programRow(int programId) const;
 

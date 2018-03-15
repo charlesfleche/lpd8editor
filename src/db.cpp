@@ -19,6 +19,24 @@ QString programName(const QString& name = QString()) {
 
 #define GOTO_END_IF_FALSE(X) if (!X) goto end;
 
+QList<int> programIds() {
+    QList<int> ret;
+
+    QSqlQuery q;
+    GOTO_END_IF_FALSE(q.prepare("select programId from programs order by programId"));
+    GOTO_END_IF_FALSE(q.exec());
+
+    while(q.next()) {
+        ret += q.value(0).toInt();
+    }
+
+end:
+    if (q.lastError().isValid()) {
+        qWarning() << "Failed to retrieve a list of program ids:" << q.lastError().text();
+    }
+    return ret;
+}
+
 QString programName(int programId) {
     QString ret;
     QSqlQuery q;

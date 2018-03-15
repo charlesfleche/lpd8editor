@@ -79,12 +79,10 @@ ProgramsModel::ProgramsModel(QObject *parent) :
     m_knobs = new QSqlTableModel(this);
     m_knobs->setEditStrategy(QSqlTableModel::OnFieldChange);
     m_knobs->setTable("knobs");
-    m_knobs->select();
 
     m_pads = new QSqlTableModel(this);
     m_pads->setEditStrategy(QSqlTableModel::OnFieldChange);
     m_pads->setTable("pads");
-    m_pads->select();
 
     m_groups = new QStandardItemModel(this);
     m_groups->setHorizontalHeaderLabels({program_id_field_name, name_field_name});
@@ -92,11 +90,8 @@ ProgramsModel::ProgramsModel(QObject *parent) :
     m_programs = new QSqlTableModel(this);
     m_programs->setTable("programs");
     m_programs->setEditStrategy(QSqlTableModel::OnFieldChange);
-    m_programs->select();
 
-    for (int i = 0 ; i < m_programs->rowCount() ; ++i) {
-        addFilters(m_programs->record(i).value(program_id_column_index).toInt());
-    }
+    refresh();
 
     qDebug() << "this" << this;
     qDebug() << "m_programs" << m_programs;
@@ -117,17 +112,6 @@ ProgramsModel::ProgramsModel(QObject *parent) :
 
     connect(
         m_programs,
-        &QSqlTableModel::rowsInserted,
-        this,
-        &ProgramsModel::rowsInserted
-    );
-
-    // QSqlTableModel does not emit rowsDeleted signals,
-    // but reset it's model after the necessary select()
-    // after removing rows
-
-    connect(
-        m_programs,
         &QSqlTableModel::modelAboutToBeReset,
         this,
         &ProgramsModel::modelAboutToBeReset
@@ -139,6 +123,58 @@ ProgramsModel::ProgramsModel(QObject *parent) :
         this,
         &ProgramsModel::modelReset
     );
+
+    QSqlDriver *driver = QSqlDatabase::database().driver();
+    Q_CHECK_PTR(driver);
+
+    driver->subscribeToNotification("programs");
+    connect(
+        driver,
+        QOverload<const QString&>::of(&QSqlDriver::notification),
+        this,
+        &ProgramsModel::refresh
+    );
+}
+
+void ProgramsModel::refresh() {
+    Q_CHECK_PTR(m_programs);
+    Q_CHECK_PTR(m_pads);
+    Q_CHECK_PTR(m_knobs);
+
+    const QSet<int> ids(QSet<int>::fromList(programIds()));
+    for (auto it = ids.begin() ; it != ids.end() ; ++it) {
+        const int id = *it;
+        if (!m_groups_proxies.contains(id)) {
+            addFilters(id);
+        }
+    }
+
+    const QSet<int> toDeleteIds(QSet<int>::fromList(m_groups_proxies.keys()).subtract(ids));
+    for (auto it = toDeleteIds.begin() ; it != toDeleteIds.end() ; ++it) {
+        const int id = *it;
+        removeFilters(id);
+    }
+
+    m_knobs->select();
+    m_pads->select();
+
+#if /*QT_DEBUG*/ 1
+    Q_ASSERT(m_groups_proxies.count() == ids.count());
+    Q_ASSERT(m_pads_proxies.count() == ids.count());
+    Q_ASSERT(m_knobs_proxies.count() == ids.count());
+
+    for (auto it = ids.begin() ; it != ids.end() ; ++it) {
+        const int id = *it;
+        Q_ASSERT(m_groups_proxies.contains(id));
+        Q_ASSERT(m_pads_proxies.contains(id));
+        Q_ASSERT(m_knobs_proxies.contains(id));
+        Q_ASSERT(m_groups_proxies[id]->rowCount() == 2);
+        Q_ASSERT(m_pads_proxies[id]->rowCount() == sysex::padsCount());
+        Q_ASSERT(m_knobs_proxies[id]->rowCount() == sysex::knobsCount());
+    }
+#endif
+
+    m_programs->select();
 }
 
 const QAbstractItemModel* ProgramsModel::modelFromParent(const QModelIndex &parent) const {
@@ -284,20 +320,7 @@ int ProgramsModel::createProgram(const QString &name, const QByteArray &sysex) {
     Q_CHECK_PTR(m_pads);
     Q_CHECK_PTR(m_knobs);
 
-    const int programId = ::createProgram(name, sysex);
-
-    // Failing to create a program is unlikely, but can happen
-    // under certain filesystem conditions. But while debuging it's
-    // good to be notifed early
-    Q_ASSERT(programId > 0);
-
-    if (programId > 0) {
-        m_pads->select();
-        m_knobs->select();
-        addFilters(programId);
-        m_programs->select();
-    }
-    return programId;
+    return ::createProgram(name, sysex);
 }
 
 bool ProgramsModel::deleteProgram(int programId) {
@@ -305,20 +328,7 @@ bool ProgramsModel::deleteProgram(int programId) {
     Q_CHECK_PTR(m_pads);
     Q_CHECK_PTR(m_knobs);
 
-    const bool ret = ::deleteProgram(programId);
-
-    // Failing to create a program is unlikely, but can happen
-    // under certain filesystem conditions. But while debuging it's
-    // good to be notifed early
-//    Q_ASSERT(ret);
-
-    if (ret) {
-        m_programs->select();
-        removeFilters(programId);
-        m_pads->select();
-        m_knobs->select();
-    }
-    return ret;
+    return ::deleteProgram(programId);
 }
 
 QString ProgramsModel::name(int programId) const {
@@ -429,7 +439,6 @@ void ProgramsModel::addFilters(int programId) {
     proxy->setSourceModel(m_groups);
     proxy->setFilterKeyColumn(program_id_column_index);
     proxy->setFilterRegExp(regex);
-    Q_ASSERT(proxy->rowCount() == 2);
     m_groups_proxies[programId] = proxy;
 
     // Pads
@@ -438,7 +447,6 @@ void ProgramsModel::addFilters(int programId) {
     proxy->setSourceModel(m_pads);
     proxy->setFilterKeyColumn(program_id_column_index);
     proxy->setFilterRegExp(regex);
-    Q_ASSERT(proxy->rowCount() == program_pads_count);
     m_pads_proxies[programId] = proxy;
 
     // Knobs
@@ -447,7 +455,6 @@ void ProgramsModel::addFilters(int programId) {
     proxy->setSourceModel(m_knobs);
     proxy->setFilterKeyColumn(program_id_column_index);
     proxy->setFilterRegExp(regex);
-    Q_ASSERT(proxy->rowCount() == program_knobs_count);
     m_knobs_proxies[programId] = proxy;
 }
 
