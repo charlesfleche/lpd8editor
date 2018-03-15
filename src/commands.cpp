@@ -40,7 +40,7 @@ void DeleteProgramCommand::redo() {
 
     m_name = m_programs->name(m_program_id);
     m_sysex = m_programs->sysex(m_program_id);
-    m_programs->deleteProgram(m_program_id);
+    setObsolete(!m_programs->deleteProgram(m_program_id));
 }
 
 void DeleteProgramCommand::undo() {
