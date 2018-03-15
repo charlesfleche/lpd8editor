@@ -36,15 +36,30 @@ QString programIdFilter(int projectId) {
     return QString("%1='%2'").arg(program_id_field_name).arg(projectId);
 }
 
-bool deleteRecordsForProgramId(QSqlTableModel* model, const QString& table, int projectId) {
+bool deleteRecordsForProgramId(QSqlTableModel* model, int projectId, int expectedRemove) {
     Q_CHECK_PTR(model);
 
-    model->setTable(table);
-    model->setFilter(programIdFilter(projectId));
-    model->select();
-    model->setEditStrategy(QSqlTableModel::OnManualSubmit);
-    model->removeRows(0, model->rowCount());
-    return model->submitAll();
+    QModelIndexList indices = model->match(
+        model->index(0, 0),
+        Qt::DisplayRole,
+        projectId
+    );
+
+    QSet<int> rows;
+    for (auto it = indices.begin() ; it != indices.end() ; ++it) {
+        rows << (*it).row();
+    }
+
+    Q_ASSERT(rows.count() == expectedRemove);
+    Q_ASSERT(*std::max_element(rows.begin(), rows.end()) - *std::min_element(rows.begin(), rows.end()) == 0);
+
+    model->removeRows(*std::min_element(rows.begin(), rows.end()), rows.count());
+
+    if (model->submitAll()) {
+        model->select();
+        return true;
+    }
+    return false;
 }
 
 
@@ -102,6 +117,24 @@ ProgramsModel::ProgramsModel(QObject *parent) :
         &QSqlTableModel::rowsInserted,
         this,
         &ProgramsModel::rowsInserted
+    );
+
+    // QSqlTableModel does not emit rowsDeleted signals,
+    // but reset it's model after the necessary select()
+    // after removing rows
+
+    connect(
+        m_programs,
+        &QSqlTableModel::modelAboutToBeReset,
+        this,
+        &ProgramsModel::modelAboutToBeReset
+    );
+
+    connect(
+        m_programs,
+        &QSqlTableModel::modelReset,
+        this,
+        &ProgramsModel::modelReset
     );
 }
 
@@ -332,33 +365,28 @@ int ProgramsModel::createProgram(const QString &name, const QByteArray &sysex) {
 }
 
 bool ProgramsModel::deleteProgram(int programId) {
-#if 0
     QScopedPointer<QSqlTableModel> m(new QSqlTableModel());
 
-    if (!deleteRecordsForProgramId(m.data(), tableName(), programId)) {
+    if (!deleteRecordsForProgramId(m_programs, programId, 1)) {
         qWarning() << "Failed deleting program:" << programId;
         return false;
     }
 
-    if (!deleteRecordsForProgramId(m.data(), m_pads->tableName(), programId)) {
-        qWarning() << "Failed deleting pads for program:" << programId;
-        return false;
-    }
+//    removeFilters(programId);
 
-    if (!deleteRecordsForProgramId(m.data(), m_knobs->tableName(), programId)) {
-        qWarning() << "Failed deleting knobs for program:" << programId;
-        return false;
-    }
+//    if (!deleteRecordsForProgramId(m.data(), m_knobs->tableName(), programId)) {
+//        qWarning() << "Failed deleting knobs for program:" << programId;
+//        return false;
+//    }
+//    m_knobs->select();
 
-    m_knobs->select();
-    m_pads->select();
-    select();
+//    if (!deleteRecordsForProgramId(m.data(), m_pads->tableName(), programId)) {
+//        qWarning() << "Failed deleting pads for program:" << programId;
+//        return false;
+//    }
+//    m_pads->select();
 
     return true;
-#else
-    Q_UNUSED(programId);
-    return false;
-#endif
 }
 
 QString ProgramsModel::name(int programId) const {
