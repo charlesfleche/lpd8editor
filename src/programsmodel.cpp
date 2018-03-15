@@ -1,5 +1,6 @@
 #include "programsmodel.h"
 
+#include "db.h"
 #include "lpd8_sysex.h"
 
 #include <QDataStream>
@@ -36,6 +37,7 @@ QString programIdFilter(int projectId) {
     return QString("%1='%2'").arg(program_id_field_name).arg(projectId);
 }
 
+#if 0
 bool deleteRecordsForProgramId(QSqlTableModel* model, int projectId, int expectedRemove) {
     Q_CHECK_PTR(model);
 
@@ -61,6 +63,7 @@ bool deleteRecordsForProgramId(QSqlTableModel* model, int projectId, int expecte
     }
     return false;
 }
+#endif
 
 
 ProgramsModel::ProgramsModel(QObject *parent) :
@@ -281,112 +284,41 @@ int ProgramsModel::createProgram(const QString &name, const QByteArray &sysex) {
     Q_CHECK_PTR(m_pads);
     Q_CHECK_PTR(m_knobs);
 
-    QDataStream s(sysex);
-    qint8 v = 0;
+    const int programId = ::createProgram(name, sysex);
 
-    // Header
+    // Failing to create a program is unlikely, but can happen
+    // under certain filesystem conditions. But while debuging it's
+    // good to be notifed early
+    Q_ASSERT(programId > 0);
 
-    s >> v; // Sysex Start
-    s >> v; // Manufacturer
-    s >> v; // Model byte 1
-    s >> v; // Model byte 2
-    s >> v; // Opcode set program: byte1
-    s >> v; // Opcode set program: byte2
-    s >> v; // Opcode set program: byte3
-    s >> v; // Program ID
-
-    // Program
-
-    QSqlRecord r(m_programs->record());
-    r.remove(r.indexOf(program_id_field_name));
-    r.setValue(name_field_name, name);
-    s >> v;
-    r.setValue(channel_field_name, v);
-
-    if (!m_programs->insertRecord(-1, r)) {
-         qWarning() << "Cannot create program:" << m_programs->lastError().text();
-         return -1;
+    if (programId > 0) {
+        m_pads->select();
+        m_knobs->select();
+        addFilters(programId);
+        m_programs->select();
     }
-
-    const int programId = m_programs->query().lastInsertId().toInt();
-
-    // Pads
-
-    for (int i = 0; i < sysex::padsCount(); ++i) {
-        QSqlRecord r(m_pads->record());
-
-        r.setValue(program_id_field_name, programId);
-        r.setValue(control_id_field_name, i);
-
-        s >> v;
-        r.setValue(note_field_name, v);
-
-        s >> v;
-        r.setValue(pc_field_name, v);
-
-        s >> v;
-        r.setValue(cc_field_name, v);
-
-        s >> v;
-        r.setValue(toggle_field_name, v);
-
-        if (!m_pads->insertRecord(-1, r)) {
-             qWarning() << "Cannot create pad" << i << "for program:" << m_pads->lastError().text();
-             return -1;
-        }
-    }
-
-    // Knobs
-
-    for (int i = 0; i < sysex::knobsCount(); ++i) {
-        QSqlRecord r(m_knobs->record());
-
-        r.setValue(program_id_field_name, programId);
-        r.setValue(control_id_field_name, i);
-
-        s >> v;
-        r.setValue(cc_field_name, v);
-
-        s >> v;
-        r.setValue(low_field_name, v);
-
-        s >> v;
-        r.setValue(high_field_name, v);
-
-        if (!m_knobs->insertRecord(-1, r)) {
-             qWarning() << "Cannot create pad" << i << "for program:" << m_knobs->lastError().text();
-             return -1;
-        }
-    }
-
-    addFilters(programId);
-
     return programId;
 }
 
 bool ProgramsModel::deleteProgram(int programId) {
-    QScopedPointer<QSqlTableModel> m(new QSqlTableModel());
+    Q_CHECK_PTR(m_programs);
+    Q_CHECK_PTR(m_pads);
+    Q_CHECK_PTR(m_knobs);
 
-    if (!deleteRecordsForProgramId(m_programs, programId, 1)) {
-        qWarning() << "Failed deleting program:" << programId;
-        return false;
+    const bool ret = ::deleteProgram(programId);
+
+    // Failing to create a program is unlikely, but can happen
+    // under certain filesystem conditions. But while debuging it's
+    // good to be notifed early
+//    Q_ASSERT(ret);
+
+    if (ret) {
+        m_programs->select();
+        removeFilters(programId);
+        m_pads->select();
+        m_knobs->select();
     }
-
-//    removeFilters(programId);
-
-//    if (!deleteRecordsForProgramId(m.data(), m_knobs->tableName(), programId)) {
-//        qWarning() << "Failed deleting knobs for program:" << programId;
-//        return false;
-//    }
-//    m_knobs->select();
-
-//    if (!deleteRecordsForProgramId(m.data(), m_pads->tableName(), programId)) {
-//        qWarning() << "Failed deleting pads for program:" << programId;
-//        return false;
-//    }
-//    m_pads->select();
-
-    return true;
+    return ret;
 }
 
 QString ProgramsModel::name(int programId) const {

@@ -197,7 +197,7 @@ void MainWindow::on_actionNewProgram_triggered()
     QUndoCommand* cmd = new CreateProgramCommand(
         app->myPrograms(),
         "New program",
-        fromSysexTextFile(":/default-sysex.txt")
+        QSettings().value(SETTINGS_KEY_DEFAULT_SYSEX).toByteArray()
     );
     m_undo_stack->push(cmd);
 }

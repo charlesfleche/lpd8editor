@@ -3,8 +3,7 @@
 
 #include <QtSql>
 
-class QString;
-
+int createProgram(const QString &name = QString(), const QByteArray &sysex = QByteArray());
 QSqlError initDb(const QString&);
 bool addProgram(const QString&, int&);
 bool deleteProgram(int);
