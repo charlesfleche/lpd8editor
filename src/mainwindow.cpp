@@ -192,10 +192,9 @@ QString defaultSysex() {
 
 void MainWindow::on_actionNewProgram_triggered()
 {
-    Q_CHECK_PTR(app);
+    Q_CHECK_PTR(m_undo_stack);
 
     QUndoCommand* cmd = new CreateProgramCommand(
-        app->myPrograms(),
         "New program",
         QSettings().value(SETTINGS_KEY_DEFAULT_SYSEX).toByteArray()
     );
@@ -204,12 +203,11 @@ void MainWindow::on_actionNewProgram_triggered()
 
 void MainWindow::on_actionDeleteProgram_triggered()
 {
-    Q_CHECK_PTR(app);
+    Q_CHECK_PTR(m_undo_stack);
 
     QUndoCommand *cmd = new DeleteProgramCommand(
-        app->myPrograms(),
 //        app->activeProgramId()
-        4
+        11
     );
     m_undo_stack->push(cmd);
 }
