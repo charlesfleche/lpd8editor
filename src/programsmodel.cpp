@@ -231,6 +231,24 @@ QVariant ProgramsModel::data(const QModelIndex &index, int role) const {
     return ret;
 }
 
+bool ProgramsModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+    Q_ASSERT(index.isValid());
+
+    QAbstractItemModel* m = model(index);
+    Q_CHECK_PTR(m);
+
+    return m->setData(m->index(index.row(), index.column()), value, role);
+}
+
+Qt::ItemFlags ProgramsModel::flags(const QModelIndex &index) const {
+    Q_ASSERT(index.isValid());
+
+    const QAbstractItemModel* m = model(index);
+    Q_CHECK_PTR(m);
+
+    return m->flags(m->index(index.row(), index.column()));
+}
+
 QModelIndex ProgramsModel::index(int row, int column, const QModelIndex &parent) const {
     const QAbstractItemModel* m = modelFromParent(parent);
     Q_CHECK_PTR(m);
