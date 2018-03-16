@@ -133,12 +133,10 @@ int createProgram(const QString &name, const QByteArray &sysex) {
 
     programId = q.lastInsertId().toInt();
 
-    if (!name.isNull()) {
-        GOTO_END_IF_FALSE(q.prepare("update programs set name = ? where programId = ?"));
-        q.addBindValue(name);
-        q.addBindValue(programId);
-        GOTO_END_IF_FALSE(q.exec());
-    }
+    GOTO_END_IF_FALSE(q.prepare("update programs set name = ? where programId = ?"));
+    q.addBindValue(name.isNull() ? QVariant(programId) : QVariant(name));
+    q.addBindValue(programId);
+    GOTO_END_IF_FALSE(q.exec());
 
     // XXX this is a lame check
     // Proper way would be to pass a QIODevice and register callbacks

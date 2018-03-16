@@ -18,6 +18,7 @@
 
 #include <QtDebug>
 
+static const QString SETTINGS_KEY_DEFAULT_NAME = "default/name";
 static const QString SETTINGS_KEY_DEFAULT_SYSEX = "default/sysex";
 
 MainWindow::MainWindow(Application* app, QWidget *parent) :
@@ -196,7 +197,7 @@ void MainWindow::on_actionNewProgram_triggered()
     Q_CHECK_PTR(m_undo_stack);
 
     QUndoCommand* cmd = new CreateProgramCommand(
-        "New program",
+        QSettings().value(SETTINGS_KEY_DEFAULT_NAME).toString(),
         QSettings().value(SETTINGS_KEY_DEFAULT_SYSEX).toByteArray()
     );
     m_undo_stack->push(cmd);
