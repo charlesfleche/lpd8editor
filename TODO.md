@@ -1,13 +1,12 @@
-- Import program+ undo
-- Import program with constraints
+- Editor generates commands
+- Import program from file + undo
 - Show programs list on the left
 - Select current program for the list on the left
+- Undo delete puts program back at the same place
 - Widget wrappers
 - Export program
-- Send program to LPD8
 - Get program from LPD8 + undo
-- Editor generates commands
-- Undo delete puts program back at the same place
+- Send program to LPD8
 - Tests
 - Debian package
 - Stream sysex:
