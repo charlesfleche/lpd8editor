@@ -235,10 +235,8 @@ Qt::ItemFlags ProgramsModel::flags(const QModelIndex &index) const {
 
     // Do not allow edition of programIds, controlIds and grouping items
 
-    if (index.column() == program_id_column_index ||
-        m_groups_proxies.key(cmp) > 0 ||
-        (m_pads_proxies.key(cmp) > 0 && index.column() == control_id_column_index) ||
-        (m_knobs_proxies.key(cmp) > 0 && index.column() == control_id_column_index)) {
+    const QString columnName = m->headerData(index.column(), Qt::Horizontal).toString();
+    if (columnName == program_id_field_name || columnName == control_id_field_name) {
         flags &= ~Qt::ItemIsEditable;
     }
 
@@ -312,8 +310,17 @@ void ProgramsModel::addFilters(int programId) {
 
     // Groups
 
-    m_groups->appendRow({new QStandardItem(QString::number(programId)), new QStandardItem(QString("pads%1").arg(programId))});
-    m_groups->appendRow({new QStandardItem(QString::number(programId)), new QStandardItem(QString("knobs%1").arg(programId))});
+    QStandardItem *programIdItem = new QStandardItem(QString::number(programId));
+    QStandardItem *nameItem = new QStandardItem(QString("pads%1").arg(programId));
+    programIdItem->setEditable(false);
+    nameItem->setEditable(false);
+    m_groups->appendRow({programIdItem, nameItem});
+
+    programIdItem = new QStandardItem(QString::number(programId));
+    nameItem = new QStandardItem(QString("knobs%1").arg(programId));
+    programIdItem->setEditable(false);
+    nameItem->setEditable(false);
+    m_groups->appendRow({programIdItem, nameItem});
 
     QSortFilterProxyModel* proxy = new QSortFilterProxyModel(this);
     proxy->setSourceModel(m_groups);
