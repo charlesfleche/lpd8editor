@@ -62,25 +62,6 @@ ProgramsModel::ProgramsModel(QObject *parent) :
     m_programs->setTable("programs");
     m_programs->setEditStrategy(QSqlTableModel::OnFieldChange);
 
-    refresh();
-
-    qDebug() << "this" << this;
-    qDebug() << "m_programs" << m_programs;
-    qDebug() << "m_groups" << m_groups;
-    for (auto it = m_groups_proxies.keyBegin() ; it != m_groups_proxies.keyEnd() ; ++it) {
-        QSortFilterProxyModel* m = m_groups_proxies[*it];
-        qDebug() << "m_groups_proxies" << *it << m << m->rowCount() ;
-    }
-    for (auto it = m_pads_proxies.keyBegin() ; it != m_pads_proxies.keyEnd() ; ++it) {
-        QSortFilterProxyModel* m = m_pads_proxies[*it];
-        qDebug() << "m_pads_proxies" << *it << m << m->rowCount();
-    }
-    for (auto it = m_knobs_proxies.keyBegin() ; it != m_knobs_proxies.keyEnd() ; ++it) {
-        QSortFilterProxyModel* m = m_knobs_proxies[*it];
-        qDebug() << "m_knobs_proxies" << *it << m << m->rowCount();
-    }
-    qDebug() << "m_empty" << m_empty;
-
     connect(
         m_programs,
         &QSqlTableModel::modelAboutToBeReset,
@@ -105,6 +86,8 @@ ProgramsModel::ProgramsModel(QObject *parent) :
         this,
         &ProgramsModel::refresh
     );
+
+    refresh();
 }
 
 void ProgramsModel::refresh() {
@@ -213,22 +196,14 @@ int ProgramsModel::rowCount(const QModelIndex &parent) const {
     const QAbstractItemModel* m = modelFromParent(parent);
     Q_CHECK_PTR(m);
 
-    int ret = m->rowCount();
-    qDebug() << "rowCount" << parent << m << ret;
-    return ret;
+    return m->rowCount();
 }
 
 QVariant ProgramsModel::data(const QModelIndex &index, int role) const {
     const QAbstractItemModel* m = model(index);
     Q_CHECK_PTR(m);
 
-    QModelIndex idx = m->index(index.row(), index.column());
-    QVariant ret = m->data(idx, role);
-
-    if (role == Qt::DisplayRole) {
-        qDebug() << "data" << index << role << m << ret;
-    }
-    return ret;
+    return m->data(m->index(index.row(), index.column()), role);
 }
 
 bool ProgramsModel::setData(const QModelIndex &index, const QVariant &value, int role) {
@@ -262,27 +237,22 @@ QModelIndex ProgramsModel::index(int row, int column, const QModelIndex &parent)
     const QAbstractItemModel* m = modelFromParent(parent);
     Q_CHECK_PTR(m);
 
-//    qDebug() << "index" << row << column << parent << m->index(row, column, parent);
     return createIndex(row, column, const_cast<QAbstractItemModel*>(m));
 }
-
 
 QModelIndex ProgramsModel::parent(const QModelIndex &child) const {
     const QAbstractItemModel* m = model(child);
     Q_CHECK_PTR(m);
 
-    QModelIndex ret;
-
     const QSortFilterProxyModel* const_program_proxy = qobject_cast<const QSortFilterProxyModel*>(m);
     QSortFilterProxyModel* program_proxy = const_cast<QSortFilterProxyModel*>(const_program_proxy);
 
-    // Child is a know ? Return knob row of matching group model
+    // Child is a knob ? Return knob row of matching group model
 
     int programId = m_knobs_proxies.key(program_proxy);
     if (programId > 0) {
         Q_ASSERT(m_groups_proxies.contains(programId));
-        ret = createIndex(control_type_knob, 0, m_groups_proxies[programId]);
-        goto end;
+        return createIndex(control_type_knob, 0, m_groups_proxies[programId]);
     }
 
     // Child is a pad ? Return pad row of matching group model
@@ -290,8 +260,7 @@ QModelIndex ProgramsModel::parent(const QModelIndex &child) const {
     programId = m_pads_proxies.key(program_proxy);
     if (programId > 0) {
         Q_ASSERT(m_groups_proxies.contains(programId));
-        ret = createIndex(control_type_pad, 0, m_groups_proxies[programId]);
-        goto end;
+        return createIndex(control_type_pad, 0, m_groups_proxies[programId]);
     }
 
     // Child is group ? Return program row
@@ -304,13 +273,13 @@ QModelIndex ProgramsModel::parent(const QModelIndex &child) const {
             programId
         );
         Q_ASSERT(indices.count() == 1);
-        ret = createIndex(indices[0].row(), 0, m_programs);
-        goto end;
+        return createIndex(indices[0].row(), 0, m_programs);
     }
 
-end:
-//    qDebug() << "parent" << child << ret;
-    return ret;
+    // Child a program ? Return the root (invalid) index
+
+    Q_ASSERT(m == m_programs);
+    return QModelIndex();
 }
 
 QAbstractItemModel* ProgramsModel::model(const QModelIndex &index)  {
