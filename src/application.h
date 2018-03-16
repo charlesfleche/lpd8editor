@@ -37,7 +37,6 @@ public slots:
     void setActiveProgramId(int);
     void setActiveProgramChannel(int);
 
-    int newProgram(const QString&, const QByteArray&);
     void deleteProgram(int);
 
     void fetchProgram(int) const;

@@ -80,18 +80,6 @@ QAbstractItemModel* Application::knobs() const {
     return m_knobs;
 }
 
-// XXX to remove
-int Application::newProgram(const QString& name, const QByteArray& sysex) {
-//    int programId;
-//    if (!addProgram(name, programId)) {
-//        throw std::runtime_error("Failed to add program");
-//    }
-//    m_programs->select();
-//    setActiveProgramId(programId);
-//    return programId;
-    return m_my_programs->createProgram(name, sysex);
-}
-
 void Application::deleteProgram(int programId) {
     const int nextId = nextProgramId(programId);
     ::deleteProgram(programId);
@@ -178,6 +166,7 @@ void Application::exportActiveProgram(const QString & path) const {
 }
 
 void Application::importProgram(const QString & path) {
+#if 0
     pProgram p = readProgramFile(path);
     if (!p) {
         return;
@@ -187,6 +176,10 @@ void Application::importProgram(const QString & path) {
     const int programId = newProgram(fileName, QByteArray());
     setActiveProgramId(programId);
     onProgramFetched(p);
+#else
+    Q_UNUSED(path)
+    Q_UNIMPLEMENTED();
+#endif
 }
 
 void Application::onProgramFetched(pProgram p) {
