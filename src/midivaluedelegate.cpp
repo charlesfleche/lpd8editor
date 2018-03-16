@@ -50,9 +50,8 @@ void paintToggle(QPainter* painter, const QStyleOptionViewItem& option, const QM
     buttonOption.rect = option.rect;
     buttonOption.state = option.state;
 
-    const bool isToggle = index.data().toBool();
-    buttonOption.state |= isToggle ? QStyle::State_On : QStyle::State_Off;
-    buttonOption.text = isToggle ? "Toggle" : "Momentary";
+    buttonOption.state |= index.data(Qt::CheckStateRole).toInt() == Qt::Unchecked ? QStyle::State_Off : QStyle::State_On;
+    buttonOption.text = index.data().toString();
     QApplication* app = qobject_cast<QApplication*>(qGuiApp);
     Q_CHECK_PTR(app);
     app->style()->drawControl(QStyle::CE_PushButton, &buttonOption, painter);
@@ -147,7 +146,8 @@ bool MidiValueDelegate::editorEvent(QEvent* event, QAbstractItemModel* model, co
     switch (midiType(index)) {
     case MidiType::ToggleType:
         if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonDblClick) {
-            model->setData(index, !model->data(index).toBool());
+            const bool isChecked = model->data(index, Qt::CheckStateRole).toInt() == Qt::Checked;
+            model->setData(index, !isChecked);
             return true;
         }
     default:

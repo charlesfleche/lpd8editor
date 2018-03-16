@@ -41,17 +41,18 @@ struct ParameterTrait {
     MidiType type;
     int min;
     int max;
+    QStringList displayLut;
 };
 
 static const QHash<QString, ParameterTrait> parameterLut({
-    {name_field_name,    {MidiType::StringType, -1,  -1}},
-    {channel_field_name, {MidiType::ChannelType, 0, 15}},
-    {note_field_name,    {MidiType::NoteType,    0, 127}},
-    {pc_field_name,      {MidiType::DefaultType, 0, 127}},
-    {cc_field_name,      {MidiType::DefaultType, 0, 127}},
-    {toggle_field_name,  {MidiType::ToggleType,  0,   1}},
-    {low_field_name,     {MidiType::DefaultType, 0, 127}},
-    {high_field_name,    {MidiType::DefaultType, 0, 127}}
+    {name_field_name,    {MidiType::StringType, -1,  -1, {}}},
+    {channel_field_name, {MidiType::ChannelType, 0,  15, {}}},
+    {note_field_name,    {MidiType::NoteType,    0, 127, {}}},
+    {pc_field_name,      {MidiType::DefaultType, 0, 127, {}}},
+    {cc_field_name,      {MidiType::DefaultType, 0, 127, {}}},
+    {toggle_field_name,  {MidiType::ToggleType,  0,   1, {"Momentary", "Toggle"}}},
+    {low_field_name,     {MidiType::DefaultType, 0, 127, {}}},
+    {high_field_name,    {MidiType::DefaultType, 0, 127, {}}}
 });
 
 QString programIdFilter(int projectId) {
@@ -227,14 +228,26 @@ QVariant ProgramsModel::data(const QModelIndex &index, int role) const {
     if (role >= Qt::UserRole) {
         const QString name = m->headerData(index.column(), Qt::Horizontal).toString();
         switch (role) {
-            case MidiValueType:
+            case MidiDataRole::MidiValueType:
                 return parameterLut[name].type;
-            case MidiValueMin:
+            case MidiDataRole::MidiValueMin:
                 Q_ASSERT(name != name_field_name);
                 return parameterLut[name].min;
-            case MidiValueMax:
+            case MidiDataRole::MidiValueMax:
                 Q_ASSERT(name != name_field_name);
                 return parameterLut[name].max;
+            default:
+                break;
+        }
+    }
+
+    if (index.data(MidiDataRole::MidiValueType) == MidiType::ToggleType) {
+        const int value = m->data(m->index(index.row(), index.column()), Qt::EditRole).toInt();
+        switch(role) {
+            case Qt::DisplayRole:
+                return parameterLut[toggle_field_name].displayLut[value];
+            case Qt::CheckStateRole:
+                return value == 0 ? Qt::Unchecked : Qt::Checked;
             default:
                 break;
         }
