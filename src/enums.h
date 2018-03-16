@@ -4,13 +4,17 @@
 #include <QtCore>
 
 enum MidiDataRole {
-    MidiValueType = Qt::UserRole + 1
+    MidiValueType = Qt::UserRole + 1,
+    MidiValueMin,
+    MidiValueMax
 };
 
 enum MidiType {
     DefaultType,
     NoteType,
-    ToggleType
+    ToggleType,
+    StringType,
+    ChannelType
 };
 
 #endif

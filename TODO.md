@@ -1,3 +1,4 @@
+- Implement MidiDataType, MinValue and MaxValue
 - Edit constraints
 - Import program+ undo
 - Import program with constraints

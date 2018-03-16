@@ -1,6 +1,7 @@
 #include "programsmodel.h"
 
 #include "db.h"
+#include "enums.h"
 #include "lpd8_sysex.h"
 
 #include <QDataStream>
@@ -36,6 +37,22 @@ static const int control_id_column_index = 1;
 static const int program_pads_count = 8;
 static const int program_knobs_count = 8;
 
+struct ParameterTrait {
+    MidiType type;
+    int min;
+    int max;
+};
+
+static const QHash<QString, ParameterTrait> parameterLut({
+    {name_field_name,    {MidiType::StringType, -1,  -1}},
+    {channel_field_name, {MidiType::ChannelType, 0, 15}},
+    {note_field_name,    {MidiType::NoteType,    0, 127}},
+    {pc_field_name,      {MidiType::DefaultType, 0, 127}},
+    {cc_field_name,      {MidiType::DefaultType, 0, 127}},
+    {toggle_field_name,  {MidiType::ToggleType,  0,   1}},
+    {low_field_name,     {MidiType::DefaultType, 0, 127}},
+    {high_field_name,    {MidiType::DefaultType, 0, 127}}
+});
 
 QString programIdFilter(int projectId) {
     return QString("%1='%2'").arg(program_id_field_name).arg(projectId);
@@ -206,6 +223,22 @@ int ProgramsModel::rowCount(const QModelIndex &parent) const {
 QVariant ProgramsModel::data(const QModelIndex &index, int role) const {
     const QAbstractItemModel* m = model(index);
     Q_CHECK_PTR(m);
+
+    if (role >= Qt::UserRole) {
+        const QString name = m->headerData(index.column(), Qt::Horizontal).toString();
+        switch (role) {
+            case MidiValueType:
+                return parameterLut[name].type;
+            case MidiValueMin:
+                Q_ASSERT(name != name_field_name);
+                return parameterLut[name].min;
+            case MidiValueMax:
+                Q_ASSERT(name != name_field_name);
+                return parameterLut[name].max;
+            default:
+                break;
+        }
+    }
 
     return m->data(m->index(index.row(), index.column()), role);
 }

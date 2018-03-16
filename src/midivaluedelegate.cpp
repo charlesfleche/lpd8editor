@@ -12,11 +12,11 @@ MidiType midiType(const QModelIndex& index) {
     return static_cast<MidiType>(index.data(MidiDataRole::MidiValueType).toInt());
 }
 
-QWidget* createDefaultEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex&) {
+QWidget* createSpinboxEditor(QWidget* parent, int min, int max) {
     QSpinBox* ret = new QSpinBox(parent);
     ret->setFrame(false);
-    ret->setMinimum(0);
-    ret->setMaximum(127);
+    ret->setMinimum(min);
+    ret->setMaximum(max);
     return ret;
 }
 
@@ -78,16 +78,21 @@ void MidiValueDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
 
 QWidget* MidiValueDelegate::createEditor(
         QWidget* parent,
-        const QStyleOptionViewItem& style,
+        const QStyleOptionViewItem&,
         const QModelIndex& index) const {
     Q_CHECK_PTR(index.model());
 
     QWidget* ret = Q_NULLPTR;
 
     switch (midiType(index)) {
+    case MidiType::ChannelType:
     case MidiType::DefaultType:
     case MidiType::NoteType:
-        ret = createDefaultEditor(parent, style, index);
+        ret = createSpinboxEditor(
+                  parent,
+                  index.data(MidiDataRole::MidiValueMin).toInt(),
+                  index.data(MidiDataRole::MidiValueMax).toInt()
+        );
         break;
     default:
         ret = Q_NULLPTR;
@@ -101,6 +106,7 @@ void MidiValueDelegate::setEditorData(QWidget* editor, const QModelIndex& index)
     Q_CHECK_PTR(index.model());
 
     switch (midiType(index)) {
+    case MidiType::ChannelType:
     case MidiType::DefaultType:
     case MidiType::NoteType:
         setDefaultEditorData(editor, index);
@@ -115,6 +121,7 @@ void MidiValueDelegate::setModelData(QWidget* editor, QAbstractItemModel* model,
     Q_CHECK_PTR(model);
 
     switch (midiType(index)) {
+    case MidiType::ChannelType:
     case MidiType::DefaultType:
     case MidiType::NoteType:
         setDefaultModelData(editor, model, index);

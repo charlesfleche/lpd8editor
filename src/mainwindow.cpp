@@ -153,6 +153,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     clientComboBox->setModel(app->midiIO()->midiPortsModel());
 
     ui->treeView->setModel(app->programs());
+    ui->treeView->setItemDelegate(new MidiValueDelegate(this));
 }
 
 MainWindow::~MainWindow()
