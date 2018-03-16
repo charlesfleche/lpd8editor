@@ -24,6 +24,9 @@ static const QString pc_field_name("pc");
 static const QString program_id_field_name("programId");
 static const QString toggle_field_name("toggle");
 
+static const QString pads_group_name = "pads";
+static const QString knobs_group_name = "knobs";
+
 // XXX those are kinda nasty, and not data driven...
 
 static const int control_type_pad = 0;
@@ -311,13 +314,13 @@ void ProgramsModel::addFilters(int programId) {
     // Groups
 
     QStandardItem *programIdItem = new QStandardItem(QString::number(programId));
-    QStandardItem *nameItem = new QStandardItem(QString("pads%1").arg(programId));
+    QStandardItem *nameItem = new QStandardItem(pads_group_name);
     programIdItem->setEditable(false);
     nameItem->setEditable(false);
     m_groups->appendRow({programIdItem, nameItem});
 
     programIdItem = new QStandardItem(QString::number(programId));
-    nameItem = new QStandardItem(QString("knobs%1").arg(programId));
+    nameItem = new QStandardItem(knobs_group_name);
     programIdItem->setEditable(false);
     nameItem->setEditable(false);
     m_groups->appendRow({programIdItem, nameItem});
