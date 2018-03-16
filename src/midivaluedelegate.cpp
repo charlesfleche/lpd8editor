@@ -27,7 +27,7 @@ void setDefaultEditorData(QWidget* editor, const QModelIndex& index) {
     Q_CHECK_PTR(spinBox);
 
     Q_CHECK_PTR(index.model());
-    const int value = index.model()->data(index, Qt::EditRole).toInt();
+    const int value = index.model()->data(index).toInt();
 
     spinBox->setValue(value);
 }

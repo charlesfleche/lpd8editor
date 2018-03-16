@@ -232,9 +232,15 @@ QVariant ProgramsModel::data(const QModelIndex &index, int role) const {
                 return parameterLut[name].type;
             case MidiDataRole::MidiValueMin:
                 Q_ASSERT(name != name_field_name);
+                if (parameterLut[name].type == MidiType::ChannelType) {
+                    return parameterLut[name].min + 1;
+                }
                 return parameterLut[name].min;
             case MidiDataRole::MidiValueMax:
                 Q_ASSERT(name != name_field_name);
+                if (parameterLut[name].type == MidiType::ChannelType) {
+                    return parameterLut[name].max + 1;
+                }
                 return parameterLut[name].max;
             default:
                 break;
@@ -253,6 +259,16 @@ QVariant ProgramsModel::data(const QModelIndex &index, int role) const {
         }
     }
 
+    if (index.data(MidiDataRole::MidiValueType) == MidiType::ChannelType) {
+        const int value = m->data(m->index(index.row(), index.column()), Qt::EditRole).toInt();
+        switch(role) {
+            case Qt::DisplayRole:
+                return value+1;
+            default:
+                break;
+        }
+    }
+
     return m->data(m->index(index.row(), index.column()), role);
 }
 
@@ -261,6 +277,10 @@ bool ProgramsModel::setData(const QModelIndex &index, const QVariant &value, int
 
     QAbstractItemModel* m = model(index);
     Q_CHECK_PTR(m);
+
+    if (role == Qt::EditRole && index.data(MidiDataRole::MidiValueType) == MidiType::ChannelType) {
+        return m->setData(m->index(index.row(), index.column()), value.toInt() - 1, role);
+    }
 
     return m->setData(m->index(index.row(), index.column()), value, role);
 }
