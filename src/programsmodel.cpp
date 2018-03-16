@@ -29,6 +29,7 @@ static const QString toggle_field_name("toggle");
 static const int control_type_pad = 0;
 static const int control_type_knob = 1;
 static const int program_id_column_index = 0;
+static const int control_id_column_index = 1;
 static const int program_pads_count = 8;
 static const int program_knobs_count = 8;
 
@@ -223,11 +224,22 @@ Qt::ItemFlags ProgramsModel::flags(const QModelIndex &index) const {
 
     Qt::ItemFlags flags = m->flags(m->index(index.row(), index.column()));
 
+    // QSqlTableModel are Qt::ItemNeverHasChildren by default
+
     const QSortFilterProxyModel *mp = qobject_cast<const QSortFilterProxyModel *>(m);
     QSortFilterProxyModel *cmp = const_cast<QSortFilterProxyModel*>(mp);
     const bool indexIsInLastChildTables = m_pads_proxies.key(cmp) > 0 || m_knobs_proxies.key(cmp) > 0;
     if (!indexIsInLastChildTables) {
         flags &= ~Qt::ItemNeverHasChildren;
+    }
+
+    // Do not allow edition of programIds, controlIds and grouping items
+
+    if (index.column() == program_id_column_index ||
+        m_groups_proxies.key(cmp) > 0 ||
+        (m_pads_proxies.key(cmp) > 0 && index.column() == control_id_column_index) ||
+        (m_knobs_proxies.key(cmp) > 0 && index.column() == control_id_column_index)) {
+        flags &= ~Qt::ItemIsEditable;
     }
 
     return flags;
