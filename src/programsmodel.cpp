@@ -246,7 +246,16 @@ Qt::ItemFlags ProgramsModel::flags(const QModelIndex &index) const {
     const QAbstractItemModel* m = model(index);
     Q_CHECK_PTR(m);
 
-    return m->flags(m->index(index.row(), index.column()));
+    Qt::ItemFlags flags = m->flags(m->index(index.row(), index.column()));
+
+    const QSortFilterProxyModel *mp = qobject_cast<const QSortFilterProxyModel *>(m);
+    QSortFilterProxyModel *cmp = const_cast<QSortFilterProxyModel*>(mp);
+    const bool indexIsInLastChildTables = m_pads_proxies.key(cmp) > 0 || m_knobs_proxies.key(cmp) > 0;
+    if (!indexIsInLastChildTables) {
+        flags &= ~Qt::ItemNeverHasChildren;
+    }
+
+    return flags;
 }
 
 QModelIndex ProgramsModel::index(int row, int column, const QModelIndex &parent) const {
