@@ -37,6 +37,40 @@ end:
     return ret;
 }
 
+int programChannel(int programId) {
+    int ret = -1;
+    QSqlQuery q;
+    GOTO_END_IF_FALSE(q.prepare("select channel from programs where programId = ?"));
+    q.addBindValue(programId);
+    GOTO_END_IF_FALSE(q.exec());
+
+    GOTO_END_IF_FALSE(q.first());
+    ret = q.value(0).toInt();
+
+    Q_ASSERT(!q.next());
+
+end:
+    if (q.lastError().isValid()) {
+        qWarning() << "Failed to retrieve channel for program" << programId << ":" << q.lastError().text();
+    }
+    return ret;
+}
+
+bool setProgramChannel(int programId, int channel) {
+    bool ret = false;
+    QSqlQuery q;
+    GOTO_END_IF_FALSE(q.prepare("update programs set channel = ? where programId = ?"));
+    q.addBindValue(channel);
+    q.addBindValue(programId);
+    ret = q.exec();
+
+end:
+    if (q.lastError().isValid()) {
+        qWarning() << "Failed to set channel" << channel << "for program" << programId << ":" << q.lastError().text();
+    }
+    return ret;
+}
+
 QString programName(int programId) {
     QString ret;
     QSqlQuery q;

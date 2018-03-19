@@ -7,6 +7,8 @@ int createProgram(const QString &programName = QString(), const QByteArray &syse
 QString programName(int programId);
 QByteArray programSysex(int programId);
 QList<int> programIds();
+int programChannel(int programId);
+bool setProgramChannel(int programId, int channel);
 
 QSqlError initDb(const QString&);
 bool addProgram(const QString&, int&);
