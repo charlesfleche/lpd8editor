@@ -1,4 +1,5 @@
 - Editor generates commands
+- Use QItemEditorFactory
 - Import program from file + undo
 - Show programs list on the left
 - Select current program for the list on the left
