@@ -75,13 +75,6 @@ QAbstractItemModel* Application::knobs() const {
     return m_knobs;
 }
 
-void Application::deleteProgram(int programId) {
-    const int nextId = nextProgramId(programId);
-    ::deleteProgram(programId);
-    setActiveProgramId(nextId);
-    m_programs->select();
-}
-
 int Application::activeProgramId() const {
     const int programId = QSettings().value(SETTINGS_KEY_ACTIVE_PROGRAM_ID, -1).toInt();
     return isValidProgramId(programId) ? programId : -1;

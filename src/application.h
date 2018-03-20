@@ -36,8 +36,6 @@ public slots:
     void setActiveProgramId(int);
     void setActiveProgramChannel(int);
 
-    void deleteProgram(int);
-
     void fetchProgram(int) const;
     void sendProgram(int);
 
