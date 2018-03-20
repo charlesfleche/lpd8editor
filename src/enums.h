@@ -6,7 +6,8 @@
 enum MidiDataRole {
     MidiValueType = Qt::UserRole + 1,
     MidiValueMin,
-    MidiValueMax
+    MidiValueMax,
+    MidiValues
 };
 
 enum MidiType {
