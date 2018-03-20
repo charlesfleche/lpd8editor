@@ -12,6 +12,20 @@ MidiType midiType(const QModelIndex& index) {
     return static_cast<MidiType>(index.data(MidiDataRole::MidiValueType).toInt());
 }
 
+bool hasLut(const QModelIndex &index) {
+    return index.data(MidiDataRole::MidiValues).isValid();
+}
+
+QStringList lut(const QModelIndex &index) {
+    Q_ASSERT(hasLut(index));
+
+    return index.data(MidiDataRole::MidiValues).toStringList();
+}
+
+bool isToggle(const QModelIndex &index) {
+    return hasLut(index) && lut(index).size() == 2;
+}
+
 QWidget* createSpinboxEditor(QWidget* parent, int min, int max) {
     QSpinBox* ret = new QSpinBox(parent);
     ret->setFrame(false);
@@ -50,7 +64,7 @@ void paintToggle(QPainter* painter, const QStyleOptionViewItem& option, const QM
     buttonOption.rect = option.rect;
     buttonOption.state = option.state;
 
-    buttonOption.state |= index.data(Qt::CheckStateRole).toInt() == Qt::Unchecked ? QStyle::State_Off : QStyle::State_On;
+    buttonOption.state |= index.data(Qt::EditRole).toInt() == 0 ? QStyle::State_Off : QStyle::State_On;
     buttonOption.text = index.data().toString();
     QApplication* app = qobject_cast<QApplication*>(qGuiApp);
     Q_CHECK_PTR(app);
@@ -66,37 +80,31 @@ MidiValueDelegate::MidiValueDelegate(QObject* parent):
 void MidiValueDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
     Q_CHECK_PTR(index.model());
 
-    switch (midiType(index)) {
-    case MidiType::ToggleType:
-        paintToggle(painter, option, index);
-        return;
-    default:
-        return QStyledItemDelegate::paint(painter, option, index);
-    }
+    isToggle(index) ? paintToggle(painter, option, index) : QStyledItemDelegate::paint(painter, option, index);
 }
 
 QWidget* MidiValueDelegate::createEditor(
-        QWidget* parent,
+        QWidget* /*parent*/,
         const QStyleOptionViewItem&,
-        const QModelIndex& index) const {
-    Q_CHECK_PTR(index.model());
+        const QModelIndex& /*index*/) const {
+//    Q_CHECK_PTR(index.model());
 
     QWidget* ret = Q_NULLPTR;
 
-    switch (midiType(index)) {
-    case MidiType::ChannelType:
-    case MidiType::DefaultType:
-    case MidiType::NoteType:
-        ret = createSpinboxEditor(
-                  parent,
-                  index.data(MidiDataRole::MidiValueMin).toInt(),
-                  index.data(MidiDataRole::MidiValueMax).toInt()
-        );
-        break;
-    default:
-        ret = Q_NULLPTR;
-        break;
-    }
+//    switch (midiType(index)) {
+//    case MidiType::ChannelType:
+//    case MidiType::DefaultType:
+//    case MidiType::NoteType:
+//        ret = createSpinboxEditor(
+//                  parent,
+//                  index.data(MidiDataRole::MidiValueMin).toInt(),
+//                  index.data(MidiDataRole::MidiValueMax).toInt()
+//        );
+//        break;
+//    default:
+//        ret = Q_NULLPTR;
+//        break;
+//    }
 
     return ret;
 }
@@ -143,15 +151,12 @@ bool MidiValueDelegate::editorEvent(QEvent* event, QAbstractItemModel* model, co
     Q_CHECK_PTR(event);
     Q_CHECK_PTR(model);
 
-    switch (midiType(index)) {
-    case MidiType::ToggleType:
-        if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonDblClick) {
-            const bool isChecked = model->data(index, Qt::CheckStateRole).toInt() == Qt::Checked;
-            model->setData(index, !isChecked);
-            return true;
-        }
-    default:
-        break;
+    const bool toggleClicked = isToggle(index) && (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonDblClick);
+    if (toggleClicked) {
+        const int currentValue = model->data(index, Qt::EditRole).toInt();
+        const int newValue = currentValue == 0 ? 1 : 0;
+        model->setData(index, newValue);
+        return true;
     }
 
     return QStyledItemDelegate::editorEvent(event, model, option, index);
