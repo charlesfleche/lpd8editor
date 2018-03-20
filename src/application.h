@@ -5,7 +5,6 @@
 
 #include <QObject>
 
-class PadProxyModel;
 class ProgramsModel;
 class MidiIO;
 
@@ -60,7 +59,6 @@ private:
     ProgramsModel* m_my_programs;
     QSqlTableModel* m_programs;
     QSqlTableModel* m_pads;
-    PadProxyModel* m_pads_proxy;
     QSqlTableModel* m_knobs;
 
     MidiIO* m_midi_io;

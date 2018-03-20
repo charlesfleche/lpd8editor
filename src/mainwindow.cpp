@@ -5,7 +5,6 @@
 #include "commands.h"
 #include "midiio.h"
 #include "midivaluedelegate.h"
-#include "programproxymodel.h"
 #include "utils.h"
 
 #include <QComboBox>
@@ -58,15 +57,9 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ui->newProgramButton->setDefaultAction(ui->actionNewProgram);
     ui->deleteProgramButton->setDefaultAction(ui->actionDeleteProgram);
 
-    ProgramProxyModel* programsProxyModel = new ProgramProxyModel(this);
-//    programsProxyModel->setSourceModel(app->programs());
-    programsProxyModel->setActiveProgramId(app->activeProgramId());
-//    ui->programsView->setModel(programsProxyModel);
-
     connect(app,
             &Application::activeProgramIdChanged,
-            [=](int programId) {
-                programsProxyModel->setActiveProgramId(programId);
+            [=](int) {
                 refreshWidgetStack();
             });
 

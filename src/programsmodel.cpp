@@ -4,15 +4,8 @@
 #include "enums.h"
 #include "lpd8_sysex.h"
 
-#include <QDataStream>
 #include <QSortFilterProxyModel>
 #include <QStandardItemModel>
-#include <QSqlError>
-#include <QSqlField>
-#include <QSqlRecord>
-#include <QSqlQuery>
-
-#include <QtDebug>
 
 static const QString cc_field_name("cc");
 static const QString channel_field_name("channel");
@@ -37,31 +30,7 @@ static const QString toggle_label = "Toggle";
 static const int control_type_pad = 0;
 static const int control_type_knob = 1;
 static const int program_id_column_index = 0;
-static const int control_id_column_index = 1;
-static const int program_pads_count = 8;
-static const int program_knobs_count = 8;
 
-struct ParameterTrait {
-    MidiType type;
-    int min;
-    int max;
-    QStringList displayLut;
-};
-
-static const QHash<QString, ParameterTrait> parameterLut({
-    {name_field_name,    {MidiType::StringType, -1,  -1, {}}},
-    {channel_field_name, {MidiType::ChannelType, 0,  15, {}}},
-    {note_field_name,    {MidiType::NoteType,    0, 127, {}}},
-    {pc_field_name,      {MidiType::DefaultType, 0, 127, {}}},
-    {cc_field_name,      {MidiType::DefaultType, 0, 127, {}}},
-    {toggle_field_name,  {MidiType::ToggleType,  0,   1, {"Momentary", "Toggle"}}},
-    {low_field_name,     {MidiType::DefaultType, 0, 127, {}}},
-    {high_field_name,    {MidiType::DefaultType, 0, 127, {}}}
-});
-
-QString programIdFilter(int projectId) {
-    return QString("%1='%2'").arg(program_id_field_name).arg(projectId);
-}
 
 ProgramsModel::ProgramsModel(QObject *parent) :
     QAbstractItemModel(parent),
@@ -264,54 +233,6 @@ QVariant ProgramsModel::data(const QModelIndex &index, int role) const {
     }
 
     return m->data(m->index(index.row(), index.column()), role);
-/*
-    if (role >= Qt::UserRole) {
-        const QString name = m->headerData(index.column(), Qt::Horizontal).toString();
-        switch (role) {
-            case MidiDataRole::MidiValueType:
-                return parameterLut[name].type;
-            case MidiDataRole::MidiValueMin:
-                Q_ASSERT(name != name_field_name);
-                if (parameterLut[name].type == MidiType::ChannelType) {
-                    return parameterLut[name].min + 1;
-                }
-                return parameterLut[name].min;
-            case MidiDataRole::MidiValueMax:
-                Q_ASSERT(name != name_field_name);
-                if (parameterLut[name].type == MidiType::ChannelType) {
-                    return parameterLut[name].max + 1;
-                }
-                return parameterLut[name].max;
-            case MidiDataRole::MidiValues:
-                return lut(index);
-            default:
-                break;
-        }
-    }
-
-    if (index.data(MidiDataRole::MidiValueType) == MidiType::ToggleType) {
-        const int value = m->data(m->index(index.row(), index.column()), Qt::EditRole).toInt();
-        switch(role) {
-            case Qt::DisplayRole:
-                return parameterLut[toggle_field_name].displayLut[value];
-            case Qt::CheckStateRole:
-                return value == 0 ? Qt::Unchecked : Qt::Checked;
-            default:
-                break;
-        }
-    }
-
-    if (index.data(MidiDataRole::MidiValueType) == MidiType::ChannelType) {
-        const int value = m->data(m->index(index.row(), index.column()), Qt::EditRole).toInt();
-        switch(role) {
-            case Qt::DisplayRole:
-                return value+1;
-            default:
-                break;
-        }
-    }
-    return m->data(m->index(index.row(), index.column()), role);
-*/
 }
 
 bool ProgramsModel::setData(const QModelIndex &index, const QVariant &value, int role) {
@@ -319,10 +240,6 @@ bool ProgramsModel::setData(const QModelIndex &index, const QVariant &value, int
 
     QAbstractItemModel* m = model(index);
     Q_CHECK_PTR(m);
-
-    if (role == Qt::EditRole && index.data(MidiDataRole::MidiValueType) == MidiType::ChannelType) {
-        return m->setData(m->index(index.row(), index.column()), value.toInt() - 1, role);
-    }
 
     return m->setData(m->index(index.row(), index.column()), value, role);
 }

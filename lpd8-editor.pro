@@ -12,7 +12,6 @@ SOURCES += src/main.cpp \
     src/lpd8_sysex.cpp \
     src/mainwindow.cpp \
     src/programproxymodel.cpp \
-    src/padproxymodel.cpp \
     src/midivaluedelegate.cpp \
     src/commands.cpp \
     src/programsmodel.cpp
@@ -54,7 +53,6 @@ HEADERS += \
     src/lpd8_types.h \
     src/mainwindow.h \
     src/programproxymodel.h \
-    src/padproxymodel.h \
     src/midivaluedelegate.h \
     src/enums.h \
     src/commands.h \
