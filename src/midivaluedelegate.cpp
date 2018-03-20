@@ -8,6 +8,7 @@
 
 #include <QtDebug>
 
+
 MidiType midiType(const QModelIndex& index) {
     return static_cast<MidiType>(index.data(MidiDataRole::MidiValueType).toInt());
 }
@@ -24,6 +25,10 @@ QStringList lut(const QModelIndex &index) {
 
 bool isToggle(const QModelIndex &index) {
     return hasLut(index) && lut(index).size() == 2;
+}
+
+bool isSpinbox(const QModelIndex &index) {
+    return hasLut(index) && lut(index).size() > 2;
 }
 
 QWidget* createSpinboxEditor(QWidget* parent, int min, int max) {
@@ -84,58 +89,61 @@ void MidiValueDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opt
 }
 
 QWidget* MidiValueDelegate::createEditor(
-        QWidget* /*parent*/,
-        const QStyleOptionViewItem&,
-        const QModelIndex& /*index*/) const {
+        QWidget* parent,
+        const QStyleOptionViewItem& option,
+        const QModelIndex& index) const {
+    if (isSpinbox(index)) {
+        return new LutSpinBox(lut(index), parent);
+    }
+    return QStyledItemDelegate::createEditor(parent, option, index);
+}
+
+void MidiValueDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const {
 //    Q_CHECK_PTR(index.model());
 
-    QWidget* ret = Q_NULLPTR;
+    if (isSpinbox(index)) {
+        LutSpinBox *sb = qobject_cast<LutSpinBox*>(editor);
+        Q_CHECK_PTR(sb);
+
+        sb->setValue(index.data(Qt::EditRole).toInt());
+        return;
+    }
+
+    QStyledItemDelegate::setEditorData(editor, index);
 
 //    switch (midiType(index)) {
 //    case MidiType::ChannelType:
 //    case MidiType::DefaultType:
 //    case MidiType::NoteType:
-//        ret = createSpinboxEditor(
-//                  parent,
-//                  index.data(MidiDataRole::MidiValueMin).toInt(),
-//                  index.data(MidiDataRole::MidiValueMax).toInt()
-//        );
+//        setDefaultEditorData(editor, index);
 //        break;
 //    default:
-//        ret = Q_NULLPTR;
 //        break;
 //    }
-
-    return ret;
-}
-
-void MidiValueDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const {
-    Q_CHECK_PTR(index.model());
-
-    switch (midiType(index)) {
-    case MidiType::ChannelType:
-    case MidiType::DefaultType:
-    case MidiType::NoteType:
-        setDefaultEditorData(editor, index);
-        break;
-    default:
-        break;
-    }
 }
 
 void MidiValueDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const {
-    Q_CHECK_PTR(editor);
     Q_CHECK_PTR(model);
 
-    switch (midiType(index)) {
-    case MidiType::ChannelType:
-    case MidiType::DefaultType:
-    case MidiType::NoteType:
-        setDefaultModelData(editor, model, index);
-        break;
-    default:
-        break;
+    if (isSpinbox(index)) {
+        LutSpinBox *sb = qobject_cast<LutSpinBox*>(editor);
+        Q_CHECK_PTR(sb);
+
+        model->setData(index, sb->value(), Qt::EditRole);
+        return;
     }
+
+    QStyledItemDelegate::setModelData(editor, model, index);
+
+//    switch (midiType(index)) {
+//    case MidiType::ChannelType:
+//    case MidiType::DefaultType:
+//    case MidiType::NoteType:
+//        setDefaultModelData(editor, model, index);
+//        break;
+//    default:
+//        break;
+//    }
 }
 
 void MidiValueDelegate::updateEditorGeometry(
@@ -160,4 +168,23 @@ bool MidiValueDelegate::editorEvent(QEvent* event, QAbstractItemModel* model, co
     }
 
     return QStyledItemDelegate::editorEvent(event, model, option, index);
+}
+
+
+LutSpinBox::LutSpinBox(const QStringList &lut, QWidget *parent) :
+    QSpinBox(parent),
+    m_lut(lut)
+{
+    setMinimum(0);
+    setMaximum(m_lut.count() - 1);
+}
+
+QString LutSpinBox::textFromValue(int value) const {
+    return m_lut.at(value);
+}
+
+int LutSpinBox::valueFromText(const QString &text) const {
+    const int ret = m_lut.indexOf(text);
+    Q_ASSERT(ret != -1);
+    return ret;
 }
