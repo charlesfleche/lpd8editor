@@ -2,7 +2,10 @@
 #define COMMANDS_H
 
 #include <QUndoCommand>
+#include <QVariant>
 
+class QAbstractItemModel;
+class QModelIndex;
 class QUndoStack;
 
 QUndoStack* undoStack();
@@ -31,6 +34,30 @@ private:
     int m_program_id;
     QString m_name;
     QByteArray m_sysex;
+};
+
+class UpdateParameterCommand : public QUndoCommand {
+public:
+    UpdateParameterCommand(
+        QAbstractItemModel* model,
+        int row,
+        int column,
+        const QVariant& value,
+        int role,
+        QUndoCommand *parent = Q_NULLPTR
+    );
+
+    void undo() Q_DECL_OVERRIDE;
+    void redo() Q_DECL_OVERRIDE;
+
+private:
+    void setDataAndKeepPrevious();
+
+    QAbstractItemModel* m_model;
+    const int m_row;
+    const int m_column;
+    QVariant m_value;
+    const int m_role;
 };
 
 #endif // COMMANDS_H

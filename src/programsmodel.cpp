@@ -1,5 +1,6 @@
 #include "programsmodel.h"
 
+#include "commands.h"
 #include "db.h"
 #include "enums.h"
 #include "lpd8_sysex.h"
@@ -241,7 +242,9 @@ bool ProgramsModel::setData(const QModelIndex &index, const QVariant &value, int
     QAbstractItemModel* m = model(index);
     Q_CHECK_PTR(m);
 
-    return m->setData(m->index(index.row(), index.column()), value, role);
+    QUndoCommand* cmd = new UpdateParameterCommand(m, index.row(), index.column(), value, role);
+    undoStack()->push(cmd);
+    return true;
 }
 
 Qt::ItemFlags ProgramsModel::flags(const QModelIndex &index) const {

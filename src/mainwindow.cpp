@@ -22,26 +22,25 @@ static const QString SETTINGS_KEY_DEFAULT_SYSEX = "default/sysex";
 
 MainWindow::MainWindow(Application* app, QWidget *parent) :
     QMainWindow(parent),
-    m_undo_stack(Q_NULLPTR),
     ui(new Ui::MainWindow),
     app(app)
 {
     Q_CHECK_PTR(app);
     Q_CHECK_PTR(app->midiIO());
 
-    m_undo_stack = new QUndoStack(this);
-
     ui->setupUi(this);
     setStatusBar(Q_NULLPTR);
 
     // Undo
 
-    ui->undoListView->setStack(m_undo_stack);
+    QUndoStack* stack = undoStack();
+    Q_CHECK_PTR(stack);
+    ui->undoListView->setStack(stack);
 
-    QAction* undoAction = m_undo_stack->createUndoAction(this, "&Undo");
+    QAction* undoAction = stack->createUndoAction(this, "&Undo");
     undoAction->setShortcuts(QKeySequence::Undo);
 
-    QAction* redoAction = m_undo_stack->createRedoAction(this, tr("&Redo"));
+    QAction* redoAction = stack->createRedoAction(this, tr("&Redo"));
     redoAction->setShortcuts(QKeySequence::Redo);
 
     ui->menuEdit->insertAction(ui->actionNewProgram, redoAction);
@@ -187,24 +186,24 @@ QString defaultSysex() {
 
 void MainWindow::on_actionNewProgram_triggered()
 {
-    Q_CHECK_PTR(m_undo_stack);
+    Q_CHECK_PTR(undoStack());
 
     QUndoCommand* cmd = new CreateProgramCommand(
         QSettings().value(SETTINGS_KEY_DEFAULT_NAME).toString(),
         QSettings().value(SETTINGS_KEY_DEFAULT_SYSEX).toByteArray()
     );
-    m_undo_stack->push(cmd);
+    undoStack()->push(cmd);
 }
 
 void MainWindow::on_actionDeleteProgram_triggered()
 {
-    Q_CHECK_PTR(m_undo_stack);
+    Q_CHECK_PTR(undoStack());
 
     QUndoCommand *cmd = new DeleteProgramCommand(
 //        app->activeProgramId()
         11
     );
-    m_undo_stack->push(cmd);
+    undoStack()->push(cmd);
 }
 
 void MainWindow::on_actionQuit_triggered()

@@ -52,3 +52,38 @@ void DeleteProgramCommand::redo() {
 void DeleteProgramCommand::undo() {
     m_program_id = createProgram(m_name, m_sysex);
 }
+
+
+UpdateParameterCommand::UpdateParameterCommand(
+    QAbstractItemModel *model,
+    int row,
+    int column,
+    const QVariant &value,
+    int role,
+    QUndoCommand *parent) :
+    QUndoCommand(parent),
+    m_model(model),
+    m_row(row),
+    m_column(column),
+    m_value(value),
+    m_role(role)
+{
+    Q_CHECK_PTR(m_model);
+}
+
+void UpdateParameterCommand::undo() {
+    setDataAndKeepPrevious();
+}
+
+void UpdateParameterCommand::redo() {
+    setDataAndKeepPrevious();
+}
+
+void UpdateParameterCommand::setDataAndKeepPrevious() {
+    Q_CHECK_PTR(m_model);
+
+    QVariant newValue = m_value;
+    const QModelIndex index = m_model->index(m_row, m_column);
+    m_value = index.data(m_role);
+    m_model->setData(index, newValue, m_role);
+}
