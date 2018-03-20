@@ -3,6 +3,10 @@
 
 #include <QUndoCommand>
 
+class QUndoStack;
+
+QUndoStack* undoStack();
+
 class CreateProgramCommand : public QUndoCommand {
 public:
     CreateProgramCommand(const QString&, const QByteArray&, QUndoCommand* parent = Q_NULLPTR);

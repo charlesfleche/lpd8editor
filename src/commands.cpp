@@ -2,6 +2,25 @@
 
 #include "db.h"
 
+static const QString undo_stack_object_name = "undo_stack";
+
+QUndoStack* setupUndoStack(QObject* parent) {
+    QUndoStack* stack = new QUndoStack(parent);
+    stack->setObjectName(undo_stack_object_name);
+    return stack;
+}
+
+QUndoStack* undoStack() {
+    Q_CHECK_PTR(qApp);
+
+    QUndoStack* stack = qApp->findChild<QUndoStack*>(undo_stack_object_name, Qt::FindDirectChildrenOnly);
+    if (stack == Q_NULLPTR) {
+        stack = setupUndoStack(qApp);
+    }
+    Q_CHECK_PTR(stack);
+    return stack;
+}
+
 CreateProgramCommand::CreateProgramCommand(const QString& name, const QByteArray& sysex, QUndoCommand* parent) :
     QUndoCommand(parent),
     m_name(name),
