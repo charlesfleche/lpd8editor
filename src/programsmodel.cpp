@@ -28,6 +28,10 @@ static const QString toggle_field_name("toggle");
 static const QString pads_group_name = "pads";
 static const QString knobs_group_name = "knobs";
 
+static const QString momentary_label = "Momentary";
+static const QString toggle_label = "Toggle";
+
+
 // XXX those are kinda nasty, and not data driven...
 
 static const int control_type_pad = 0;
@@ -67,6 +71,29 @@ ProgramsModel::ProgramsModel(QObject *parent) :
     m_programs(Q_NULLPTR),
     m_empty(Q_NULLPTR)
 {
+    // LUTs
+
+    for (int i = 0 ; i <= 127 ; ++i) {
+        m_lut_default << QString::number(i);
+    }
+
+    for (int i = 0 ; i <= 15 ; ++i) {
+        m_lut_channel<< QString::number(i+1);
+    }
+
+    m_lut_toggle << momentary_label;
+    m_lut_toggle << toggle_label;
+
+    m_luts[channel_field_name] = m_lut_channel;
+    m_luts[note_field_name] = m_lut_default;
+    m_luts[pc_field_name] = m_lut_default;
+    m_luts[cc_field_name] = m_lut_default;
+    m_luts[toggle_field_name] = m_lut_toggle;
+    m_luts[low_field_name] = m_lut_default;
+    m_luts[high_field_name] = m_lut_default;
+
+    // Models
+
     m_empty = new QStandardItemModel(this);
 
     m_knobs = new QSqlTableModel(this);
@@ -225,6 +252,19 @@ QVariant ProgramsModel::data(const QModelIndex &index, int role) const {
     const QAbstractItemModel* m = model(index);
     Q_CHECK_PTR(m);
 
+    if (hasLut(index)) {
+        switch (role) {
+        case Qt::DisplayRole:
+            return lut(index)[index.data(Qt::EditRole).toInt()];
+        case MidiDataRole::MidiValues:
+            return lut(index);
+        default:
+            break;
+        }
+    }
+
+    return m->data(m->index(index.row(), index.column()), role);
+/*
     if (role >= Qt::UserRole) {
         const QString name = m->headerData(index.column(), Qt::Horizontal).toString();
         switch (role) {
@@ -242,6 +282,8 @@ QVariant ProgramsModel::data(const QModelIndex &index, int role) const {
                     return parameterLut[name].max + 1;
                 }
                 return parameterLut[name].max;
+            case MidiDataRole::MidiValues:
+                return lut(index);
             default:
                 break;
         }
@@ -268,8 +310,8 @@ QVariant ProgramsModel::data(const QModelIndex &index, int role) const {
                 break;
         }
     }
-
     return m->data(m->index(index.row(), index.column()), role);
+*/
 }
 
 bool ProgramsModel::setData(const QModelIndex &index, const QVariant &value, int role) {
@@ -438,4 +480,22 @@ void ProgramsModel::removeFilters(int programId) {
     // Knobs
 
     m_knobs_proxies.take(programId)->deleteLater();
+}
+
+bool ProgramsModel::hasLut(const QModelIndex &index) const {
+    const QAbstractItemModel* m = model(index);
+    Q_CHECK_PTR(m);
+
+    const QString name = m->headerData(index.column(), Qt::Horizontal).toString();
+    return m_luts.contains(name);
+}
+
+QStringList ProgramsModel::lut(const QModelIndex & index) const {
+    Q_ASSERT(hasLut(index));
+
+    const QAbstractItemModel* m = model(index);
+    Q_CHECK_PTR(m);
+
+    const QString name = m->headerData(index.column(), Qt::Horizontal).toString();
+    return m_luts[name];
 }

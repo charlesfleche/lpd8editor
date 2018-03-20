@@ -35,6 +35,9 @@ private:
     void addFilters(int programId);
     void removeFilters(int programId);
 
+    bool hasLut(const QModelIndex& index) const;
+    QStringList lut(const QModelIndex& index) const;
+
     QHash<int, QSortFilterProxyModel*> m_groups_proxies;
     QHash<int, QSortFilterProxyModel*> m_pads_proxies;
     QHash<int, QSortFilterProxyModel*> m_knobs_proxies;
@@ -44,6 +47,11 @@ private:
     QSqlTableModel* m_knobs;
     QSqlTableModel* m_programs;
     QStandardItemModel* m_empty;
+
+    QStringList m_lut_default;
+    QStringList m_lut_channel;
+    QStringList m_lut_toggle;
+    QHash<QString, QStringList> m_luts;
 };
 
 #endif // PROGRAMSMODEL_H
