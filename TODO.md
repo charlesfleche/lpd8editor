@@ -1,6 +1,5 @@
 - Show programs list on the left
 - Select current program for the list on the left
-- Undo delete puts program back at the same place
 - Widget wrappers
 - Export program
 - Get program from LPD8 + undo
