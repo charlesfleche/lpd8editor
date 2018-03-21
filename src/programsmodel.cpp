@@ -95,6 +95,13 @@ ProgramsModel::ProgramsModel(QObject *parent) :
         &ProgramsModel::modelReset
     );
 
+    connect(
+        m_programs,
+        &QSqlTableModel::dataChanged,
+        this,
+        &ProgramsModel::dataChanged
+    );
+
     select();
 }
 
