@@ -1,6 +1,7 @@
 #include "commands.h"
 
 #include "db.h"
+#include "programsmodel.h"
 
 static const QString undo_stack_object_name = "undo_stack";
 
@@ -21,38 +22,69 @@ QUndoStack* undoStack() {
     return stack;
 }
 
-CreateProgramCommand::CreateProgramCommand(const QString& name, const QByteArray& sysex, QUndoCommand* parent) :
+CreateProgramCommand::CreateProgramCommand(ProgramsModel* model, const QString& name, const QByteArray& sysex, QUndoCommand* parent) :
     QUndoCommand(parent),
+    m_model(model),
     m_name(name),
     m_sysex(sysex),
     m_program_id(-1) {
+    Q_CHECK_PTR(m_model);
+
     setText("Create program");
 }
 
 void CreateProgramCommand::redo() {
+    Q_CHECK_PTR(m_model);
+
     m_program_id = createProgram(m_name, m_sysex, m_program_id);
-    setObsolete(m_program_id == -1);
+    if (m_program_id != -1) {
+        m_model->select();
+    } else {
+        setObsolete(true);
+    }
 }
 
 void CreateProgramCommand::undo() {
-    deleteProgram(m_program_id);
+    Q_CHECK_PTR(m_model);
+
+    if (deleteProgram(m_program_id)) {
+        m_model->select();
+    } else {
+        setObsolete(true);
+    }
 }
 
 
-DeleteProgramCommand::DeleteProgramCommand(int program_id, QUndoCommand *parent) :
+DeleteProgramCommand::DeleteProgramCommand(ProgramsModel* model, int program_id, QUndoCommand *parent) :
     QUndoCommand(parent),
+    m_model(model),
     m_program_id(program_id) {
+    Q_CHECK_PTR(m_model);
+
     setText("Delete program " + programName(m_program_id));
 }
 
 void DeleteProgramCommand::redo() {
+    Q_CHECK_PTR(m_model);
+
     m_name = programName(m_program_id);
     m_sysex = programSysex(m_program_id);
-    setObsolete(!deleteProgram(m_program_id));
+    if (deleteProgram(m_program_id)) {
+        m_model->select();
+    } else {
+        setObsolete(true);
+    }
 }
 
 void DeleteProgramCommand::undo() {
+    Q_CHECK_PTR(m_model);
+
     m_program_id = createProgram(m_name, m_sysex, m_program_id);
+    if (m_program_id != -1) {
+        m_model->select();
+    } else {
+        setObsolete(true);
+    }
 }
 
 

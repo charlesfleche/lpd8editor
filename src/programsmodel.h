@@ -24,8 +24,8 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const Q_DECL_OVERRIDE;
     Qt::ItemFlags flags(const QModelIndex &index) const Q_DECL_OVERRIDE;
 
-private slots:
-    void refresh();
+public slots:
+    void select();
 
 private:
     QAbstractItemModel* model(const QModelIndex &idx);

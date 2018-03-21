@@ -95,21 +95,10 @@ ProgramsModel::ProgramsModel(QObject *parent) :
         &ProgramsModel::modelReset
     );
 
-    QSqlDriver *driver = QSqlDatabase::database().driver();
-    Q_CHECK_PTR(driver);
-
-    driver->subscribeToNotification("programs");
-    connect(
-        driver,
-        QOverload<const QString&>::of(&QSqlDriver::notification),
-        this,
-        &ProgramsModel::refresh
-    );
-
-    refresh();
+    select();
 }
 
-void ProgramsModel::refresh() {
+void ProgramsModel::select() {
     Q_CHECK_PTR(m_programs);
     Q_CHECK_PTR(m_pads);
     Q_CHECK_PTR(m_knobs);

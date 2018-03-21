@@ -189,6 +189,7 @@ void MainWindow::on_actionNewProgram_triggered()
     Q_CHECK_PTR(undoStack());
 
     QUndoCommand* cmd = new CreateProgramCommand(
+        app->myPrograms(),
         QSettings().value(SETTINGS_KEY_DEFAULT_NAME).toString(),
         QSettings().value(SETTINGS_KEY_DEFAULT_SYSEX).toByteArray()
     );
@@ -200,6 +201,7 @@ void MainWindow::on_actionDeleteProgram_triggered()
     Q_CHECK_PTR(undoStack());
 
     QUndoCommand *cmd = new DeleteProgramCommand(
+        app->myPrograms(),
 //        app->activeProgramId()
         7
     );

@@ -4,6 +4,8 @@
 #include <QUndoCommand>
 #include <QVariant>
 
+class ProgramsModel;
+
 class QAbstractItemModel;
 class QModelIndex;
 class QUndoStack;
@@ -12,12 +14,13 @@ QUndoStack* undoStack();
 
 class CreateProgramCommand : public QUndoCommand {
 public:
-    CreateProgramCommand(const QString&, const QByteArray&, QUndoCommand* parent = Q_NULLPTR);
+    CreateProgramCommand(ProgramsModel* model, const QString&, const QByteArray&, QUndoCommand* parent = Q_NULLPTR);
 
     void undo() Q_DECL_OVERRIDE;
     void redo() Q_DECL_OVERRIDE;
 
 private:
+    ProgramsModel *m_model;
     const QString m_name;
     const QByteArray m_sysex;
     int m_program_id;
@@ -25,12 +28,13 @@ private:
 
 class DeleteProgramCommand : public QUndoCommand {
 public:
-    DeleteProgramCommand(int, QUndoCommand* parent = Q_NULLPTR);
+    DeleteProgramCommand(ProgramsModel* model, int programId, QUndoCommand* parent = Q_NULLPTR);
 
     void undo() Q_DECL_OVERRIDE;
     void redo() Q_DECL_OVERRIDE;
 
 private:
+    ProgramsModel *m_model;
     int m_program_id;
     QString m_name;
     QByteArray m_sysex;
