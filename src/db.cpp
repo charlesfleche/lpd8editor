@@ -201,7 +201,7 @@ int createProgram(const QString &name, const QByteArray &sysex, int programId) {
 
         // Pads
 
-        for (int controlId = 0; controlId < sysex::padsCount(); ++controlId) {
+        for (int controlId = 1; controlId <= sysex::padsCount(); ++controlId) {
             GOTO_END_IF_FALSE(q.prepare("update pads set note = ?, pc = ?, cc = ?, toggle = ? where programId = ? and controlId = ?"));
             s >> v;
             q.addBindValue(v);
@@ -216,7 +216,7 @@ int createProgram(const QString &name, const QByteArray &sysex, int programId) {
             GOTO_END_IF_FALSE(q.exec());
         }
 
-        for (int controlId = 0; controlId < sysex::knobsCount(); ++controlId) {
+        for (int controlId = 1; controlId <= sysex::knobsCount(); ++controlId) {
             GOTO_END_IF_FALSE(q.prepare("update knobs set cc = ?, low = ?, high = ? where programId = ? and controlId = ?"));
             s >> v;
             q.addBindValue(v);
