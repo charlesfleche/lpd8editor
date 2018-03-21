@@ -119,6 +119,8 @@ QByteArray fromSysexTextFile(const QString &path) {
             ret.append(readAndValidateChar(in, 0, 127)); // knob low
             ret.append(readAndValidateChar(in, 0, 127)); // knob high
         }
+
+        ret.append(readAndValidateChar(in, 0xf7)); // Sysex End
     } catch (const std::runtime_error& e) {
         qWarning() << "Failed to parse sysex text file:" << path << "[" << e.what() << "]";
         return QByteArray();
