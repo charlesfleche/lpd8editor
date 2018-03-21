@@ -106,11 +106,6 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     refreshActionDeleteProgram();
     refreshWidgetStack();
 
-    connect(app,
-            &Application::activeProgramChannelChanged,
-            this,
-            &MainWindow::setMidiChannel);
-
     connect(app->midiIO(),
             &MidiIO::thirdPartyModifiedConnections,
             [=]() {
@@ -150,11 +145,6 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-void MainWindow::setMidiChannel(int /*channel*/)
-{
-
 }
 
 int MainWindow::programModelColumn() const

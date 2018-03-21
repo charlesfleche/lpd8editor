@@ -42,8 +42,6 @@ private slots:
 
     void on_actionRescan_triggered();
 
-    void setMidiChannel(int);
-
     void refreshActionDeleteProgram();
     void refreshWidgetStack();
 
