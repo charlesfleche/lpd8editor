@@ -231,7 +231,7 @@ void MainWindow::refreshActionDeleteProgram()
 
 void MainWindow::on_actionImportProgram_triggered()
 {
-    Q_CHECK_PTR(app);
+    Q_CHECK_PTR(undoStack());
 
     const QString path(
                 QFileDialog::getOpenFileName(
@@ -241,7 +241,13 @@ void MainWindow::on_actionImportProgram_triggered()
     if (path.isEmpty()) {
         return;
     }
-    app->importProgram(path);
+
+    QUndoCommand* cmd = new CreateProgramCommand(
+        app->myPrograms(),
+        QDir(path).dirName(),
+        fromSysexTextFile(path)
+    );
+    undoStack()->push(cmd);
 }
 
 void MainWindow::on_actionExportProgram_triggered()
