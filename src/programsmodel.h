@@ -24,6 +24,9 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const Q_DECL_OVERRIDE;
     Qt::ItemFlags flags(const QModelIndex &index) const Q_DECL_OVERRIDE;
 
+    QModelIndex padsParentIndex(const QModelIndex &programIndex) const;
+    QModelIndex knobsParentIndex(const QModelIndex &programIndex) const;
+
 public slots:
     void select();
 

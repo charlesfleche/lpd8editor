@@ -415,3 +415,43 @@ QStringList ProgramsModel::lut(const QModelIndex & index) const {
     const QString name = m->headerData(index.column(), Qt::Horizontal).toString();
     return m_luts[name];
 }
+
+QModelIndex ProgramsModel::padsParentIndex(const QModelIndex &programIndex) const {
+    Q_ASSERT(programIndex.isValid());
+
+    Q_CHECK_PTR(m_programs);
+    Q_ASSERT(model(programIndex) == m_programs);
+
+    const QModelIndex program = index(programIndex.row(), program_id_column_index);
+    const QModelIndex pads = index(control_type_pad, program_id_column_index, program);
+
+#ifndef QT_NO_DEBUG
+    const QAbstractItemModel *m = model(pads);
+    Q_CHECK_PTR(m);
+    const int programId = pads.data().toInt();
+    Q_ASSERT(m_pads_proxies.contains(programId));
+    Q_ASSERT(m == m_groups_proxies[programId]);
+#endif
+
+    return pads;
+}
+
+QModelIndex ProgramsModel::knobsParentIndex(const QModelIndex &programIndex) const {
+    Q_ASSERT(programIndex.isValid());
+
+    Q_CHECK_PTR(m_programs);
+    Q_ASSERT(model(programIndex) == m_programs);
+
+    const QModelIndex program = index(programIndex.row(), program_id_column_index);
+    const QModelIndex knobs = index(control_type_knob, program_id_column_index, program);
+
+#ifndef QT_NO_DEBUG
+    const QAbstractItemModel *m = model(knobs);
+    Q_CHECK_PTR(m);
+    const int programId = knobs.data().toInt();
+    Q_ASSERT(m_knobs_proxies.contains(programId));
+    Q_ASSERT(m == m_groups_proxies[programId]);
+#endif
+
+    return knobs;
+}

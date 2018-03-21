@@ -5,6 +5,7 @@
 #include "commands.h"
 #include "midiio.h"
 #include "midivaluedelegate.h"
+#include "programsmodel.h"
 #include "utils.h"
 
 #include <QComboBox>
@@ -73,12 +74,13 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 
     ui->padsView->setItemDelegate(new MidiValueDelegate(this));
 //    ui->padsView->setModel(app->pads());
+    ui->padsView->setModel(app->programs());
     ui->padsView->hideColumn(0);
     ui->padsView->hideColumn(1);
     ui->padsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->knobsView->setItemDelegate(new MidiValueDelegate(this));
-//    ui->knobsView->setModel(app->knobs());
+    ui->knobsView->setModel(app->programs());
     ui->knobsView->hideColumn(0);
     ui->knobsView->hideColumn(1);
     ui->knobsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
@@ -96,6 +98,21 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             &QItemSelectionModel::currentRowChanged,
             mapper,
             &QDataWidgetMapper::setCurrentModelIndex);
+
+    connect(sel,
+            &QItemSelectionModel::currentRowChanged,
+            [=](const QModelIndex &current) {
+                Q_CHECK_PTR(app->myPrograms());
+
+                ui->padsView->setRootIndex(app->myPrograms()->padsParentIndex(current));
+                ui->knobsView->setRootIndex(app->myPrograms()->knobsParentIndex(current));
+
+//                ui->padsView->setModel(app->myPrograms()->pads(current));
+//                ui->padsView->setItemDelegate(new MidiValueDelegate(this));
+
+//                ui->knobsView->setModel(app->myPrograms()->knobs(current));
+            }
+    );
 
     connect(app->programs(),
             &QAbstractItemModel::modelReset,
