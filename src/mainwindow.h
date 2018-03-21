@@ -42,7 +42,7 @@ private slots:
 
     void on_actionRescan_triggered();
 
-    void refreshActionDeleteProgram();
+    void refreshUiAccordingToSelection();
     void refreshWidgetStack();
 
 private:

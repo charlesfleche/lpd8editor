@@ -101,7 +101,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     connect(sel,
             &QItemSelectionModel::selectionChanged,
             this,
-            &MainWindow::refreshActionDeleteProgram
+            &MainWindow::refreshUiAccordingToSelection
     );
     connect(sel,
             &QItemSelectionModel::currentRowChanged,
@@ -115,21 +115,16 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 
                 ui->padsView->setRootIndex(app->myPrograms()->padsParentIndex(current));
                 ui->knobsView->setRootIndex(app->myPrograms()->knobsParentIndex(current));
-
-//                ui->padsView->setModel(app->myPrograms()->pads(current));
-//                ui->padsView->setItemDelegate(new MidiValueDelegate(this));
-
-//                ui->knobsView->setModel(app->myPrograms()->knobs(current));
             }
     );
 
     connect(app->programs(),
             &QAbstractItemModel::modelReset,
             this,
-            &MainWindow::refreshActionDeleteProgram
+            &MainWindow::refreshUiAccordingToSelection
     );
 
-    refreshActionDeleteProgram();
+    refreshUiAccordingToSelection();
     refreshWidgetStack();
 
     connect(app->midiIO(),
@@ -227,12 +222,16 @@ void MainWindow::on_programsView_activated(const QModelIndex& idx)
     app->setActiveProgramId(getProgramId(idx.model(), idx.row()));
 }
 
-void MainWindow::refreshActionDeleteProgram()
+void MainWindow::refreshUiAccordingToSelection()
 {
     QItemSelectionModel *sel = ui->programsView->selectionModel();
     Q_CHECK_PTR(sel);
 
     ui->actionDeleteProgram->setEnabled(sel->hasSelection());
+
+    Q_CHECK_PTR(app);
+    QWidget* w = sel->hasSelection() ? ui->pageEditor : ui->pageDefault;
+    ui->stackedWidget->setCurrentWidget(w);
 }
 
 void MainWindow::on_actionImportProgram_triggered()
