@@ -50,7 +50,7 @@ QWidget* MidiValueDelegate::createEditor(
         const QStyleOptionViewItem& option,
         const QModelIndex& index) const {
     if (isSpinbox(index)) {
-        return new LutSpinBox(lut(index), parent);
+        return new LutSpinBox(parent);
     }
 
     return QStyledItemDelegate::createEditor(parent, option, index);
@@ -61,6 +61,7 @@ void MidiValueDelegate::setEditorData(QWidget* editor, const QModelIndex& index)
         LutSpinBox *sb = qobject_cast<LutSpinBox*>(editor);
         Q_CHECK_PTR(sb);
 
+        sb->setLut(lut(index));
         sb->setValue(index.data(Qt::EditRole).toInt());
         return;
     }
@@ -106,16 +107,20 @@ bool MidiValueDelegate::editorEvent(QEvent* event, QAbstractItemModel* model, co
 }
 
 
-LutSpinBox::LutSpinBox(const QStringList &lut, QWidget *parent) :
-    QSpinBox(parent),
-    m_lut(lut)
+LutSpinBox::LutSpinBox(QWidget *parent) :
+    QSpinBox(parent)
 {
+
+}
+
+void LutSpinBox::setLut(const QStringList &lut) {
+    m_lut = lut;
     setMinimum(0);
     setMaximum(m_lut.count() - 1);
 }
 
 QString LutSpinBox::textFromValue(int value) const {
-    return m_lut.at(value);
+    return m_lut.isEmpty() ? QString() : m_lut.at(value);
 }
 
 int LutSpinBox::valueFromText(const QString &text) const {

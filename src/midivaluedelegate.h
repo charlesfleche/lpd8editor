@@ -26,14 +26,16 @@ class LutSpinBox : public QSpinBox {
     Q_OBJECT
 
 public:
-    LutSpinBox(const QStringList& lut, QWidget *parent = Q_NULLPTR);
+    LutSpinBox(QWidget *parent = Q_NULLPTR);
+
+    void setLut(const QStringList &lut);
 
 protected:
     QString textFromValue(int value) const Q_DECL_OVERRIDE;
     int valueFromText(const QString &text) const Q_DECL_OVERRIDE;
 
 private:
-    const QStringList m_lut;
+    QStringList m_lut;
 };
 
 #endif // MIDIVALUEDELEGATE_H

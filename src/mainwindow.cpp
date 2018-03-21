@@ -8,6 +8,7 @@
 #include "utils.h"
 
 #include <QComboBox>
+#include <QDataWidgetMapper>
 #include <QFileDialog>
 #include <QPushButton>
 #include <QSettings>
@@ -65,6 +66,11 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ui->programsView->setModel(app->programs());
     ui->programsView->setModelColumn(programModelColumn());
 
+    QDataWidgetMapper *mapper = new QDataWidgetMapper(this);
+    mapper->setModel(app->programs());
+    mapper->setItemDelegate(new MidiValueDelegate(this));
+    mapper->addMapping(ui->channelSpinBox, 2); // XXX
+
     ui->padsView->setItemDelegate(new MidiValueDelegate(this));
 //    ui->padsView->setModel(app->pads());
     ui->padsView->hideColumn(0);
@@ -86,6 +92,10 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             this,
             &MainWindow::refreshActionDeleteProgram
     );
+    connect(sel,
+            &QItemSelectionModel::currentRowChanged,
+            mapper,
+            &QDataWidgetMapper::setCurrentModelIndex);
 
     connect(app->programs(),
             &QAbstractItemModel::modelReset,
@@ -95,27 +105,6 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 
     refreshActionDeleteProgram();
     refreshWidgetStack();
-
-    QGridLayout* l = new QGridLayout;
-    l->setSizeConstraint(QLayout::SetMinimumSize);
-    for (int i=1 ; i <= 16 ; ++i) {
-        QPushButton* b = new QPushButton(this);
-        b->setMaximumWidth(b->height()*3);
-        b->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-        b->setText(QString::number(i));
-        b->setCheckable(true);
-        b->setAutoExclusive(true);
-        connect(b,
-                &QPushButton::clicked,
-                [=](){
-            Q_CHECK_PTR(app);
-            app->setActiveProgramChannel(i);
-        });
-        const int row = (i - 1) < 8 ? 0 : 1;
-        const int col = (i - 1) % 8;
-        l->addWidget(b, row, col, 1, 1);
-        midiChannelButtons.append(b);
-    }
 
     connect(app,
             &Application::activeProgramChannelChanged,
@@ -163,18 +152,9 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::setMidiChannel(int channel)
+void MainWindow::setMidiChannel(int /*channel*/)
 {
-    Q_ASSERT(channel == -1 || (channel >= 1 && channel <= 16));
 
-    QPushButton* b;
-    if (channel == -1) {
-        foreach (b, midiChannelButtons) {
-            b->setChecked(false);
-        }
-    } else {
-        midiChannelButtons[--channel]->setChecked(true);
-    }
 }
 
 int MainWindow::programModelColumn() const

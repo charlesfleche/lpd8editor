@@ -200,14 +200,17 @@
            </spacer>
           </item>
           <item>
-           <widget class="QLabel" name="label">
+           <widget class="QLabel" name="channelLabel">
             <property name="text">
-             <string>Midi channel</string>
+             <string>&amp;Midi channel</string>
+            </property>
+            <property name="buddy">
+             <cstring>channelSpinBox</cstring>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QSpinBox" name="spinBox"/>
+           <widget class="LutSpinBox" name="channelSpinBox"/>
           </item>
          </layout>
         </item>
@@ -457,6 +460,11 @@
    <class>QUndoView</class>
    <extends>QListView</extends>
    <header location="global">QUndoView</header>
+  </customwidget>
+  <customwidget>
+   <class>LutSpinBox</class>
+   <extends>QSpinBox</extends>
+   <header>midivaluedelegate.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
