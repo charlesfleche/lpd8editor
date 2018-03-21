@@ -73,17 +73,26 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     mapper->addMapping(ui->channelSpinBox, 2); // XXX
 
     ui->padsView->setItemDelegate(new MidiValueDelegate(this));
-//    ui->padsView->setModel(app->pads());
     ui->padsView->setModel(app->programs());
+    ui->padsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+    QHeaderView* headerView = new QHeaderView(Qt::Horizontal, this);
+    headerView->setModel(app->myPrograms()->padsHeaderModel());
+    ui->padsView->setHorizontalHeader(headerView);
+
     ui->padsView->hideColumn(0);
     ui->padsView->hideColumn(1);
-    ui->padsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->knobsView->setItemDelegate(new MidiValueDelegate(this));
     ui->knobsView->setModel(app->programs());
+    ui->knobsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+    headerView = new QHeaderView(Qt::Horizontal, this);
+    headerView->setModel(app->myPrograms()->knobsHeaderModel());
+    ui->knobsView->setHorizontalHeader(headerView);
+
     ui->knobsView->hideColumn(0);
     ui->knobsView->hideColumn(1);
-    ui->knobsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     // Refresh action delete program
 

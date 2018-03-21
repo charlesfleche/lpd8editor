@@ -31,7 +31,8 @@ static const QString toggle_label = "Toggle";
 static const int control_type_pad = 0;
 static const int control_type_knob = 1;
 static const int program_id_column_index = 0;
-
+QStandardItemModel* m_pads_header_model;
+QStandardItemModel* m_knobs_header_model;
 
 ProgramsModel::ProgramsModel(QObject *parent) :
     QAbstractItemModel(parent),
@@ -270,6 +271,10 @@ Qt::ItemFlags ProgramsModel::flags(const QModelIndex &index) const {
     return flags;
 }
 
+QVariant ProgramsModel::headerData(int section, Qt::Orientation orientation, int role) const {
+    return m_pads->headerData(section, orientation, role);
+}
+
 QModelIndex ProgramsModel::index(int row, int column, const QModelIndex &parent) const {
     const QAbstractItemModel* m = modelFromParent(parent);
     Q_CHECK_PTR(m);
@@ -454,4 +459,16 @@ QModelIndex ProgramsModel::knobsParentIndex(const QModelIndex &programIndex) con
 #endif
 
     return knobs;
+}
+
+QAbstractItemModel *ProgramsModel::padsHeaderModel() const {
+    Q_ASSERT(m_pads);
+
+    return m_pads;
+}
+
+QAbstractItemModel *ProgramsModel::knobsHeaderModel() const {
+    Q_ASSERT(m_knobs);
+
+    return m_knobs;
 }
