@@ -1,5 +1,6 @@
-- Select current program for the list on the left
-- Widget wrappers
+- Parameter names (horizontal sections)
+- Control names (vertical sections)
+- Delete program from selection
 - Export program
 - Get program from LPD8 + undo
 - Send program to LPD8
