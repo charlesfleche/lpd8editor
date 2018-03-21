@@ -1,3 +1,4 @@
+- Create / delete program manually refresh ProgramsModel
 - Import program from file + undo
 - Show programs list on the left
 - Select current program for the list on the left

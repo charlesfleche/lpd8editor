@@ -201,7 +201,7 @@ void MainWindow::on_actionDeleteProgram_triggered()
 
     QUndoCommand *cmd = new DeleteProgramCommand(
 //        app->activeProgramId()
-        11
+        7
     );
     undoStack()->push(cmd);
 }

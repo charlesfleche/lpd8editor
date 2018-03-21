@@ -3,7 +3,7 @@
 
 #include <QtSql>
 
-int createProgram(const QString &programName = QString(), const QByteArray &sysex = QByteArray());
+int createProgram(const QString &programName = QString(), const QByteArray &sysex = QByteArray(), int programId = -1);
 QString programName(int programId);
 QByteArray programSysex(int programId);
 QList<int> programIds();

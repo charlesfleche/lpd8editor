@@ -149,19 +149,24 @@ end:
     return ret;
 }
 
-int createProgram(const QString &name, const QByteArray &sysex) {
+int createProgram(const QString &name, const QByteArray &sysex, int programId) {
     Q_UNUSED(name);
     Q_UNUSED(sysex);
-
-    int programId = -1;
 
     QSqlDatabase::database().transaction();
 
     QSqlQuery q;
-    GOTO_END_IF_FALSE(q.prepare("insert into programs default values;"));
-    GOTO_END_IF_FALSE(q.exec());
 
-    programId = q.lastInsertId().toInt();
+    if (programId == -1) {
+        GOTO_END_IF_FALSE(q.prepare("insert into programs default values;"));
+        GOTO_END_IF_FALSE(q.exec());
+
+        programId = q.lastInsertId().toInt();
+    } else {
+        GOTO_END_IF_FALSE(q.prepare("insert into programs (programId) values (?);"));
+        q.addBindValue(programId);
+        GOTO_END_IF_FALSE(q.exec());
+    }
 
     GOTO_END_IF_FALSE(q.prepare("update programs set name = ? where programId = ?"));
     q.addBindValue(name.isNull() ? QVariant(programId) : QVariant(name));

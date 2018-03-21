@@ -30,12 +30,14 @@ CreateProgramCommand::CreateProgramCommand(const QString& name, const QByteArray
 }
 
 void CreateProgramCommand::redo() {
-    m_program_id = createProgram(m_name, m_sysex);
+    m_program_id = createProgram(m_name, m_sysex, m_program_id);
+    setObsolete(m_program_id == -1);
 }
 
 void CreateProgramCommand::undo() {
     deleteProgram(m_program_id);
 }
+
 
 DeleteProgramCommand::DeleteProgramCommand(int program_id, QUndoCommand *parent) :
     QUndoCommand(parent),
@@ -50,7 +52,7 @@ void DeleteProgramCommand::redo() {
 }
 
 void DeleteProgramCommand::undo() {
-    m_program_id = createProgram(m_name, m_sysex);
+    m_program_id = createProgram(m_name, m_sysex, m_program_id);
 }
 
 
