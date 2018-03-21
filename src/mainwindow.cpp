@@ -122,8 +122,6 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             this,
             &MainWindow::setMidiChannel);
 
-    ui->groupBoxMidiChannel->setLayout(l);
-
     connect(app->midiIO(),
             &MidiIO::thirdPartyModifiedConnections,
             [=]() {
