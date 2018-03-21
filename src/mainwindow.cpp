@@ -62,6 +62,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
                 refreshWidgetStack();
             });
 
+    ui->programsView->setModel(app->programs());
     ui->programsView->setModelColumn(programModelColumn());
 
     ui->padsView->setItemDelegate(new MidiValueDelegate(this));
@@ -75,6 +76,16 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ui->knobsView->hideColumn(0);
     ui->knobsView->hideColumn(1);
     ui->knobsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+    // Refresh action delete program
+
+    QItemSelectionModel *sel = ui->programsView->selectionModel();
+    Q_CHECK_PTR(sel);
+    connect(sel,
+            &QItemSelectionModel::selectionChanged,
+            this,
+            &MainWindow::refreshActionDeleteProgram
+    );
 
     connect(app->programs(),
             &QAbstractItemModel::modelReset,
@@ -224,9 +235,10 @@ void MainWindow::on_programsView_activated(const QModelIndex& idx)
 
 void MainWindow::refreshActionDeleteProgram()
 {
-    Q_CHECK_PTR(app);
+    QItemSelectionModel *sel = ui->programsView->selectionModel();
+    Q_CHECK_PTR(sel);
 
-//    ui->actionDeleteProgram->setEnabled(app->programs()->rowCount() > 0);
+    ui->actionDeleteProgram->setEnabled(sel->hasSelection());
 }
 
 void MainWindow::on_actionImportProgram_triggered()
