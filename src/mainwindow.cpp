@@ -189,7 +189,7 @@ void MainWindow::on_actionNewProgram_triggered()
     Q_CHECK_PTR(undoStack());
 
     QUndoCommand* cmd = new CreateProgramCommand(
-        app->myPrograms(),
+        ui->programsView->selectionModel(),
         QSettings().value(SETTINGS_KEY_DEFAULT_NAME).toString(),
         QSettings().value(SETTINGS_KEY_DEFAULT_SYSEX).toByteArray()
     );
@@ -248,7 +248,7 @@ void MainWindow::on_actionImportProgram_triggered()
     }
 
     QUndoCommand* cmd = new CreateProgramCommand(
-        app->myPrograms(),
+        ui->programsView->selectionModel(),
         QDir(path).dirName(),
         fromSysexTextFile(path)
     );

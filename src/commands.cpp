@@ -3,6 +3,8 @@
 #include "db.h"
 #include "programsmodel.h"
 
+#include <QItemSelectionModel>
+
 static const QString undo_stack_object_name = "undo_stack";
 
 QUndoStack* setupUndoStack(QObject* parent) {
@@ -22,12 +24,40 @@ QUndoStack* undoStack() {
     return stack;
 }
 
-CreateProgramCommand::CreateProgramCommand(ProgramsModel* model, const QString& name, const QByteArray& sysex, QUndoCommand* parent) :
+int selectedProgramId(const QItemSelectionModel *selection_model) {
+    Q_CHECK_PTR(selection_model);
+
+    if (!selection_model->hasSelection()) {
+        return -1;
+    }
+
+    const QAbstractItemModel *model = selection_model->model();
+    Q_CHECK_PTR(model);
+
+    const QModelIndex curSelIdx = selection_model->currentIndex();
+    const QModelIndex curProjIdx = model->index(curSelIdx.row(), 0);
+    return curProjIdx.data(Qt::EditRole).toInt();
+}
+
+void setSelectProgramId(QItemSelectionModel *selection_model, int program_id) {
+    Q_CHECK_PTR(selection_model);
+
+    const ProgramsModel *model = qobject_cast<ProgramsModel*>(selection_model->model());
+    Q_CHECK_PTR(model);
+
+    const QModelIndex programIdx = model->programIndex(program_id);
+    Q_ASSERT(programIdx.isValid());
+
+    selection_model->setCurrentIndex(programIdx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+}
+
+CreateProgramCommand::CreateProgramCommand(QItemSelectionModel* model, const QString& name, const QByteArray& sysex, QUndoCommand* parent) :
     QUndoCommand(parent),
     m_model(model),
     m_name(name),
     m_sysex(sysex),
-    m_program_id(-1) {
+    m_program_id(-1)
+{
     Q_CHECK_PTR(m_model);
 
     setText("Create program");
@@ -36,9 +66,17 @@ CreateProgramCommand::CreateProgramCommand(ProgramsModel* model, const QString& 
 void CreateProgramCommand::redo() {
     Q_CHECK_PTR(m_model);
 
+    ProgramsModel* model = qobject_cast<ProgramsModel*>(m_model->model());
+    Q_CHECK_PTR(model);
+
     m_program_id = createProgram(m_name, m_sysex, m_program_id);
     if (m_program_id != -1) {
-        m_model->select();
+        const int selected_program_id = selectedProgramId(m_model);
+        model->select();
+
+        if (selected_program_id != -1) {
+            setSelectProgramId(m_model, selected_program_id);
+        }
     } else {
         setObsolete(true);
     }
@@ -47,8 +85,16 @@ void CreateProgramCommand::redo() {
 void CreateProgramCommand::undo() {
     Q_CHECK_PTR(m_model);
 
+    ProgramsModel* model = qobject_cast<ProgramsModel*>(m_model->model());
+    Q_CHECK_PTR(model);
+
     if (deleteProgram(m_program_id)) {
-        m_model->select();
+        const int selected_program_id = selectedProgramId(m_model);
+        model->select();
+        if (selected_program_id != m_program_id &&
+            selected_program_id != -1) {
+            setSelectProgramId(m_model, selected_program_id);
+        }
     } else {
         setObsolete(true);
     }
