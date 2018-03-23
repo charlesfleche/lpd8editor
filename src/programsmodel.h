@@ -31,6 +31,8 @@ public:
     QAbstractItemModel *padsHeaderModel() const;
     QAbstractItemModel *knobsHeaderModel() const;
 
+    QModelIndex programIndex(int programId) const;
+
 public slots:
     void select();
 

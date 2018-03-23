@@ -472,3 +472,18 @@ QAbstractItemModel *ProgramsModel::knobsHeaderModel() const {
 
     return m_knobs;
 }
+
+QModelIndex ProgramsModel::programIndex(int programId) const {
+    Q_ASSERT(m_programs);
+
+    for (int row = 0 ; row < m_programs->rowCount() ; ++row) {
+        const QModelIndex idx = index(row, program_id_column_index);
+        if (idx.data(Qt::EditRole).toInt() == programId) {
+            return idx;
+        }
+    }
+
+    Q_UNREACHABLE();
+
+    return QModelIndex();
+}
