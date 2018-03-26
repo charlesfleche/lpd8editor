@@ -1,4 +1,3 @@
-- ProgramsModel should handle dataChanged of sub models
 - Get program from LPD8 + undo
 - Send program to LPD8
 - Tests

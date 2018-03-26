@@ -368,6 +368,16 @@ void ProgramsModel::addFilters(int programId) {
     proxy->setFilterRegExp(regex);
     m_pads_proxies[programId] = proxy;
 
+    connect(proxy,
+            &QSortFilterProxyModel::dataChanged,
+            [=](const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles) {
+                const QModelIndex programIndex = this->programIndex(programId);
+                const QModelIndex parent = this->padsParentIndex(programIndex);
+                const QModelIndex tl = index(topLeft.row(), topLeft.column(), parent);
+                const QModelIndex br = index(bottomRight.row(), bottomRight.column(), parent);
+                emit dataChanged(tl, br, roles);
+            });
+
     // Knobs
 
     proxy = new QSortFilterProxyModel(this);
@@ -375,6 +385,16 @@ void ProgramsModel::addFilters(int programId) {
     proxy->setFilterKeyColumn(program_id_column_index);
     proxy->setFilterRegExp(regex);
     m_knobs_proxies[programId] = proxy;
+
+    connect(proxy,
+            &QSortFilterProxyModel::dataChanged,
+            [=](const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles) {
+                const QModelIndex programIndex = this->programIndex(programId);
+                const QModelIndex parent = this->knobsParentIndex(programIndex);
+                const QModelIndex tl = index(topLeft.row(), topLeft.column(), parent);
+                const QModelIndex br = index(bottomRight.row(), bottomRight.column(), parent);
+                emit dataChanged(tl, br, roles);
+            });
 }
 
 void ProgramsModel::removeFilters(int programId) {
