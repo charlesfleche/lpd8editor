@@ -149,6 +149,10 @@ end:
     return ret;
 }
 
+QString defaultProgramName(int programIds) {
+    return QString("P%1").arg(programIds);
+}
+
 int createProgram(const QString &name, const QByteArray &sysex, int programId) {
     Q_UNUSED(name);
     Q_UNUSED(sysex);
@@ -169,7 +173,7 @@ int createProgram(const QString &name, const QByteArray &sysex, int programId) {
     }
 
     GOTO_END_IF_FALSE(q.prepare("update programs set name = ? where programId = ?"));
-    q.addBindValue(name.isNull() ? QVariant(programId) : QVariant(name));
+    q.addBindValue(name.isNull() ? QVariant(defaultProgramName(programId)) : QVariant(name));
     q.addBindValue(programId);
     GOTO_END_IF_FALSE(q.exec());
 
