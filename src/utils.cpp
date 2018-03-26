@@ -1,6 +1,7 @@
 #include "utils.h"
 
 #include <QAbstractItemModel>
+#include <QBuffer>
 #include <QDir>
 #include <QStandardPaths>
 #include <QTextStream>
@@ -232,6 +233,20 @@ void writeProgramFile(pProgram p, const QString &path) {
     // Footer
 
     WRITE_CHECK_OR_RETURN(out, 247, path);
+}
+
+void writeProgramFile(const QByteArray &sysex, const QString &path) {
+    QFile f(path);
+    if (!f.open(QFile::WriteOnly | QFile::Truncate)) {
+        qWarning() << "Failed to open" << path;
+        return;
+    }
+
+    QTextStream out(&f);
+
+    for (auto it = sysex.constBegin() ; it != sysex.constEnd() ; ++it) {
+        out << static_cast<unsigned char>(*it) << " ";
+    }
 }
 
 int getProgramId(const QAbstractItemModel* model, int row)

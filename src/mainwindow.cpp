@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include "application.h"
+#include "db.h"
 #include "commands.h"
 #include "midiio.h"
 #include "midivaluedelegate.h"
@@ -262,15 +263,26 @@ void MainWindow::on_actionExportProgram_triggered()
 {
     Q_CHECK_PTR(app);
 
+    QItemSelectionModel *m = ui->programsView->selectionModel();
+    Q_CHECK_PTR(m);
+
+    const int programId = selectedProgramId(m);
+    const QString name = programName(programId);
+    const QByteArray sysex = programSysex(programId);
+
+    const QDir defaultDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+    const QString defaultPath = defaultDir.absoluteFilePath(name);
+
     const QString path(
                 QFileDialog::getSaveFileName(
                     this,
                     "Export LPD8 program",
-                    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)));
+                    defaultPath));
     if (path.isEmpty()) {
         return;
     }
-    app->exportActiveProgram(path);
+
+    writeProgramFile(sysex, path);
 }
 
 void MainWindow::on_actionGetProgram1_triggered()

@@ -13,6 +13,7 @@ bool initFilesystem();
 QString defaultDbPath();
 pProgram readProgramFile(const QString&);
 void writeProgramFile(pProgram, const QString&);
+void writeProgramFile(const QByteArray& sysex, const QString&);
 int getProgramId(const QAbstractItemModel*, int);
 
 #endif // UTILS_H
