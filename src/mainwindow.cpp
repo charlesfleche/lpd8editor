@@ -53,6 +53,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     // Client selection combo box
 
     QComboBox* clientComboBox = new QComboBox(this);
+    clientComboBox->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     ui->toolBar->addWidget(clientComboBox);
     ui->toolBar->addAction(ui->actionRescan);
 
