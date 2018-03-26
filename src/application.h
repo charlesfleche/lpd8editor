@@ -39,9 +39,6 @@ public slots:
     void fetchProgram(int) const;
     void sendProgram(int);
 
-    void exportActiveProgram(const QString&) const;
-    void importProgram(const QString&);
-
     pProgram program(int) const;
     void onProgramFetched(pProgram);
 

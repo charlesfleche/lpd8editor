@@ -149,27 +149,6 @@ void Application::sendProgram(int programId) {
     m_midi_io->sendProgram(program(programId));
 }
 
-void Application::exportActiveProgram(const QString & path) const {
-    writeProgramFile(program(activeProgramId()), path);
-}
-
-void Application::importProgram(const QString & path) {
-#if 0
-    pProgram p = readProgramFile(path);
-    if (!p) {
-        return;
-    }
-
-    const QString fileName(QFileInfo(path).baseName());
-    const int programId = newProgram(fileName, QByteArray());
-    setActiveProgramId(programId);
-    onProgramFetched(p);
-#else
-    Q_UNUSED(path)
-    Q_UNIMPLEMENTED();
-#endif
-}
-
 void Application::onProgramFetched(pProgram p) {
     Q_CHECK_PTR(p);
 
