@@ -1,6 +1,3 @@
-- Parameter names (horizontal sections)
-- Control names (vertical sections)
-- Delete program from selection
 - Export program
 - Get program from LPD8 + undo
 - Send program to LPD8
