@@ -24,6 +24,21 @@ QUndoStack* undoStack() {
     return stack;
 }
 
+int selectedProgramId(QItemSelectionModel* model) {
+    Q_CHECK_PTR(model);
+
+    if (!model->hasSelection()) {
+        return -1;
+    }
+
+    const QAbstractItemModel *m = model->model();
+    Q_CHECK_PTR(m);
+
+    const QModelIndex curSelIdx = model->currentIndex();
+    const QModelIndex curProjIdx = m->index(curSelIdx.row(), 0);
+    return curProjIdx.data(Qt::EditRole).toInt();
+}
+
 
 class ProgramIdSelectionRestorer {
 public:
@@ -68,16 +83,7 @@ void ProgramIdSelectionRestorer::restore() {
 int ProgramIdSelectionRestorer::selectedProgramId() const {
     Q_CHECK_PTR(m_model);
 
-    if (!m_model->hasSelection()) {
-        return -1;
-    }
-
-    const QAbstractItemModel *m = m_model->model();
-    Q_CHECK_PTR(m);
-
-    const QModelIndex curSelIdx = m_model->currentIndex();
-    const QModelIndex curProjIdx = m->index(curSelIdx.row(), 0);
-    return curProjIdx.data(Qt::EditRole).toInt();
+    return ::selectedProgramId(m_model);
 }
 
 void ProgramIdSelectionRestorer::selectProgramId(int program_id) {
@@ -136,7 +142,7 @@ void CreateProgramCommand::undo() {
 }
 
 
-DeleteProgramCommand::DeleteProgramCommand(ProgramsModel* model, int program_id, QUndoCommand *parent) :
+DeleteProgramCommand::DeleteProgramCommand(QItemSelectionModel* model, int program_id, QUndoCommand *parent) :
     QUndoCommand(parent),
     m_model(model),
     m_program_id(program_id) {
@@ -148,10 +154,15 @@ DeleteProgramCommand::DeleteProgramCommand(ProgramsModel* model, int program_id,
 void DeleteProgramCommand::redo() {
     Q_CHECK_PTR(m_model);
 
+    ProgramsModel* model = qobject_cast<ProgramsModel*>(m_model->model());
+    Q_CHECK_PTR(model);
+
     m_name = programName(m_program_id);
     m_sysex = programSysex(m_program_id);
     if (deleteProgram(m_program_id)) {
-        m_model->select();
+        ProgramIdSelectionRestorer sel(m_model);
+        model->select();
+        sel.restore();
     } else {
         setObsolete(true);
     }
@@ -160,9 +171,14 @@ void DeleteProgramCommand::redo() {
 void DeleteProgramCommand::undo() {
     Q_CHECK_PTR(m_model);
 
+    ProgramsModel* model = qobject_cast<ProgramsModel*>(m_model->model());
+    Q_CHECK_PTR(model);
+
     m_program_id = createProgram(m_name, m_sysex, m_program_id);
     if (m_program_id != -1) {
-        m_model->select();
+        ProgramIdSelectionRestorer sel(m_model);
+        model->select();
+        sel.restore();
     } else {
         setObsolete(true);
     }

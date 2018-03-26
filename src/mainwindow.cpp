@@ -200,10 +200,13 @@ void MainWindow::on_actionDeleteProgram_triggered()
 {
     Q_CHECK_PTR(undoStack());
 
+    QItemSelectionModel* selection_model = ui->programsView->selectionModel();
+    Q_CHECK_PTR(selection_model);
+    Q_ASSERT(selection_model->hasSelection());
+
     QUndoCommand *cmd = new DeleteProgramCommand(
-        app->myPrograms(),
-//        app->activeProgramId()
-        7
+        selection_model,
+        selectedProgramId(selection_model)
     );
     undoStack()->push(cmd);
 }

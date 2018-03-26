@@ -13,6 +13,8 @@ class QUndoStack;
 
 QUndoStack* undoStack();
 
+int selectedProgramId(QItemSelectionModel* model);
+
 class CreateProgramCommand : public QUndoCommand {
 public:
     CreateProgramCommand(QItemSelectionModel* model, const QString&, const QByteArray&, QUndoCommand* parent = Q_NULLPTR);
@@ -29,13 +31,13 @@ private:
 
 class DeleteProgramCommand : public QUndoCommand {
 public:
-    DeleteProgramCommand(ProgramsModel* model, int programId, QUndoCommand* parent = Q_NULLPTR);
+    DeleteProgramCommand(QItemSelectionModel* model, int programId, QUndoCommand* parent = Q_NULLPTR);
 
     void undo() Q_DECL_OVERRIDE;
     void redo() Q_DECL_OVERRIDE;
 
 private:
-    ProgramsModel *m_model;
+    QItemSelectionModel *m_model;
     int m_program_id;
     QString m_name;
     QByteArray m_sysex;
