@@ -24,31 +24,72 @@ QUndoStack* undoStack() {
     return stack;
 }
 
-int selectedProgramId(const QItemSelectionModel *selection_model) {
-    Q_CHECK_PTR(selection_model);
 
-    if (!selection_model->hasSelection()) {
+class ProgramIdSelectionRestorer {
+public:
+    ProgramIdSelectionRestorer(QItemSelectionModel* model);
+
+    void store();
+    void restore();
+
+private:
+    int selectedProgramId() const;
+    void selectProgramId(int programId);
+
+    QItemSelectionModel *m_model;
+    int m_program_id;
+};
+
+ProgramIdSelectionRestorer::ProgramIdSelectionRestorer(QItemSelectionModel *model) :
+    m_model(model)
+{
+    Q_CHECK_PTR(m_model);
+
+    store();
+}
+
+void ProgramIdSelectionRestorer::store() {
+    Q_CHECK_PTR(m_model);
+
+    m_program_id = selectedProgramId();
+}
+
+void ProgramIdSelectionRestorer::restore() {
+    Q_CHECK_PTR(m_model);
+
+    const ProgramsModel *m = qobject_cast<ProgramsModel*>(m_model->model());
+    Q_CHECK_PTR(m);
+
+    if (m->programIndex(m_program_id).isValid()) {
+        selectProgramId(m_program_id);
+    }
+}
+
+int ProgramIdSelectionRestorer::selectedProgramId() const {
+    Q_CHECK_PTR(m_model);
+
+    if (!m_model->hasSelection()) {
         return -1;
     }
 
-    const QAbstractItemModel *model = selection_model->model();
-    Q_CHECK_PTR(model);
+    const QAbstractItemModel *m = m_model->model();
+    Q_CHECK_PTR(m);
 
-    const QModelIndex curSelIdx = selection_model->currentIndex();
-    const QModelIndex curProjIdx = model->index(curSelIdx.row(), 0);
+    const QModelIndex curSelIdx = m_model->currentIndex();
+    const QModelIndex curProjIdx = m->index(curSelIdx.row(), 0);
     return curProjIdx.data(Qt::EditRole).toInt();
 }
 
-void setSelectProgramId(QItemSelectionModel *selection_model, int program_id) {
-    Q_CHECK_PTR(selection_model);
+void ProgramIdSelectionRestorer::selectProgramId(int program_id) {
+    Q_CHECK_PTR(m_model);
 
-    const ProgramsModel *model = qobject_cast<ProgramsModel*>(selection_model->model());
-    Q_CHECK_PTR(model);
+    const ProgramsModel *m = qobject_cast<ProgramsModel*>(m_model->model());
+    Q_CHECK_PTR(m);
 
-    const QModelIndex programIdx = model->programIndex(program_id);
+    const QModelIndex programIdx = m->programIndex(program_id);
     Q_ASSERT(programIdx.isValid());
 
-    selection_model->setCurrentIndex(programIdx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+    m_model->setCurrentIndex(programIdx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
 }
 
 CreateProgramCommand::CreateProgramCommand(QItemSelectionModel* model, const QString& name, const QByteArray& sysex, QUndoCommand* parent) :
@@ -71,12 +112,9 @@ void CreateProgramCommand::redo() {
 
     m_program_id = createProgram(m_name, m_sysex, m_program_id);
     if (m_program_id != -1) {
-        const int selected_program_id = selectedProgramId(m_model);
+        ProgramIdSelectionRestorer sel(m_model);
         model->select();
-
-        if (selected_program_id != -1) {
-            setSelectProgramId(m_model, selected_program_id);
-        }
+        sel.restore();
     } else {
         setObsolete(true);
     }
@@ -89,12 +127,9 @@ void CreateProgramCommand::undo() {
     Q_CHECK_PTR(model);
 
     if (deleteProgram(m_program_id)) {
-        const int selected_program_id = selectedProgramId(m_model);
+        ProgramIdSelectionRestorer sel(m_model);
         model->select();
-        if (selected_program_id != m_program_id &&
-            selected_program_id != -1) {
-            setSelectProgramId(m_model, selected_program_id);
-        }
+        sel.restore();
     } else {
         setObsolete(true);
     }

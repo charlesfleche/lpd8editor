@@ -483,7 +483,5 @@ QModelIndex ProgramsModel::programIndex(int programId) const {
         }
     }
 
-    Q_UNREACHABLE();
-
     return QModelIndex();
 }
