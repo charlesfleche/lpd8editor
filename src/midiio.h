@@ -14,6 +14,8 @@ class MidiIO : public QObject
 {
     Q_OBJECT
 public:
+    Q_PROPERTY(bool canSelectDevice READ canSelectDevice NOTIFY canSelectDeviceChanged)
+
     explicit MidiIO(QObject *parent = 0);
     ~MidiIO();
 
@@ -22,6 +24,7 @@ public:
     void getPrograms() const;
     void sendProgram(pProgram) const;
 
+    bool canSelectDevice() const;
     QAbstractItemModel* midiPortsModel() const;
 
 public slots:
@@ -31,10 +34,10 @@ public slots:
 signals:
     void sysexReceived(QByteArray);
     void programReceived(pProgram);
-
-    void thirdPartyModifiedConnections();
+    void canSelectDeviceChanged(bool);
 
 private slots:
+    void disallowManualConnections();
     void readEvents();
     void processEvent(snd_seq_event_t *);
 

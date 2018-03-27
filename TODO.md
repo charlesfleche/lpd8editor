@@ -1,3 +1,5 @@
+- Connection model should handle the "not refreshed" and "handled by third party" states
+- KMidiMon knows when new clients / ports connect ?
 - Get program from LPD8 + undo
 - Send program to LPD8
 - Tests

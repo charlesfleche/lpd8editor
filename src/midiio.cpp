@@ -62,8 +62,10 @@ MidiIO::MidiIO(QObject *parent) : QObject(parent),
         throw std::runtime_error("Failed setting sequencer port");
     }
 
-//    m_ports_model = new MidiPortsModel(m_seq_handle, m_seq_port, this);
     m_ports_model = new QStandardItemModel(this);
+    QStandardItem* item = new QStandardItem("Select MIDI device");
+    item->setEnabled(false);
+    m_ports_model->appendRow(item);
 }
 
 MidiIO::~MidiIO() {
@@ -102,7 +104,8 @@ void MidiIO::processEvent(snd_seq_event_t* ev)
     switch (ev->type) {
     case SND_SEQ_EVENT_PORT_SUBSCRIBED:
     case SND_SEQ_EVENT_PORT_UNSUBSCRIBED:
-        emit thirdPartyModifiedConnections();
+//        emit thirdPartyModifiedConnections();
+        disallowManualConnections();
         break;
     case SND_SEQ_EVENT_SYSEX:
         processSysex(ev);
@@ -206,8 +209,9 @@ QStandardItem* takeItemFromAlsaAddress(QList<QStandardItem*>& items, const snd_s
     Q_CHECK_PTR(addr);
 
     QStandardItem* item = Q_NULLPTR;
-    foreach (item, items) {
-        if (client(item) == addr->client && port(item) == addr->port) {
+    for (auto it = items.constBegin() ; it != items.constEnd() ; ++it) {
+        if (client(*it) == addr->client && port(*it) == addr->port) {
+            item = *it;
             break;
         }
     }
@@ -286,6 +290,24 @@ void MidiIO::rescanPorts() {
         rc = m_ports_model->rowCount();
         Q_UNUSED(rc);
     }
+
+    emit canSelectDeviceChanged(canSelectDevice());
+}
+
+bool MidiIO::canSelectDevice() const {
+    Q_CHECK_PTR(m_ports_model);
+
+    return m_ports_model->rowCount() >= 1 && m_ports_model->item(0)->isEnabled();
+}
+
+void MidiIO::disallowManualConnections() {
+    Q_CHECK_PTR(m_ports_model);
+
+    QStandardItem *item = new QStandardItem("MIDI connection managed by third party");
+    item->setEnabled(false);
+    m_ports_model->clear();
+    m_ports_model->appendRow(item);
+    emit canSelectDeviceChanged(false);
 }
 
 void MidiIO::connectPort(const QModelIndex& index) {
@@ -353,3 +375,4 @@ void MidiIO::connectPort(const QModelIndex& index) {
         qDebug() << "Cannot connect to";
     }
 }
+

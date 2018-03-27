@@ -129,37 +129,30 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     refreshUiAccordingToSelection();
     refreshWidgetStack();
 
+    clientComboBox->setModel(app->midiIO()->midiPortsModel());
+    Q_ASSERT(clientComboBox->count() > 0);
+    clientComboBox->setCurrentIndex(0);
+    clientComboBox->setEnabled(app->midiIO()->canSelectDevice());
     connect(app->midiIO(),
-            &MidiIO::thirdPartyModifiedConnections,
-            [=]() {
-                Q_CHECK_PTR(clientComboBox);
-                Q_CHECK_PTR(app->midiIO());
-                Q_CHECK_PTR(app->midiIO()->midiPortsModel());
-
-                // Check if connections are already managed by third party
-                if (clientComboBox->model() != app->midiIO()->midiPortsModel()) {
-                    return;
-                }
-
-                clientComboBox->disconnect();
-                clientComboBox->setModel(new QStandardItemModel(this));
-                clientComboBox->addItem("Managed by third party");
-                clientComboBox->setEnabled(false);
-                ui->actionRescan->setEnabled(false);
-            }
-    );
+            &MidiIO::canSelectDeviceChanged,
+            [=](bool v) {
+                clientComboBox->setEnabled(v);
+                ui->actionRescan->setEnabled(v);
+            });
 
     connect(clientComboBox,
             QOverload<int>::of(&QComboBox::currentIndexChanged),
             [=](int row) {
                 Q_CHECK_PTR(app->midiIO());
 
+                if (row < 0) {
+                    return;
+                }
+
                 QAbstractItemModel* midiPortsModel = app->midiIO()->midiPortsModel();
                 const QModelIndex index(midiPortsModel->index(row, 0));
                 app->midiIO()->connectPort(index);
             });
-
-    clientComboBox->setModel(app->midiIO()->midiPortsModel());
 
     ui->treeView->setModel(app->programs());
     ui->treeView->setItemDelegate(new MidiValueDelegate(this));
