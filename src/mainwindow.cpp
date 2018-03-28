@@ -176,6 +176,16 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
                     undoStack()->push(cmd);
                 }
             });
+
+    ProgramIdSelectionRestorer *restorer = new ProgramIdSelectionRestorer(ui->programsView->selectionModel(), this);
+    connect(app->myPrograms(),
+            &ProgramsModel::modelAboutToBeReset,
+            restorer,
+            &ProgramIdSelectionRestorer::store);
+    connect(app->myPrograms(),
+            &ProgramsModel::modelReset,
+            restorer,
+            &ProgramIdSelectionRestorer::restore);
 }
 
 MainWindow::~MainWindow()

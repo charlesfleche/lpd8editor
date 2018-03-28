@@ -41,7 +41,7 @@ void CreateProgramCommand::redo() {
     Q_CHECK_PTR(m_model);
 
     m_program_id = m_model->createProgram(m_name, m_sysex, m_program_id);
-    setObsolete(m_program_id != -1);
+    setObsolete(m_program_id == -1);
 }
 
 void CreateProgramCommand::undo() {
@@ -72,7 +72,7 @@ void DeleteProgramCommand::undo() {
     Q_CHECK_PTR(m_model);
 
     m_program_id = m_model->createProgram(m_name, m_sysex, m_program_id);
-    setObsolete(!m_program_id);
+    setObsolete(m_program_id == -1);
 }
 
 
