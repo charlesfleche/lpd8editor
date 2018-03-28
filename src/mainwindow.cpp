@@ -186,6 +186,33 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             &ProgramsModel::modelReset,
             restorer,
             &ProgramIdSelectionRestorer::restore);
+
+    // Enable MIDI send / receive action when connected
+
+    QList<QAction *> midiSendActions = {
+        ui->actionGetProgram1,
+        ui->actionGetProgram2,
+        ui->actionGetProgram3,
+        ui->actionGetProgram4
+    };
+    QList<QAction *> midiReceiveActions {
+        ui->actionSendToProgram1,
+        ui->actionSendToProgram2,
+        ui->actionSendToProgram3,
+        ui->actionSendToProgram4,
+    };
+    QList<QAction *> midiActions = midiSendActions + midiReceiveActions;
+    for (auto it = midiActions.begin() ; it != midiActions.end() ; ++it) {
+        QAction* a = *it;
+        Q_CHECK_PTR(a);
+
+        a->setEnabled(app->midiIO()->isConnected());
+        connect(
+            app->midiIO(),
+            &MidiIO::isConnectedChanged,
+            a,
+            &QAction::setEnabled);
+    }
 }
 
 MainWindow::~MainWindow()

@@ -1,4 +1,5 @@
-- Deactivate get / send actions when not connected
+- editor shows itself in the list of available connexions
+- cannot connect from qjackctl
 - KMidiMon knows when new clients / ports connect ?
 - Extract devices model to its own model
 - NetBSD

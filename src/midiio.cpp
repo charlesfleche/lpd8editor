@@ -14,7 +14,8 @@ MidiIO::MidiIO(QObject *parent) : QObject(parent),
     m_seq_handle(Q_NULLPTR),
     m_pfds(Q_NULLPTR),
     m_seq_port(-1),
-    m_ports_model(Q_NULLPTR)
+    m_ports_model(Q_NULLPTR),
+    m_connected(false)
 {
     qDebug() << "Opening MIDI sequencer";
 
@@ -81,6 +82,10 @@ MidiIO::~MidiIO() {
     } else {
         qWarning() << "Failed closing sequencer";
     }
+}
+
+bool MidiIO::isConnected() const {
+    return m_connected;
 }
 
 QAbstractItemModel* MidiIO::midiPortsModel() const {
@@ -374,12 +379,19 @@ void MidiIO::connectPort(const QModelIndex& index) {
 
     // Connect target
 
+    const bool old_connected = m_connected;
+    m_connected = true;
     if (snd_seq_connect_from(m_seq_handle, m_seq_port, targetaddr.client, targetaddr.port) < 0) {
         qDebug() << "Cannot connect from";
+        m_connected = false;
     }
 
     if (snd_seq_connect_to(m_seq_handle, m_seq_port, targetaddr.client, targetaddr.port) < 0) {
         qDebug() << "Cannot connect to";
+        m_connected = false;
+    }
+
+    if (old_connected != m_connected) {
+        emit isConnectedChanged(m_connected);
     }
 }
-

@@ -14,6 +14,7 @@ class MidiIO : public QObject
 {
     Q_OBJECT
 public:
+    Q_PROPERTY(bool isConnected READ isConnected NOTIFY isConnectedChanged)
     Q_PROPERTY(bool canSelectDevice READ canSelectDevice NOTIFY canSelectDeviceChanged)
 
     explicit MidiIO(QObject *parent = 0);
@@ -29,6 +30,8 @@ public:
     bool canSelectDevice() const;
     QAbstractItemModel* midiPortsModel() const;
 
+    bool isConnected() const;
+
 public slots:
     void rescanPorts();
     void connectPort(const QModelIndex&);
@@ -37,6 +40,7 @@ signals:
     void sysexReceived(QByteArray);
     void programReceived(QByteArray);
     void canSelectDeviceChanged(bool);
+    void isConnectedChanged(bool);
 
 private slots:
     void disallowManualConnections();
@@ -52,6 +56,7 @@ private:
     struct pollfd* m_pfds;
     int m_seq_port;
     QStandardItemModel* m_ports_model;
+    bool m_connected;
 };
 
 #endif // MIDIIO_H
