@@ -1,4 +1,4 @@
-- Send program to LPD8
+- Deactivate get / send actions when not connected
 - KMidiMon knows when new clients / ports connect ?
 - Extract devices model to its own model
 - NetBSD
