@@ -104,7 +104,6 @@ void MidiIO::processEvent(snd_seq_event_t* ev)
     switch (ev->type) {
     case SND_SEQ_EVENT_PORT_SUBSCRIBED:
     case SND_SEQ_EVENT_PORT_UNSUBSCRIBED:
-//        emit thirdPartyModifiedConnections();
         disallowManualConnections();
         break;
     case SND_SEQ_EVENT_SYSEX:
@@ -124,7 +123,7 @@ void MidiIO::processSysex(snd_seq_event_t* ev) {
 
     switch (sysex::type(s)) {
     case sysex::TypeProgram:
-        emit programReceived(sysex::toProgram(s));
+        emit programReceived(s);
         break;
     default:
         break;

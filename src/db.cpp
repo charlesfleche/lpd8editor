@@ -153,10 +153,71 @@ QString defaultProgramName(int programIds) {
     return QString("P%1").arg(programIds);
 }
 
-int createProgram(const QString &name, const QByteArray &sysex, int programId) {
-    Q_UNUSED(name);
-    Q_UNUSED(sysex);
+bool updateProgramFromSysex(int programId, const QByteArray &sysex) {
+    Q_ASSERT(!sysex.isNull() && !sysex.isEmpty());
 
+    QSqlQuery q;
+
+    QDataStream s(sysex);
+    qint8 v = 0;
+
+    // Header
+
+    s >> v; // Sysex Start
+    s >> v; // Manufacturer
+    s >> v; // Model byte 1
+    s >> v; // Model byte 2
+    s >> v; // Opcode set program: byte1
+    s >> v; // Opcode set program: byte2
+    s >> v; // Opcode set program: byte3
+    s >> v; // Program ID
+
+    // Program
+
+    s >> v;
+    GOTO_END_IF_FALSE(q.prepare("update programs set channel = ? where programId = ?"));
+    q.addBindValue(v);
+    q.addBindValue(programId);
+    GOTO_END_IF_FALSE(q.exec());
+
+    // Pads
+
+    for (int controlId = 1; controlId <= sysex::padsCount(); ++controlId) {
+        GOTO_END_IF_FALSE(q.prepare("update pads set note = ?, pc = ?, cc = ?, toggle = ? where programId = ? and controlId = ?"));
+        s >> v;
+        q.addBindValue(v);
+        s >> v;
+        q.addBindValue(v);
+        s >> v;
+        q.addBindValue(v);
+        s >> v;
+        q.addBindValue(v);
+        q.addBindValue(programId);
+        q.addBindValue(controlId);
+        GOTO_END_IF_FALSE(q.exec());
+    }
+
+    for (int controlId = 1; controlId <= sysex::knobsCount(); ++controlId) {
+        GOTO_END_IF_FALSE(q.prepare("update knobs set cc = ?, low = ?, high = ? where programId = ? and controlId = ?"));
+        s >> v;
+        q.addBindValue(v);
+        s >> v;
+        q.addBindValue(v);
+        s >> v;
+        q.addBindValue(v);
+        q.addBindValue(programId);
+        q.addBindValue(controlId);
+        GOTO_END_IF_FALSE(q.exec());
+    }
+
+end:
+    if (q.lastError().isValid()) {
+        qWarning() << "Failed to update program from sysex: " << q.lastError().text();
+    }
+    return programId;
+}
+
+int createProgram(const QString &name, const QByteArray &sysex, int programId) {
     QSqlDatabase::database().transaction();
 
     QSqlQuery q;
@@ -181,57 +242,7 @@ int createProgram(const QString &name, const QByteArray &sysex, int programId) {
     // Proper way would be to pass a QIODevice and register callbacks
     // ala SAX
     if (!sysex.isNull()) {
-        QDataStream s(sysex);
-        qint8 v = 0;
-
-        // Header
-
-        s >> v; // Sysex Start
-        s >> v; // Manufacturer
-        s >> v; // Model byte 1
-        s >> v; // Model byte 2
-        s >> v; // Opcode set program: byte1
-        s >> v; // Opcode set program: byte2
-        s >> v; // Opcode set program: byte3
-        s >> v; // Program ID
-
-        // Program
-
-        s >> v;
-        GOTO_END_IF_FALSE(q.prepare("update programs set channel = ? where programId = ?"));
-        q.addBindValue(v);
-        q.addBindValue(programId);
-        GOTO_END_IF_FALSE(q.exec());
-
-        // Pads
-
-        for (int controlId = 1; controlId <= sysex::padsCount(); ++controlId) {
-            GOTO_END_IF_FALSE(q.prepare("update pads set note = ?, pc = ?, cc = ?, toggle = ? where programId = ? and controlId = ?"));
-            s >> v;
-            q.addBindValue(v);
-            s >> v;
-            q.addBindValue(v);
-            s >> v;
-            q.addBindValue(v);
-            s >> v;
-            q.addBindValue(v);
-            q.addBindValue(programId);
-            q.addBindValue(controlId);
-            GOTO_END_IF_FALSE(q.exec());
-        }
-
-        for (int controlId = 1; controlId <= sysex::knobsCount(); ++controlId) {
-            GOTO_END_IF_FALSE(q.prepare("update knobs set cc = ?, low = ?, high = ? where programId = ? and controlId = ?"));
-            s >> v;
-            q.addBindValue(v);
-            s >> v;
-            q.addBindValue(v);
-            s >> v;
-            q.addBindValue(v);
-            q.addBindValue(programId);
-            q.addBindValue(controlId);
-            GOTO_END_IF_FALSE(q.exec());
-        }
+        updateProgramFromSysex(programId, sysex);
     }
 
 end:
@@ -242,6 +253,12 @@ end:
         qWarning() << "Failed to commit program creation transaction:" << QSqlDatabase::database().lastError().text();
     }
     return programId;
+}
+
+bool fromSysex(int programId, const QByteArray &sysex) {
+    QSqlDatabase::database().transaction();
+    updateProgramFromSysex(programId, sysex);
+    return QSqlDatabase::database().commit();
 }
 
 bool deleteProgram(int programId) {

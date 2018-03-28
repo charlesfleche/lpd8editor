@@ -218,3 +218,43 @@ void UpdateParameterCommand::setDataAndKeepPrevious() {
     m_value = index.data(m_role);
     m_model->setData(index, newValue, m_role);
 }
+
+
+UpdateProgramFromSysexCommand::UpdateProgramFromSysexCommand(
+    ProgramsModel *model,
+    int programId,
+    const QByteArray &sysex,
+    QUndoCommand *parent) :
+    QUndoCommand(parent),
+    m_model(model),
+    m_program_id(programId),
+    m_sysex(sysex) {
+    Q_CHECK_PTR(model);
+}
+
+void UpdateProgramFromSysexCommand::redo() {
+    Q_CHECK_PTR(m_model);
+
+    if (setSysexAndKeepPrevious()) {
+        m_model->select();
+    } else {
+        setObsolete(false);
+    }}
+
+void UpdateProgramFromSysexCommand::undo() {
+    Q_CHECK_PTR(m_model);
+
+    if (setSysexAndKeepPrevious()) {
+        m_model->select();
+    } else {
+        setObsolete(false);
+    }
+}
+
+bool UpdateProgramFromSysexCommand::setSysexAndKeepPrevious() {
+    Q_CHECK_PTR(m_model);
+
+    const QByteArray new_sysex = m_sysex;
+    m_sysex = programSysex(m_program_id);
+    return fromSysex(m_program_id, new_sysex);
+}

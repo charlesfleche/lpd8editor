@@ -40,7 +40,6 @@ public slots:
     void sendProgram(int);
 
     pProgram program(int) const;
-    void onProgramFetched(pProgram);
 
 signals:
     void activeProgramIdChanged(int);

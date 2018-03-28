@@ -53,10 +53,6 @@ Application::Application(QObject *parent):
     refreshModels();
 
     m_midi_io = new MidiIO(this);
-    connect(m_midi_io,
-            &MidiIO::programReceived,
-            this,
-            &Application::onProgramFetched);
 }
 
 QAbstractItemModel* Application::programs() const {
@@ -147,47 +143,6 @@ char getChar(const QSqlRecord& r, const QString& name) {
 
 void Application::sendProgram(int programId) {
     m_midi_io->sendProgram(program(programId));
-}
-
-void Application::onProgramFetched(pProgram p) {
-    Q_CHECK_PTR(p);
-
-    const int programId = static_cast<int>(p->id);
-
-    for (int i = 0 ; i < 8 ; ++i) {
-        QSqlRecord r;
-        r.append(QSqlField("note", QVariant::Int));
-        r.setValue("note", p->pads[i].note);
-
-        r.append(QSqlField("pc", QVariant::Int));
-        r.setValue("pc", p->pads[i].pc);
-
-        r.append(QSqlField("cc", QVariant::Int));
-        r.setValue("cc", p->pads[i].cc);
-
-        r.append(QSqlField("toggle", QVariant::Int));
-        r.setValue("toggle", p->pads[i].toggle);
-        if (!m_pads->setRecord(i, r)) {
-            qDebug() << "Cannot set pad" << programId << i << r;
-        }
-
-        r.clear();
-
-        r.append(QSqlField("cc", QVariant::Int));
-        r.setValue("cc", p->knobs[i].cc);
-
-        r.append(QSqlField("low", QVariant::Int));
-        r.setValue("low", p->knobs[i].low);
-
-        r.append(QSqlField("high", QVariant::Int));
-        r.setValue("high", p->knobs[i].high);
-
-        if (!m_knobs->setRecord(i, r)) {
-            qDebug() << "Cannot set knob" << programId << i << r;
-        }
-    }
-
-    refreshModels();
 }
 
 pProgram Application::program(int programId) const {

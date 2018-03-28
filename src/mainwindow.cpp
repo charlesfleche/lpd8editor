@@ -156,6 +156,26 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 
     ui->treeView->setModel(app->programs());
     ui->treeView->setItemDelegate(new MidiValueDelegate(this));
+
+    connect(app->midiIO(),
+            &MidiIO::programReceived,
+            [=](const QByteArray& sysex) {
+                Q_CHECK_PTR(ui->programsView->selectionModel());
+                Q_CHECK_PTR(app->myPrograms());
+                Q_CHECK_PTR(undoStack());
+
+                const int programId = selectedProgramId(ui->programsView->selectionModel());
+                if (programId == -1) {
+                    Q_UNIMPLEMENTED();
+                } else {
+                    UpdateProgramFromSysexCommand* cmd = new UpdateProgramFromSysexCommand(
+                        app->myPrograms(),
+                        programId,
+                        sysex
+                    );
+                    undoStack()->push(cmd);
+                }
+            });
 }
 
 MainWindow::~MainWindow()
@@ -283,6 +303,8 @@ void MainWindow::on_actionGetProgram1_triggered()
 {
     Q_CHECK_PTR(app);
 
+
+
     app->fetchProgram(1);
 }
 
@@ -290,21 +312,21 @@ void MainWindow::on_actionGetProgram2_triggered()
 {
     Q_CHECK_PTR(app);
 
-    app->fetchProgram(2);
+//    app->fetchProgram(2);
 }
 
 void MainWindow::on_actionGetProgram3_triggered()
 {
     Q_CHECK_PTR(app);
 
-    app->fetchProgram(3);
+//    app->fetchProgram(3);
 }
 
 void MainWindow::on_actionGetProgram4_triggered()
 {
     Q_CHECK_PTR(app);
 
-    app->fetchProgram(4);
+//    app->fetchProgram(4);
 }
 
 void MainWindow::on_actionSendToProgram1_triggered()

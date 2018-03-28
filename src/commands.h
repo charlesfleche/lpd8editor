@@ -67,4 +67,23 @@ private:
     const int m_role;
 };
 
+class UpdateProgramFromSysexCommand : public QUndoCommand {
+public:
+    UpdateProgramFromSysexCommand(
+        ProgramsModel* model,
+        int programId,
+        const QByteArray& sysex,
+        QUndoCommand *parent = Q_NULLPTR);
+
+    void undo() Q_DECL_OVERRIDE;
+    void redo() Q_DECL_OVERRIDE;
+
+private:
+    bool setSysexAndKeepPrevious();
+
+    ProgramsModel *m_model;
+    const int m_program_id;
+    QByteArray m_sysex;
+};
+
 #endif // COMMANDS_H

@@ -33,7 +33,7 @@ public slots:
 
 signals:
     void sysexReceived(QByteArray);
-    void programReceived(pProgram);
+    void programReceived(QByteArray);
     void canSelectDeviceChanged(bool);
 
 private slots:
