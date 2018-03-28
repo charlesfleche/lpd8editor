@@ -204,7 +204,7 @@ void MainWindow::on_actionNewProgram_triggered()
     Q_CHECK_PTR(undoStack());
 
     QUndoCommand* cmd = new CreateProgramCommand(
-        ui->programsView->selectionModel(),
+        app->myPrograms(),
         QSettings().value(SETTINGS_KEY_DEFAULT_NAME).toString(),
         QSettings().value(SETTINGS_KEY_DEFAULT_SYSEX).toByteArray()
     );
@@ -220,7 +220,7 @@ void MainWindow::on_actionDeleteProgram_triggered()
     Q_ASSERT(selection_model->hasSelection());
 
     QUndoCommand *cmd = new DeleteProgramCommand(
-        selection_model,
+        app->myPrograms(),
         selectedProgramId(selection_model)
     );
     undoStack()->push(cmd);
@@ -266,7 +266,7 @@ void MainWindow::on_actionImportProgram_triggered()
     }
 
     QUndoCommand* cmd = new CreateProgramCommand(
-        ui->programsView->selectionModel(),
+        app->myPrograms(),
         QDir(path).dirName(),
         fromSysexTextFile(path)
     );
