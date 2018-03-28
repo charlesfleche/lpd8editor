@@ -30,16 +30,6 @@ private slots:
     void on_actionImportProgram_triggered();
     void on_actionExportProgram_triggered();
 
-    void on_actionGetProgram1_triggered();
-    void on_actionGetProgram2_triggered();
-    void on_actionGetProgram3_triggered();
-    void on_actionGetProgram4_triggered();
-
-    void on_actionSendToProgram1_triggered();
-    void on_actionSendToProgram2_triggered();
-    void on_actionSendToProgram3_triggered();
-    void on_actionSendToProgram4_triggered();
-
     void on_actionRescan_triggered();
 
     void refreshUiAccordingToSelection();

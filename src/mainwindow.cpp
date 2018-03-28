@@ -195,24 +195,61 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
         ui->actionGetProgram3,
         ui->actionGetProgram4
     };
+    for (int i = 0 ; i < midiSendActions.count() ; ++i) {
+        connect(
+            midiSendActions[i],
+            &QAction::triggered,
+            [=]() {
+            Q_CHECK_PTR(app->midiIO());
+
+            app->midiIO()->getProgram(i+1);
+            }
+        );
+    }
+
     QList<QAction *> midiReceiveActions {
         ui->actionSendToProgram1,
         ui->actionSendToProgram2,
         ui->actionSendToProgram3,
         ui->actionSendToProgram4,
     };
-    QList<QAction *> midiActions = midiSendActions + midiReceiveActions;
-    for (auto it = midiActions.begin() ; it != midiActions.end() ; ++it) {
-        QAction* a = *it;
-        Q_CHECK_PTR(a);
-
-        a->setEnabled(app->midiIO()->isConnected());
+    for (int i = 0 ; i < midiReceiveActions.count() ; ++i) {
         connect(
-            app->midiIO(),
-            &MidiIO::isConnectedChanged,
-            a,
-            &QAction::setEnabled);
+            midiReceiveActions[i],
+            &QAction::triggered,
+            [=]() {
+                this->sendCurrentProgram(i+1);
+            }
+        );
     }
+
+    QList<QAction *> midiActions = midiSendActions + midiReceiveActions;
+    auto midiActionsSetEnabled = [=](){
+        for (auto it = midiActions.begin() ; it != midiActions.end() ; ++it) {
+            QAction* a = *it;
+            Q_CHECK_PTR(a);
+
+            a->setEnabled(app->midiIO()->isConnected() &&
+                          ui->programsView->selectionModel()->currentIndex().row() != -1);
+        }
+    };
+    midiActionsSetEnabled();
+
+    connect(
+        app->midiIO(),
+        &MidiIO::isConnectedChanged,
+        midiActionsSetEnabled
+    );
+    connect(
+        ui->programsView->selectionModel(),
+        &QItemSelectionModel::currentChanged,
+        midiActionsSetEnabled
+    );
+    connect(
+        app->myPrograms(),
+        &ProgramsModel::modelReset,
+        midiActionsSetEnabled
+    );
 }
 
 MainWindow::~MainWindow()
@@ -285,7 +322,7 @@ void MainWindow::refreshUiAccordingToSelection()
     ui->actionDeleteProgram->setEnabled(sel->hasSelection());
 
     Q_CHECK_PTR(app);
-    QWidget* w = sel->hasSelection() ? ui->pageEditor : ui->pageDefault;
+    QWidget* w = sel->currentIndex().row() != -1 ? ui->pageEditor : ui->pageDefault;
     ui->stackedWidget->setCurrentWidget(w);
 }
 
@@ -336,60 +373,12 @@ void MainWindow::on_actionExportProgram_triggered()
     writeProgramFile(sysex, path);
 }
 
-void MainWindow::on_actionGetProgram1_triggered()
-{
-    Q_CHECK_PTR(app->midiIO());
-
-    app->midiIO()->getProgram(1);
-}
-
-void MainWindow::on_actionGetProgram2_triggered()
-{
-    Q_CHECK_PTR(app->midiIO());
-
-    app->midiIO()->getProgram(2);
-}
-
-void MainWindow::on_actionGetProgram3_triggered()
-{
-    Q_CHECK_PTR(app->midiIO());
-
-    app->midiIO()->getProgram(3);
-}
-
-void MainWindow::on_actionGetProgram4_triggered()
-{
-    Q_CHECK_PTR(app->midiIO());
-
-    app->midiIO()->getProgram(4);
-}
-
 void MainWindow::sendCurrentProgram(int deviceProgramId) {
     Q_CHECK_PTR(app->midiIO());
     Q_CHECK_PTR(app->myPrograms());
 
     const QByteArray sysex = app->myPrograms()->programSysex(currentSelectedProjectId());
     app->midiIO()->sendProgramSysex(sysex, deviceProgramId);
-}
-
-void MainWindow::on_actionSendToProgram1_triggered()
-{
-    sendCurrentProgram(1);
-}
-
-void MainWindow::on_actionSendToProgram2_triggered()
-{
-    sendCurrentProgram(2);
-}
-
-void MainWindow::on_actionSendToProgram3_triggered()
-{
-    sendCurrentProgram(3);
-}
-
-void MainWindow::on_actionSendToProgram4_triggered()
-{
-    sendCurrentProgram(4);
 }
 
 void MainWindow::on_actionRescan_triggered() {
