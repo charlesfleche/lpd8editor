@@ -78,6 +78,7 @@ class ProgramIdSelectionRestorer : public QObject {
 public:
     ProgramIdSelectionRestorer(QItemSelectionModel* model, QObject *parent = Q_NULLPTR);
 
+public slots:
     void store();
     void restore();
 
