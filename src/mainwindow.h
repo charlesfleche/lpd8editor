@@ -46,7 +46,10 @@ private slots:
     void refreshWidgetStack();
 
 private:
+    int currentSelectedProjectId() const;
     int programModelColumn() const;
+
+    void sendCurrentProgram(int deviceProgramId);
 
     Ui::MainWindow *ui;
     Application* app;

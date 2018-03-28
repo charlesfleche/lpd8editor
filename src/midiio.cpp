@@ -167,6 +167,13 @@ void MidiIO::getPrograms() const {
     }
 }
 
+void MidiIO::sendProgramSysex(const QByteArray &sysex, int programId) const {
+    QByteArray s(sysex);
+    sysex::makeSetProgramRequest(s, programId);
+    sendSysex(s);
+}
+
+
 void MidiIO::sendProgram(pProgram program) const
 {
     QByteArray s = sysex::setProgram(program);

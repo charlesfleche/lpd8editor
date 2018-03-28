@@ -9,6 +9,8 @@ static const char sysex_end = '\xf7';
 static const int channel_offset = 8;
 
 static const int opcode_offset = 4;
+static const int program_offset = 7;
+
 static const int minimum_rep_sysex_size = 9;
 
 static const char sysex_program_req[] = {'\x63', '\x00', '\x01'};
@@ -17,6 +19,8 @@ static const char sysex_program_rep_size = 66;
 static const char sysex_program_rep_payload_offset = 7;
 
 static const char sysex_set_program_req[] = {'\x61', '\x00', '\x3a'};
+static const char sysex_set_program_req_size = 66;
+
 
 #define RETURN_IF_TYPE(type, b, code, size) if (is(b, code, size)) return type
 
@@ -101,6 +105,16 @@ pProgram toProgram(const QByteArray & b) {
         ret->knobs[i].high = b[offset++];
     }
     return ret;
+}
+
+void makeSetProgramRequest(QByteArray &sysex, int programId) {
+    Q_ASSERT(sysex.count() == sysex_set_program_req_size);
+    Q_ASSERT(programId >= 1 && programId <= 4);
+
+    sysex[opcode_offset + 0] = sysex_set_program_req[0];
+    sysex[opcode_offset + 1] = sysex_set_program_req[1];
+    sysex[opcode_offset + 2] = sysex_set_program_req[2];
+    sysex[program_offset] = static_cast<char>(programId);
 }
 
 QByteArray setProgram(pProgram p) {

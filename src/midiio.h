@@ -24,6 +24,8 @@ public:
     void getPrograms() const;
     void sendProgram(pProgram) const;
 
+    void sendProgramSysex(const QByteArray &sysex, int programId) const;
+
     bool canSelectDevice() const;
     QAbstractItemModel* midiPortsModel() const;
 

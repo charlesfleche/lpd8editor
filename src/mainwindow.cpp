@@ -164,7 +164,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
                 Q_CHECK_PTR(app->myPrograms());
                 Q_CHECK_PTR(undoStack());
 
-                const int programId = selectedProgramId(ui->programsView->selectionModel());
+                const int programId = currentSelectedProjectId();
                 if (programId == -1) {
                     Q_UNIMPLEMENTED();
                 } else {
@@ -337,36 +337,42 @@ void MainWindow::on_actionGetProgram4_triggered()
     app->midiIO()->getProgram(4);
 }
 
+void MainWindow::sendCurrentProgram(int deviceProgramId) {
+    Q_CHECK_PTR(app->midiIO());
+    Q_CHECK_PTR(app->myPrograms());
+
+    const QByteArray sysex = app->myPrograms()->programSysex(currentSelectedProjectId());
+    app->midiIO()->sendProgramSysex(sysex, deviceProgramId);
+}
+
 void MainWindow::on_actionSendToProgram1_triggered()
 {
-    Q_CHECK_PTR(app);
-
-    app->sendProgram(1);
+    sendCurrentProgram(1);
 }
 
 void MainWindow::on_actionSendToProgram2_triggered()
 {
-    Q_CHECK_PTR(app);
-
-    app->sendProgram(2);
+    sendCurrentProgram(2);
 }
 
 void MainWindow::on_actionSendToProgram3_triggered()
 {
-    Q_CHECK_PTR(app);
-
-    app->sendProgram(3);
+    sendCurrentProgram(3);
 }
 
 void MainWindow::on_actionSendToProgram4_triggered()
 {
-    Q_CHECK_PTR(app);
-
-    app->sendProgram(4);
+    sendCurrentProgram(4);
 }
 
 void MainWindow::on_actionRescan_triggered() {
     Q_CHECK_PTR(app->midiIO());
 
     app->midiIO()->rescanPorts();
+}
+
+int MainWindow::currentSelectedProjectId() const {
+    Q_CHECK_PTR(ui->programsView->selectionModel());
+
+    return selectedProgramId(ui->programsView->selectionModel());
 }

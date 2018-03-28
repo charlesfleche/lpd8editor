@@ -15,6 +15,8 @@ enum Type {
 int padsCount();
 int knobsCount();
 
+void makeSetProgramRequest(QByteArray &sysex, int programId);
+
 Type type(const QByteArray&);
 void addHeader(QByteArray&);
 void addFooter(QByteArray&);
