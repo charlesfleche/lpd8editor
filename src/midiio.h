@@ -19,7 +19,7 @@ public:
     explicit MidiIO(QObject *parent = 0);
     ~MidiIO();
 
-    void sendSysex(QByteArray) const;
+    void sendSysex(const QByteArray&) const;
     void getProgram(int) const;
     void getPrograms() const;
     void sendProgram(pProgram) const;

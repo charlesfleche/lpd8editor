@@ -138,14 +138,15 @@ void MidiIO::sendIdRequest() const
     sendSysex(sysex);
 }
 
-void MidiIO::sendSysex(QByteArray sysex) const
+void MidiIO::sendSysex(const QByteArray &sysex) const
 {
+    QByteArray s(sysex);
     snd_seq_event_t ev;
     snd_seq_ev_clear(&ev);
     snd_seq_ev_set_subs(&ev);
     snd_seq_ev_set_direct(&ev);
     snd_seq_ev_set_source(&ev, m_seq_port);
-    snd_seq_ev_set_sysex(&ev, sysex.length(), sysex.data());
+    snd_seq_ev_set_sysex(&ev, s.length(), s.data());
 
     int err = snd_seq_event_output(m_seq_handle, &ev);
     if (err < 0) {
