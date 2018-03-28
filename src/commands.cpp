@@ -1,8 +1,8 @@
 #include "commands.h"
 
-#include "db.h"
 #include "programsmodel.h"
 
+#include <QApplication>
 #include <QItemSelectionModel>
 
 static const QString undo_stack_object_name = "undo_stack";
@@ -98,6 +98,7 @@ void ProgramIdSelectionRestorer::selectProgramId(int program_id) {
     m_model->setCurrentIndex(programIdx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
 }
 
+
 CreateProgramCommand::CreateProgramCommand(QItemSelectionModel* model, const QString& name, const QByteArray& sysex, QUndoCommand* parent) :
     QUndoCommand(parent),
     m_model(model),
@@ -116,10 +117,9 @@ void CreateProgramCommand::redo() {
     ProgramsModel* model = qobject_cast<ProgramsModel*>(m_model->model());
     Q_CHECK_PTR(model);
 
-    m_program_id = createProgram(m_name, m_sysex, m_program_id);
+    ProgramIdSelectionRestorer sel(m_model);
+    m_program_id = model->createProgram(m_name, m_sysex, m_program_id);
     if (m_program_id != -1) {
-        ProgramIdSelectionRestorer sel(m_model);
-        model->select();
         sel.restore();
     } else {
         setObsolete(true);
@@ -132,9 +132,8 @@ void CreateProgramCommand::undo() {
     ProgramsModel* model = qobject_cast<ProgramsModel*>(m_model->model());
     Q_CHECK_PTR(model);
 
-    if (deleteProgram(m_program_id)) {
-        ProgramIdSelectionRestorer sel(m_model);
-        model->select();
+    ProgramIdSelectionRestorer sel(m_model);
+    if (model->deleteProgram(m_program_id)) {
         sel.restore();
     } else {
         setObsolete(true);
@@ -148,7 +147,7 @@ DeleteProgramCommand::DeleteProgramCommand(QItemSelectionModel* model, int progr
     m_program_id(program_id) {
     Q_CHECK_PTR(m_model);
 
-    setText("Delete program " + programName(m_program_id));
+    setText("Delete program");
 }
 
 void DeleteProgramCommand::redo() {
@@ -157,11 +156,10 @@ void DeleteProgramCommand::redo() {
     ProgramsModel* model = qobject_cast<ProgramsModel*>(m_model->model());
     Q_CHECK_PTR(model);
 
-    m_name = programName(m_program_id);
-    m_sysex = programSysex(m_program_id);
-    if (deleteProgram(m_program_id)) {
-        ProgramIdSelectionRestorer sel(m_model);
-        model->select();
+    m_name = model->programName(m_program_id);
+    m_sysex = model->programSysex(m_program_id);
+    ProgramIdSelectionRestorer sel(m_model);
+    if (model->deleteProgram(m_program_id)) {
         sel.restore();
     } else {
         setObsolete(true);
@@ -174,10 +172,9 @@ void DeleteProgramCommand::undo() {
     ProgramsModel* model = qobject_cast<ProgramsModel*>(m_model->model());
     Q_CHECK_PTR(model);
 
-    m_program_id = createProgram(m_name, m_sysex, m_program_id);
+    m_program_id = model->createProgram(m_name, m_sysex, m_program_id);
+    ProgramIdSelectionRestorer sel(m_model);
     if (m_program_id != -1) {
-        ProgramIdSelectionRestorer sel(m_model);
-        model->select();
         sel.restore();
     } else {
         setObsolete(true);
@@ -229,32 +226,25 @@ UpdateProgramFromSysexCommand::UpdateProgramFromSysexCommand(
     m_model(model),
     m_program_id(programId),
     m_sysex(sysex) {
-    Q_CHECK_PTR(model);
+    Q_CHECK_PTR(m_model);
 }
 
 void UpdateProgramFromSysexCommand::redo() {
     Q_CHECK_PTR(m_model);
 
-    if (setSysexAndKeepPrevious()) {
-        m_model->select();
-    } else {
-        setObsolete(false);
-    }}
+    setObsolete(!setSysexAndKeepPrevious());
+}
 
 void UpdateProgramFromSysexCommand::undo() {
     Q_CHECK_PTR(m_model);
 
-    if (setSysexAndKeepPrevious()) {
-        m_model->select();
-    } else {
-        setObsolete(false);
-    }
+    setObsolete(!setSysexAndKeepPrevious());
 }
 
 bool UpdateProgramFromSysexCommand::setSysexAndKeepPrevious() {
     Q_CHECK_PTR(m_model);
 
     const QByteArray new_sysex = m_sysex;
-    m_sysex = programSysex(m_program_id);
-    return fromSysex(m_program_id, new_sysex);
+    m_sysex = m_model->programSysex(m_program_id);
+    return m_model->updateProgramFromSysex(m_program_id, new_sysex);
 }

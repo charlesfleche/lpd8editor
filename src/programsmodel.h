@@ -32,6 +32,13 @@ public:
     QAbstractItemModel *knobsHeaderModel() const;
 
     QModelIndex programIndex(int programId) const;
+    QString programName(int programId) const;
+    QByteArray programSysex(int programId) const;
+
+    bool updateProgramFromSysex(int programId, const QByteArray &sysex);
+
+    int createProgram(const QString &programName = QString(), const QByteArray &sysex = QByteArray(), int programId = -1);
+    bool deleteProgram(int programId);
 
 public slots:
     void select();

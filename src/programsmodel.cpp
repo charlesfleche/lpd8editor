@@ -505,3 +505,35 @@ QModelIndex ProgramsModel::programIndex(int programId) const {
 
     return QModelIndex();
 }
+
+int ProgramsModel::createProgram(const QString &programName, const QByteArray &sysex, int programId) {
+    const int ret = ::createProgram(programName, sysex, programId);
+    if (ret != -1) {
+        this->select();
+    }
+    return ret;
+}
+
+bool ProgramsModel::deleteProgram(int programId) {
+    const bool ret = ::deleteProgram(programId);
+    if (ret) {
+        this->select();
+    }
+    return ret;
+}
+
+QString ProgramsModel::programName(int programId) const {
+    return ::programName(programId);
+}
+
+QByteArray ProgramsModel::programSysex(int programId) const {
+    return ::programSysex(programId);
+}
+
+bool ProgramsModel::updateProgramFromSysex(int programId, const QByteArray &sysex) {
+    const bool ret = fromSysex(programId, sysex);
+    if (ret) {
+        this->select();
+    }
+    return ret;
+}
