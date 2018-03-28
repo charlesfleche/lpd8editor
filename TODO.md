@@ -1,4 +1,3 @@
-- Selection restorer should be connected to beginreset / begin end signals
 - Send program to LPD8
 - KMidiMon knows when new clients / ports connect ?
 - Extract devices model to its own model

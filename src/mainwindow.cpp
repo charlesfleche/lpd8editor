@@ -311,32 +311,30 @@ void MainWindow::on_actionExportProgram_triggered()
 
 void MainWindow::on_actionGetProgram1_triggered()
 {
-    Q_CHECK_PTR(app);
+    Q_CHECK_PTR(app->midiIO());
 
-
-
-    app->fetchProgram(1);
+    app->midiIO()->getProgram(1);
 }
 
 void MainWindow::on_actionGetProgram2_triggered()
 {
-    Q_CHECK_PTR(app);
+    Q_CHECK_PTR(app->midiIO());
 
-//    app->fetchProgram(2);
+    app->midiIO()->getProgram(2);
 }
 
 void MainWindow::on_actionGetProgram3_triggered()
 {
-    Q_CHECK_PTR(app);
+    Q_CHECK_PTR(app->midiIO());
 
-//    app->fetchProgram(3);
+    app->midiIO()->getProgram(3);
 }
 
 void MainWindow::on_actionGetProgram4_triggered()
 {
-    Q_CHECK_PTR(app);
+    Q_CHECK_PTR(app->midiIO());
 
-//    app->fetchProgram(4);
+    app->midiIO()->getProgram(4);
 }
 
 void MainWindow::on_actionSendToProgram1_triggered()

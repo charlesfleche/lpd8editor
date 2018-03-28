@@ -131,12 +131,6 @@ void Application::refreshModels() {
     m_knobs->setFilter(filter);
 }
 
-void Application::fetchProgram(int programId) const {
-    Q_CHECK_PTR(m_midi_io);
-
-    m_midi_io->getProgram(programId);
-}
-
 char getChar(const QSqlRecord& r, const QString& name) {
     return r.value(name).toChar().toLatin1();
 }
