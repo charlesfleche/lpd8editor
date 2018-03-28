@@ -1,4 +1,3 @@
-- Commands should implement model method calls + refresh should be done in model
 - Selection restorer should be connected to beginreset / begin end signals
 - Send program to LPD8
 - KMidiMon knows when new clients / ports connect ?

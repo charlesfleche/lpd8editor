@@ -5,6 +5,7 @@
 #include <QSqlTableModel>
 
 class QAbstractItemModel;
+class QItemSelectionModel;
 class QSortFilterProxyModel;
 class QSqlTableModel;
 class QStandardItemModel;
@@ -68,6 +69,24 @@ private:
     QStringList m_lut_channel;
     QStringList m_lut_toggle;
     QHash<QString, QStringList> m_luts;
+};
+
+
+class ProgramIdSelectionRestorer : public QObject {
+    Q_OBJECT
+
+public:
+    ProgramIdSelectionRestorer(QItemSelectionModel* model, QObject *parent = Q_NULLPTR);
+
+    void store();
+    void restore();
+
+private:
+    int selectedProgramId() const;
+    void selectProgramId(int programId);
+
+    QItemSelectionModel *m_model;
+    int m_program_id;
 };
 
 #endif // PROGRAMSMODEL_H
