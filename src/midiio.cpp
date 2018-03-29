@@ -10,13 +10,14 @@
 
 #include <exception>
 
-MidiIO::MidiIO(QObject *parent) : QObject(parent),
+OldMidiIO::OldMidiIO(QObject *parent) : QObject(parent),
     m_seq_handle(Q_NULLPTR),
     m_pfds(Q_NULLPTR),
     m_seq_port(-1),
     m_ports_model(Q_NULLPTR),
     m_connected(false)
 {
+#if 0
     qDebug() << "Opening MIDI sequencer";
 
     if (snd_seq_open(&m_seq_handle, "default", SND_SEQ_OPEN_DUPLEX, 0) < 0) {
@@ -42,7 +43,7 @@ MidiIO::MidiIO(QObject *parent) : QObject(parent),
         connect(n,
                 &QSocketNotifier::activated,
                 this,
-                &MidiIO::readEvents
+                &OldMidiIO::readEvents
         );
     }
 
@@ -62,14 +63,16 @@ MidiIO::MidiIO(QObject *parent) : QObject(parent),
     if (m_seq_port < 0) {
         throw std::runtime_error("Failed setting sequencer port");
     }
-
+#endif
     m_ports_model = new QStandardItemModel(this);
-    QStandardItem* item = new QStandardItem("Select MIDI device");
+//    QStandardItem* item = new QStandardItem("Select MIDI device");
+    QStandardItem* item = new QStandardItem("From OldMidiIO");
     item->setEnabled(false);
     m_ports_model->appendRow(item);
 }
 
-MidiIO::~MidiIO() {
+OldMidiIO::~OldMidiIO() {
+#if 0
     qDebug() << "Closing MIDI sequencer";
     if (snd_seq_delete_simple_port(m_seq_handle, m_seq_port) >= 0) {
         m_seq_port = -1;
@@ -82,19 +85,20 @@ MidiIO::~MidiIO() {
     } else {
         qWarning() << "Failed closing sequencer";
     }
+#endif
 }
 
-bool MidiIO::isConnected() const {
+bool OldMidiIO::isConnected() const {
     return m_connected;
 }
 
-QAbstractItemModel* MidiIO::midiPortsModel() const {
+QAbstractItemModel* OldMidiIO::midiPortsModel() const {
     Q_CHECK_PTR(m_ports_model);
 
     return m_ports_model;
 }
 
-void MidiIO::readEvents()
+void OldMidiIO::readEvents()
 {
     qDebug();
     while (snd_seq_event_input_pending(m_seq_handle, 1) > 0) {
@@ -104,7 +108,7 @@ void MidiIO::readEvents()
     }
 }
 
-void MidiIO::processEvent(snd_seq_event_t* ev)
+void OldMidiIO::processEvent(snd_seq_event_t* ev)
 {
     switch (ev->type) {
     case SND_SEQ_EVENT_PORT_SUBSCRIBED:
@@ -118,7 +122,7 @@ void MidiIO::processEvent(snd_seq_event_t* ev)
     }
 }
 
-void MidiIO::processSysex(snd_seq_event_t* ev) {
+void OldMidiIO::processSysex(snd_seq_event_t* ev) {
     Q_CHECK_PTR(ev);
     Q_ASSERT(ev->type == SND_SEQ_EVENT_SYSEX);
 
@@ -136,14 +140,14 @@ void MidiIO::processSysex(snd_seq_event_t* ev) {
     emit sysexReceived(s);
 }
 
-void MidiIO::sendIdRequest() const
+void OldMidiIO::sendIdRequest() const
 {
     const unsigned char b[] = {0xF0, 0x7E, 0x00, 0x06, 0x01, 0xF7};
     const QByteArray sysex(reinterpret_cast<const char*>(b), sizeof(b));
     sendSysex(sysex);
 }
 
-void MidiIO::sendSysex(const QByteArray &sysex) const
+void OldMidiIO::sendSysex(const QByteArray &sysex) const
 {
     QByteArray s(sysex);
     snd_seq_event_t ev;
@@ -166,26 +170,26 @@ void MidiIO::sendSysex(const QByteArray &sysex) const
     }
 }
 
-void MidiIO::getPrograms() const {
+void OldMidiIO::getPrograms() const {
     for (int i = 1 ; i <= 4 ; ++i) {
         sendSysex(sysex::getProgram(i));
     }
 }
 
-void MidiIO::sendProgramSysex(const QByteArray &sysex, int programId) const {
+void OldMidiIO::sendProgramSysex(const QByteArray &sysex, int programId) const {
     QByteArray s(sysex);
     sysex::makeSetProgramRequest(s, programId);
     sendSysex(s);
 }
 
 
-void MidiIO::sendProgram(pProgram program) const
+void OldMidiIO::sendProgram(pProgram program) const
 {
     QByteArray s = sysex::setProgram(program);
     sendSysex(s);
 }
 
-void MidiIO::getProgram(int id) const {
+void OldMidiIO::getProgram(int id) const {
     Q_ASSERT(id >= 1 && id <= 4);
 
     sendSysex(sysex::getProgram(id));
@@ -233,7 +237,7 @@ QStandardItem* takeItemFromAlsaAddress(QList<QStandardItem*>& items, const snd_s
     return item;
 }
 
-void MidiIO::rescanPorts() {
+void OldMidiIO::rescanPorts() {
     Q_CHECK_PTR(m_seq_handle);
     Q_CHECK_PTR(m_ports_model);
 
@@ -306,13 +310,13 @@ void MidiIO::rescanPorts() {
     emit canSelectDeviceChanged(canSelectDevice());
 }
 
-bool MidiIO::canSelectDevice() const {
+bool OldMidiIO::canSelectDevice() const {
     Q_CHECK_PTR(m_ports_model);
 
     return m_ports_model->rowCount() >= 1 && m_ports_model->item(0)->isEnabled();
 }
 
-void MidiIO::disallowManualConnections() {
+void OldMidiIO::disallowManualConnections() {
     Q_CHECK_PTR(m_ports_model);
 
     QStandardItem *item = new QStandardItem("MIDI connection managed by third party");
@@ -322,7 +326,7 @@ void MidiIO::disallowManualConnections() {
     emit canSelectDeviceChanged(false);
 }
 
-void MidiIO::connectPort(const QModelIndex& index) {
+void OldMidiIO::connectPort(const QModelIndex& index) {
     Q_CHECK_PTR(m_ports_model);
     Q_ASSERT(m_seq_port >= 0);
 

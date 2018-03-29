@@ -134,7 +134,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     clientComboBox->setCurrentIndex(0);
     clientComboBox->setEnabled(app->midiIO()->canSelectDevice());
     connect(app->midiIO(),
-            &MidiIO::canSelectDeviceChanged,
+            &OldMidiIO::canSelectDeviceChanged,
             [=](bool v) {
                 clientComboBox->setEnabled(v);
                 ui->actionRescan->setEnabled(v);
@@ -158,7 +158,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ui->treeView->setItemDelegate(new MidiValueDelegate(this));
 
     connect(app->midiIO(),
-            &MidiIO::programReceived,
+            &OldMidiIO::programReceived,
             [=](const QByteArray& sysex) {
                 Q_CHECK_PTR(ui->programsView->selectionModel());
                 Q_CHECK_PTR(app->myPrograms());
@@ -237,7 +237,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 
     connect(
         app->midiIO(),
-        &MidiIO::isConnectedChanged,
+        &OldMidiIO::isConnectedChanged,
         midiActionsSetEnabled
     );
     connect(

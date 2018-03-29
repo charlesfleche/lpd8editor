@@ -52,7 +52,7 @@ Application::Application(QObject *parent):
 
     refreshModels();
 
-    m_midi_io = new MidiIO(this);
+    m_midi_io = new OldMidiIO(this);
 }
 
 QAbstractItemModel* Application::programs() const {
@@ -76,7 +76,7 @@ int Application::activeProgramId() const {
     return isValidProgramId(programId) ? programId : -1;
 }
 
-MidiIO* Application::midiIO() const {
+OldMidiIO* Application::midiIO() const {
     Q_CHECK_PTR(m_midi_io);
 
     return m_midi_io;

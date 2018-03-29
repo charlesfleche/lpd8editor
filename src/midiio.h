@@ -10,15 +10,15 @@
 class QAbstractItemModel;
 class QStandardItemModel;
 
-class MidiIO : public QObject
+class OldMidiIO : public QObject
 {
     Q_OBJECT
 public:
     Q_PROPERTY(bool isConnected READ isConnected NOTIFY isConnectedChanged)
     Q_PROPERTY(bool canSelectDevice READ canSelectDevice NOTIFY canSelectDeviceChanged)
 
-    explicit MidiIO(QObject *parent = 0);
-    ~MidiIO();
+    explicit OldMidiIO(QObject *parent = 0);
+    ~OldMidiIO();
 
     void sendSysex(const QByteArray&) const;
     void getProgram(int) const;

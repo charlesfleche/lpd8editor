@@ -6,7 +6,7 @@
 #include <QObject>
 
 class ProgramsModel;
-class MidiIO;
+class OldMidiIO;
 
 class QAbstractItemModel;
 class QSqlTableModel;
@@ -25,7 +25,7 @@ public:
 
     bool isValidActiveProgram() const;
 
-    MidiIO* midiIO() const;
+    OldMidiIO* midiIO() const;
 
     QAbstractItemModel* programs() const;
     ProgramsModel* myPrograms() const;
@@ -54,7 +54,7 @@ private:
     QSqlTableModel* m_pads;
     QSqlTableModel* m_knobs;
 
-    MidiIO* m_midi_io;
+    OldMidiIO* m_midi_io;
 };
 
 #endif // APPLICATION_H
