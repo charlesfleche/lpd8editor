@@ -1,5 +1,4 @@
-- editor shows itself in the list of available connexions
-- cannot connect from qjackctl
+- disconnect when new midi client appears (like running KMidimon after starting lpd8-editor)
 - KMidiMon knows when new clients / ports connect ?
 - Extract devices model to its own model
 - NetBSD

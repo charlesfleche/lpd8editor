@@ -145,7 +145,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             [=](int row) {
                 Q_CHECK_PTR(app->midiIO());
 
-                if (row < 0) {
+                if (row < 0 || !app->midiIO()->canSelectDevice()) {
                     return;
                 }
 
