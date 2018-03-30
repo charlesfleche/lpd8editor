@@ -150,30 +150,24 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     refreshUiAccordingToSelection();
     refreshWidgetStack();
 
-    clientComboBox->setModel(app->midiIO()->midiPortsModel());
+    clientComboBox->setModel(connectionsModel);
     Q_ASSERT(clientComboBox->count() > 0);
     clientComboBox->setCurrentIndex(0);
-    clientComboBox->setEnabled(app->midiIO()->canSelectDevice());
-    connect(app->midiIO(),
-            &OldMidiIO::canSelectDeviceChanged,
+    clientComboBox->setDisabled(connectionsModel->isExternallyHandled());
+    connect(connectionsModel,
+            &MidiConnectionsModel::isExternallyHandledChanged,
             [=](bool v) {
-                clientComboBox->setEnabled(v);
-                ui->actionRescan->setEnabled(v);
+                clientComboBox->setDisabled(v);
+                ui->actionRescan->setDisabled(v);
             });
 
-    connect(clientComboBox,
-            QOverload<int>::of(&QComboBox::currentIndexChanged),
-            [=](int row) {
-                Q_CHECK_PTR(app->midiIO());
-
-                if (row < 0 || !app->midiIO()->canSelectDevice()) {
-                    return;
-                }
-
-                QAbstractItemModel* midiPortsModel = app->midiIO()->midiPortsModel();
-                const QModelIndex index(midiPortsModel->index(row, 0));
-                app->midiIO()->connectPort(index);
-            });
+    connect(
+        clientComboBox,
+        QOverload<int>::of(&QComboBox::activated),
+        [=](int row) {
+            connectionsModel->connectPort(connectionsModel->index(row));
+        }
+    );
 
     ui->treeView->setModel(app->programs());
     ui->treeView->setItemDelegate(new MidiValueDelegate(this));
