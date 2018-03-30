@@ -40,3 +40,6 @@ CMakeLists.txt.user*
 
 # lpd8-editor
 /lpd8-editor
+
+.directory
+
