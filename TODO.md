@@ -8,3 +8,6 @@
   - what is we receive huge forged sysex from ALSA ?
   - txt representation -> binary repr -> handle sysex
   - alsa representation -> read by chunk / byte -> handle sysex
+- Q_NULLPRT -> nullptr
+- Q_DECL_OVERRIDE -> override
+- auto everywhere
