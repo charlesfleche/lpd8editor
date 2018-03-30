@@ -14,7 +14,9 @@ SOURCES += src/main.cpp \
     src/programproxymodel.cpp \
     src/midivaluedelegate.cpp \
     src/commands.cpp \
-    src/programsmodel.cpp
+    src/programsmodel.cpp \
+    src/iomidi.cpp \
+    src/midiconnectionsmodel.cpp
 
 RESOURCES += \
     src/sql.qrc
@@ -56,7 +58,9 @@ HEADERS += \
     src/midivaluedelegate.h \
     src/enums.h \
     src/commands.h \
-    src/programsmodel.h
+    src/programsmodel.h \
+    src/iomidi.h \
+    src/midiconnectionsmodel.h
 
 DISTFILES += \
     README.md \

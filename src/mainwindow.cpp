@@ -4,7 +4,9 @@
 #include "application.h"
 #include "db.h"
 #include "commands.h"
+#include "iomidi.h"
 #include "midiio.h"
+#include "midiconnectionsmodel.h"
 #include "midivaluedelegate.h"
 #include "programsmodel.h"
 #include "utils.h"
@@ -31,8 +33,27 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     Q_CHECK_PTR(app);
     Q_CHECK_PTR(app->midiIO());
 
+    IOMidi* io = new IOMidi(this);
+
     ui->setupUi(this);
     setStatusBar(Q_NULLPTR);
+
+    auto connectionsModel = new MidiConnectionsModel(io);
+
+    ui->connectionsView->setDisabled(connectionsModel->isExternallyHandled());
+    connect(
+        connectionsModel,
+        &MidiConnectionsModel::isExternallyHandledChanged,
+        ui->connectionsView,
+        &QListView::setDisabled
+    );
+    connect(
+        ui->connectionsView,
+        &QListView::activated,
+        connectionsModel,
+        QOverload<const QModelIndex &>::of(&MidiConnectionsModel::connectPort)
+    );
+    ui->connectionsView->setModel(connectionsModel);
 
     // Undo
 
