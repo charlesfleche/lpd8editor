@@ -40,13 +40,6 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 
     auto connectionsModel = new MidiConnectionsModel(io);
 
-    ui->connectionsView->setDisabled(connectionsModel->isExternallyHandled());
-    connect(
-        connectionsModel,
-        &MidiConnectionsModel::isExternallyHandledChanged,
-        ui->connectionsView,
-        &QListView::setDisabled
-    );
     connect(
         ui->connectionsView,
         &QListView::activated,
@@ -152,13 +145,15 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
 
     clientComboBox->setModel(connectionsModel);
     Q_ASSERT(clientComboBox->count() > 0);
-    clientComboBox->setCurrentIndex(0);
-    clientComboBox->setDisabled(connectionsModel->isExternallyHandled());
+    clientComboBox->setEnabled(connectionsModel->connectedPort().isValid());
     connect(connectionsModel,
-            &MidiConnectionsModel::isExternallyHandledChanged,
-            [=](bool v) {
-                clientComboBox->setDisabled(v);
-                ui->actionRescan->setDisabled(v);
+            &MidiConnectionsModel::connectedPortChanged,
+            [=](const QModelIndex &index) {
+                clientComboBox->setEnabled(index.isValid());
+                ui->actionRescan->setEnabled(index.isValid());
+                if (index.isValid()) {
+                    clientComboBox->setCurrentIndex(index.row());
+                }
             });
 
     connect(
@@ -244,15 +239,15 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             QAction* a = *it;
             Q_CHECK_PTR(a);
 
-            a->setEnabled(app->midiIO()->isConnected() &&
+            a->setEnabled(connectionsModel->connected() &&
                           ui->programsView->selectionModel()->currentIndex().row() != -1);
         }
     };
     midiActionsSetEnabled();
 
     connect(
-        app->midiIO(),
-        &OldMidiIO::isConnectedChanged,
+        connectionsModel,
+        &MidiConnectionsModel::connectedChanged,
         midiActionsSetEnabled
     );
     connect(

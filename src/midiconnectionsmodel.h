@@ -1,5 +1,6 @@
 #ifndef MIDICONNECTIONSMODEL_H
 #define MIDICONNECTIONSMODEL_H
+class IOMidi;
 
 #include <QAbstractListModel>
 
@@ -20,22 +21,28 @@ public:
     Q_DECLARE_FLAGS(Directions, Direction)
     Q_FLAG(Directions)
 
-    Q_PROPERTY(bool isExternallyHandled READ isExternallyHandled NOTIFY isExternallyHandledChanged)
+    Q_PROPERTY(QModelIndex connectedPort READ connectedPort NOTIFY connectedPortChanged)
+    Q_PROPERTY(bool connected READ connected NOTIFY connectedChanged)
+    Q_PROPERTY(bool externallyManaged READ externallyManaged NOTIFY externallyManagedChanged)
 
     MidiConnectionsModel(IOMidi *io);
 
     int rowCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role) const override;
 
-    bool isExternallyHandled() const;
+    QModelIndex connectedPort() const;
+    bool connected() const;
+    bool externallyManaged() const;
 
 public slots:
-    void connectPort(const QModelIndex &index) const;
+    void connectPort(const QModelIndex &index);
 
     void handleMidiEvent(const snd_seq_event_t* ev);
 
 signals:
-    void isExternallyHandledChanged(bool);
+    void connectedPortChanged(const QModelIndex&);
+    void connectedChanged(bool);
+    void externallyManagedChanged(bool);
 
 private:
     void addAddressIfAccepted(const snd_seq_addr_t *addr);
@@ -48,7 +55,7 @@ private:
     bool acceptPort(const snd_seq_port_info_t *info) const;
 
     void disconnectAllPorts() const;
-    void connectPort(const snd_seq_addr_t &addr) const;
+    void connectPort(const snd_seq_addr_t &addr);
 
     QString portName(const QModelIndex& index) const;
     Directions portConnection(const QModelIndex& index) const;

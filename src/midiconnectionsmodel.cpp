@@ -15,18 +15,20 @@ MidiConnectionsModel::MidiConnectionsModel(IOMidi* io) :
     Q_CHECK_PTR(m_io);
 
     connect(
-        this,
-        &MidiConnectionsModel::isExternallyHandledChanged,
-        [=](bool v) {
-            qDebug() << "Externally handled" << v;
-        }
-    );
-
-    connect(
         m_io,
         &IOMidi::eventReceived,
         this,
         &MidiConnectionsModel::handleMidiEvent);
+
+    connect(
+        this,
+        &MidiConnectionsModel::dataChanged,
+        [=]() {
+            emit connectedPortChanged(connectedPort());
+            emit connectedChanged(connected());
+            emit externallyManagedChanged(externallyManaged());
+        }
+    );
 
     m_addrs.append({0, 0}); // Row for disconnect choice
 
@@ -76,39 +78,56 @@ QVariant MidiConnectionsModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 }
 
-bool MidiConnectionsModel::isExternallyHandled() const {
-    bool found_both_ways = false;
-    for (auto it = m_addrs.constBegin() ; it != m_addrs.constEnd() ; ++it) {
-        switch (portConnection(*it)) {
+QModelIndex MidiConnectionsModel::connectedPort() const {
+    Q_ASSERT(m_addrs.count() > 0);
+
+    QModelIndex ret = index(0);
+    for (int r = 1 ; r < m_addrs.count() ; ++r) {
+        switch (portConnection(m_addrs[r])) {
         case Direction::Disconnected:
             break;
 
         // Partially connected, done externally
         case Direction::From:
         case Direction::To:
-            return true;
+            return QModelIndex();
 
         // If a second addr is connected both ways, done externally
         case Direction::BothWays:
-            if (found_both_ways) {
-                return true;
+            if (ret.row() != 0) {
+                return QModelIndex();
             }
-            found_both_ways = true;
+            ret = index(r);
             break;
+        }
+    }
+    return ret;
+}
+
+bool MidiConnectionsModel::connected() const {
+    for (int r = 0 ; r < m_addrs.count() ; ++r) {
+        if (portConnection(m_addrs[r]) > Direction::Disconnected) {
+            return true;
         }
     }
     return false;
 }
 
-void MidiConnectionsModel::connectPort(const QModelIndex &index) const {
-    Q_ASSERT(index.isValid());
-    Q_ASSERT(!isExternallyHandled());
+bool MidiConnectionsModel::externallyManaged() const {
+    return connected() && !connectedPort().isValid();
+}
+
+void MidiConnectionsModel::connectPort(const QModelIndex &idx) {
+    Q_ASSERT(idx.isValid());
+//    Q_ASSERT(connectedPort().isValid());
 
     disconnectAllPorts();
 
-    if (index.row() > 0) {
-        connectPort(m_addrs[index.row()]);
+    if (idx.row() > 0) {
+        connectPort(m_addrs[idx.row()]);
     }
+
+    emit dataChanged(index(0), index(m_addrs.count()));
 }
 
 void MidiConnectionsModel::disconnectAllPorts() const {
@@ -139,7 +158,7 @@ void MidiConnectionsModel::disconnectAllPorts() const {
     }
 }
 
-void MidiConnectionsModel::connectPort(const snd_seq_addr_t &addr) const {
+void MidiConnectionsModel::connectPort(const snd_seq_addr_t &addr) {
     Q_CHECK_PTR(m_io);
 
     if (snd_seq_connect_from(m_io->handle(), m_io->portId(), addr.client, addr.port) < 0) {
@@ -177,7 +196,7 @@ void MidiConnectionsModel::handleMidiEvent(const snd_seq_event_t* ev) {
         return;
     case SND_SEQ_EVENT_CLIENT_START:
     case SND_SEQ_EVENT_CLIENT_EXIT:
-        emit isExternallyHandledChanged(isExternallyHandled());
+        emit connectedPortChanged(connectedPort());
         return;
     default:
         return;
@@ -211,8 +230,6 @@ void MidiConnectionsModel::notifyDataChangedForAddress(const snd_seq_addr_t *add
         const QModelIndex idx = index(r);
         emit dataChanged(idx, idx);
     }
-
-    emit isExternallyHandledChanged(isExternallyHandled());
 }
 
 void MidiConnectionsModel::addAddress(const snd_seq_addr_t *addr) {
