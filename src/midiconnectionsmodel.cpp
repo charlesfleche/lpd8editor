@@ -119,7 +119,6 @@ bool MidiConnectionsModel::externallyManaged() const {
 
 void MidiConnectionsModel::connectPort(const QModelIndex &idx) {
     Q_ASSERT(idx.isValid());
-//    Q_ASSERT(connectedPort().isValid());
 
     disconnectAllPorts();
 

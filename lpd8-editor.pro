@@ -16,7 +16,8 @@ SOURCES += src/main.cpp \
     src/commands.cpp \
     src/programsmodel.cpp \
     src/iomidi.cpp \
-    src/midiconnectionsmodel.cpp
+    src/midiconnectionsmodel.cpp \
+    src/sysexhandler.cpp
 
 RESOURCES += \
     src/sql.qrc
@@ -60,7 +61,8 @@ HEADERS += \
     src/commands.h \
     src/programsmodel.h \
     src/iomidi.h \
-    src/midiconnectionsmodel.h
+    src/midiconnectionsmodel.h \
+    src/sysexhandler.h
 
 DISTFILES += \
     README.md \

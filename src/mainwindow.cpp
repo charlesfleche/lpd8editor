@@ -9,6 +9,7 @@
 #include "midiconnectionsmodel.h"
 #include "midivaluedelegate.h"
 #include "programsmodel.h"
+#include "sysexhandler.h"
 #include "utils.h"
 
 #include <QComboBox>
@@ -38,6 +39,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ui->setupUi(this);
     setStatusBar(Q_NULLPTR);
 
+    auto sysexHandler = new SysexHandler(io);
     auto connectionsModel = new MidiConnectionsModel(io);
 
     connect(
@@ -167,8 +169,8 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ui->treeView->setModel(app->programs());
     ui->treeView->setItemDelegate(new MidiValueDelegate(this));
 
-    connect(app->midiIO(),
-            &OldMidiIO::programReceived,
+    connect(sysexHandler,
+            &SysexHandler::programReceived,
             [=](const QByteArray& sysex) {
                 Q_CHECK_PTR(ui->programsView->selectionModel());
                 Q_CHECK_PTR(app->myPrograms());
@@ -210,9 +212,9 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             midiSendActions[i],
             &QAction::triggered,
             [=]() {
-            Q_CHECK_PTR(app->midiIO());
+                Q_CHECK_PTR(sysexHandler);
 
-            app->midiIO()->getProgram(i+1);
+                sysexHandler->getProgram(i+1);
             }
         );
     }
@@ -228,7 +230,8 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             midiReceiveActions[i],
             &QAction::triggered,
             [=]() {
-                this->sendCurrentProgram(i+1);
+                const QByteArray sysex = app->myPrograms()->programSysex(currentSelectedProjectId());
+                sysexHandler->sendProgram(sysex, i+1);
             }
         );
     }

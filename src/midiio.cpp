@@ -182,7 +182,6 @@ void OldMidiIO::sendProgramSysex(const QByteArray &sysex, int programId) const {
     sendSysex(s);
 }
 
-
 void OldMidiIO::sendProgram(pProgram program) const
 {
     QByteArray s = sysex::setProgram(program);

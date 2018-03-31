@@ -100,5 +100,9 @@ int IOMidi::sendEvent(snd_seq_event_t *ev) const
     Q_CHECK_PTR(ev);
 
     snd_seq_ev_set_source(ev, m_seq_port);
-    return snd_seq_event_output_direct(m_seq_handle, ev);
+    const int ret = snd_seq_event_output_direct(m_seq_handle, ev);
+    if (ret < 0) {
+        qWarning() << "Failed to send sysex";
+    }
+    return ret;
 }
