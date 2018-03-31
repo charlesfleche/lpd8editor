@@ -51,7 +51,6 @@ HEADERS += \
     src/utils.h \
     src/qmltablemodelproxy.h \
     src/lpd8_sysex.h \
-    src/lpd8_types.h \
     src/mainwindow.h \
     src/programproxymodel.h \
     src/midivaluedelegate.h \

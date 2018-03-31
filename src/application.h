@@ -1,8 +1,6 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
-#include "lpd8_types.h"
-
 #include <QObject>
 
 class ProgramsModel;

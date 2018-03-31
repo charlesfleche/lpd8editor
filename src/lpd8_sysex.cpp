@@ -86,27 +86,6 @@ QByteArray getProgram(int programId) {
     return ret;
 }
 
-pProgram toProgram(const QByteArray & b) {
-    Q_ASSERT(type(b) == TypeProgram);
-
-    pProgram ret(new Program);
-    int offset = sysex_program_rep_payload_offset;
-    ret->id = b[offset++];
-    ret->channel = b[offset++];
-    for (int i = 0 ; i < 8 ; ++i) {
-        ret->pads[i].note = b[offset++];
-        ret->pads[i].pc = b[offset++];
-        ret->pads[i].cc = b[offset++];
-        ret->pads[i].toggle = b[offset++];
-    }
-    for (int i = 0 ; i < 8 ; ++i) {
-        ret->knobs[i].cc = b[offset++];
-        ret->knobs[i].low = b[offset++];
-        ret->knobs[i].high = b[offset++];
-    }
-    return ret;
-}
-
 void makeSetProgramRequest(QByteArray &sysex, int programId) {
     Q_ASSERT(sysex.count() == sysex_set_program_req_size);
     Q_ASSERT(programId >= 1 && programId <= 4);
@@ -115,33 +94,6 @@ void makeSetProgramRequest(QByteArray &sysex, int programId) {
     sysex[opcode_offset + 1] = sysex_set_program_req[1];
     sysex[opcode_offset + 2] = sysex_set_program_req[2];
     sysex[program_offset] = static_cast<char>(programId);
-}
-
-QByteArray setProgram(pProgram p) {
-    Q_CHECK_PTR(p);
-
-    QByteArray ret;
-    addHeader(ret);
-    ret += sysex_set_program_req[0];
-    ret += sysex_set_program_req[1];
-    ret += sysex_set_program_req[2];
-    ret += p->id;
-    ret += p->channel;
-    for (int i = 0 ; i < 8 ; ++i) {
-        const Pad& pad = p->pads[i];
-        ret += pad.note;
-        ret += pad.pc;
-        ret += pad.cc;
-        ret += pad.toggle;
-    }
-    for (int i = 0 ; i < 8 ; ++i) {
-        const Knob& knob = p->knobs[i];
-        ret += knob.cc;
-        ret += knob.low;
-        ret += knob.high;
-    }
-    addFooter(ret);
-    return ret;
 }
 
 char channel(const QByteArray &sysex) {
