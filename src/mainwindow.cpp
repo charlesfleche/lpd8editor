@@ -42,19 +42,10 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     auto sysexHandler = new SysexHandler(io);
     auto connectionsModel = new MidiConnectionsModel(io);
 
-    connect(
-        ui->connectionsView,
-        &QListView::activated,
-        connectionsModel,
-        QOverload<const QModelIndex &>::of(&MidiConnectionsModel::connectPort)
-    );
-    ui->connectionsView->setModel(connectionsModel);
-
     // Undo
 
     QUndoStack* stack = undoStack();
     Q_CHECK_PTR(stack);
-    ui->undoListView->setStack(stack);
 
     QAction* undoAction = stack->createUndoAction(this, "&Undo");
     undoAction->setShortcuts(QKeySequence::Undo);
@@ -165,9 +156,6 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             connectionsModel->connectPort(connectionsModel->index(row));
         }
     );
-
-    ui->treeView->setModel(app->programs());
-    ui->treeView->setItemDelegate(new MidiValueDelegate(this));
 
     connect(sysexHandler,
             &SysexHandler::programReceived,

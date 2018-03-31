@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>2040</width>
-    <height>1320</height>
+    <width>775</width>
+    <height>389</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -71,7 +71,7 @@
       </layout>
      </widget>
     </item>
-    <item row="0" column="2">
+    <item row="0" column="1">
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
        <number>1</number>
@@ -231,15 +231,6 @@
       </widget>
      </widget>
     </item>
-    <item row="1" column="0">
-     <widget class="QTreeView" name="treeView"/>
-    </item>
-    <item row="1" column="2">
-     <widget class="QUndoView" name="undoListView"/>
-    </item>
-    <item row="1" column="1">
-     <widget class="QListView" name="connectionsView"/>
-    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -247,7 +238,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>2040</width>
+     <width>775</width>
      <height>42</height>
     </rect>
    </property>
@@ -459,11 +450,6 @@
   </action>
  </widget>
  <customwidgets>
-  <customwidget>
-   <class>QUndoView</class>
-   <extends>QListView</extends>
-   <header location="global">QUndoView</header>
-  </customwidget>
   <customwidget>
    <class>LutSpinBox</class>
    <extends>QSpinBox</extends>
