@@ -72,27 +72,12 @@ int Application::activeProgramId() const {
     return isValidProgramId(programId) ? programId : -1;
 }
 
-int Application::activeProgramChannel() const
-{
-    Q_CHECK_PTR(programs());
-
-    for (int row = 0 ; row < programs()->rowCount() ; ++row) {
-        const int programId(getProgramId(programs(), row));
-        if (programId == activeProgramId()) {
-            return programs()->data(programs()->index(row, 2)).toInt();
-        }
-    }
-
-    return -1;
-}
-
 void Application::setActiveProgramId(int programId) {
     if (QSettings().value(SETTINGS_KEY_ACTIVE_PROGRAM_ID).toInt() == programId) {
         return;
     }
     QSettings().setValue(SETTINGS_KEY_ACTIVE_PROGRAM_ID, programId);
     emit activeProgramIdChanged(programId);
-    emit activeProgramChannelChanged(activeProgramChannel());
 }
 
 void Application::setActiveProgramChannel(int channel)

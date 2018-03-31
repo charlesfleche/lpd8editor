@@ -12,13 +12,11 @@ class Application : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(int activeProgramId READ activeProgramId WRITE setActiveProgramId NOTIFY activeProgramIdChanged)
-    Q_PROPERTY(int activeProgramChannel READ activeProgramChannel WRITE setActiveProgramChannel NOTIFY activeProgramChannelChanged)
 
 public:
     explicit Application(QObject *parent = 0);
 
     int activeProgramId() const;
-    int activeProgramChannel() const;
 
     bool isValidActiveProgram() const;
 
