@@ -30,16 +30,12 @@ private slots:
     void on_actionImportProgram_triggered();
     void on_actionExportProgram_triggered();
 
-    void on_actionRescan_triggered();
-
     void refreshUiAccordingToSelection();
     void refreshWidgetStack();
 
 private:
     int currentSelectedProjectId() const;
     int programModelColumn() const;
-
-    void sendCurrentProgram(int deviceProgramId);
 
     Ui::MainWindow *ui;
     Application* app;

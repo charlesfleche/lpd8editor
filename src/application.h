@@ -6,7 +6,6 @@
 #include <QObject>
 
 class ProgramsModel;
-class OldMidiIO;
 
 class QAbstractItemModel;
 class QSqlTableModel;
@@ -25,8 +24,6 @@ public:
 
     bool isValidActiveProgram() const;
 
-    OldMidiIO* midiIO() const;
-
     QAbstractItemModel* programs() const;
     ProgramsModel* myPrograms() const;
     QAbstractItemModel* pads() const;
@@ -35,10 +32,6 @@ public:
 public slots:
     void setActiveProgramId(int);
     void setActiveProgramChannel(int);
-
-    void sendProgram(int);
-
-    pProgram program(int) const;
 
 signals:
     void activeProgramIdChanged(int);
@@ -53,8 +46,6 @@ private:
     QSqlTableModel* m_programs;
     QSqlTableModel* m_pads;
     QSqlTableModel* m_knobs;
-
-    OldMidiIO* m_midi_io;
 };
 
 #endif // APPLICATION_H

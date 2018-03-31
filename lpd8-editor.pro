@@ -8,7 +8,6 @@ SOURCES += src/main.cpp \
     src/db.cpp \
     src/utils.cpp \
     src/qmltablemodelproxy.cpp \
-    src/midiio.cpp \
     src/lpd8_sysex.cpp \
     src/mainwindow.cpp \
     src/programproxymodel.cpp \
@@ -51,7 +50,6 @@ HEADERS += \
     src/db.h \
     src/utils.h \
     src/qmltablemodelproxy.h \
-    src/midiio.h \
     src/lpd8_sysex.h \
     src/lpd8_types.h \
     src/mainwindow.h \

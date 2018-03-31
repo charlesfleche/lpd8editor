@@ -5,7 +5,6 @@
 #include "db.h"
 #include "commands.h"
 #include "iomidi.h"
-#include "midiio.h"
 #include "midiconnectionsmodel.h"
 #include "midivaluedelegate.h"
 #include "programsmodel.h"
@@ -32,7 +31,6 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     app(app)
 {
     Q_CHECK_PTR(app);
-    Q_CHECK_PTR(app->midiIO());
 
     IOMidi* io = new IOMidi(this);
 
@@ -372,20 +370,6 @@ void MainWindow::on_actionExportProgram_triggered()
     }
 
     writeProgramFile(sysex, path);
-}
-
-void MainWindow::sendCurrentProgram(int deviceProgramId) {
-    Q_CHECK_PTR(app->midiIO());
-    Q_CHECK_PTR(app->myPrograms());
-
-    const QByteArray sysex = app->myPrograms()->programSysex(currentSelectedProjectId());
-    app->midiIO()->sendProgramSysex(sysex, deviceProgramId);
-}
-
-void MainWindow::on_actionRescan_triggered() {
-    Q_CHECK_PTR(app->midiIO());
-
-    app->midiIO()->rescanPorts();
 }
 
 int MainWindow::currentSelectedProjectId() const {
