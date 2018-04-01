@@ -5,14 +5,6 @@
 
 #include <exception>
 
-QString sqlErrorMessage(const QString& msg, const QSqlError& err) {
-    return msg + QString("\n") + err.text();
-}
-
-bool isInitialized(const QSqlDatabase& db) {
-    return db.tables().contains("programs");
-}
-
 #define GOTO_END_IF_FALSE(X) if (!X) goto end;
 
 QList<int> programIds() {
@@ -29,40 +21,6 @@ QList<int> programIds() {
 end:
     if (q.lastError().isValid()) {
         qWarning() << "Failed to retrieve a list of program ids:" << q.lastError().text();
-    }
-    return ret;
-}
-
-int programChannel(int programId) {
-    int ret = -1;
-    QSqlQuery q;
-    GOTO_END_IF_FALSE(q.prepare("select channel from programs where programId = ?"));
-    q.addBindValue(programId);
-    GOTO_END_IF_FALSE(q.exec());
-
-    GOTO_END_IF_FALSE(q.first());
-    ret = q.value(0).toInt();
-
-    Q_ASSERT(!q.next());
-
-end:
-    if (q.lastError().isValid()) {
-        qWarning() << "Failed to retrieve channel for program" << programId << ":" << q.lastError().text();
-    }
-    return ret;
-}
-
-bool setProgramChannel(int programId, int channel) {
-    bool ret = false;
-    QSqlQuery q;
-    GOTO_END_IF_FALSE(q.prepare("update programs set channel = ? where programId = ?"));
-    q.addBindValue(channel);
-    q.addBindValue(programId);
-    ret = q.exec();
-
-end:
-    if (q.lastError().isValid()) {
-        qWarning() << "Failed to set channel" << channel << "for program" << programId << ":" << q.lastError().text();
     }
     return ret;
 }
@@ -282,10 +240,6 @@ end:
     return true;
 }
 
-bool isValidProgramId(int programId) {
-    return programIds().contains(programId);
-}
-
 bool initialize() {
     QSqlQuery q;
     if (!q.exec(readTextFile(":/create_table_programs.sql"))) return false;
@@ -294,6 +248,10 @@ bool initialize() {
     if (!q.exec(readTextFile(":/create_trigger_add_program.sql"))) return false;
     if (!q.exec(readTextFile(":/create_trigger_delete_program.sql"))) return false;
     return true;
+}
+
+bool isInitialized(const QSqlDatabase& db) {
+    return db.tables().contains("programs");
 }
 
 QSqlError initDb(const QString& path) {

@@ -8,11 +8,8 @@ QString programName(int programId);
 QByteArray programSysex(int programId);
 bool fromSysex(int programId, const QByteArray &sysex);
 QList<int> programIds();
-int programChannel(int programId);
-bool setProgramChannel(int programId, int channel);
 
 QSqlError initDb(const QString&);
 bool deleteProgram(int);
-bool isValidProgramId(int);
 
 #endif // DB_H
