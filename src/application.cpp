@@ -34,37 +34,3 @@ QAbstractItemModel* Application::programs() const {
 ProgramsModel* Application::myPrograms() const {
     return m_my_programs;
 }
-
-int Application::activeProgramId() const {
-    const int programId = QSettings().value(SETTINGS_KEY_ACTIVE_PROGRAM_ID, -1).toInt();
-    return isValidProgramId(programId) ? programId : -1;
-}
-
-void Application::setActiveProgramId(int programId) {
-    if (QSettings().value(SETTINGS_KEY_ACTIVE_PROGRAM_ID).toInt() == programId) {
-        return;
-    }
-    QSettings().setValue(SETTINGS_KEY_ACTIVE_PROGRAM_ID, programId);
-    emit activeProgramIdChanged(programId);
-}
-
-void Application::setActiveProgramChannel(int channel)
-{
-    Q_CHECK_PTR(programs());
-
-    for (int row = 0 ; row < programs()->rowCount() ; ++row) {
-        const int programId(getProgramId(programs(), row));
-        if (programId == activeProgramId()) {
-            const QModelIndex idx(programs()->index(row, 2));
-            const int curChannel(programs()->data(idx).toInt());
-            if (channel != curChannel) {
-                programs()->setData(idx, channel);
-                emit activeProgramChannelChanged(channel);
-            }
-        }
-    }
-}
-
-char getChar(const QSqlRecord& r, const QString& name) {
-    return r.value(name).toChar().toLatin1();
-}

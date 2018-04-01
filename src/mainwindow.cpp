@@ -65,12 +65,6 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ui->newProgramButton->setDefaultAction(ui->actionNewProgram);
     ui->deleteProgramButton->setDefaultAction(ui->actionDeleteProgram);
 
-    connect(app,
-            &Application::activeProgramIdChanged,
-            [=](int) {
-                refreshWidgetStack();
-            });
-
     ui->programsView->setModel(app->programs());
     ui->programsView->setModelColumn(programModelColumn());
 
@@ -132,7 +126,6 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     );
 
     refreshUiAccordingToSelection();
-    refreshWidgetStack();
 
     clientComboBox->setModel(connectionsModel);
     Q_ASSERT(clientComboBox->count() > 0);
@@ -261,13 +254,6 @@ int MainWindow::programModelColumn() const
     return 1;
 }
 
-void MainWindow::refreshWidgetStack() {
-    Q_CHECK_PTR(app);
-
-    QWidget* w = app->activeProgramId() > 0 ? ui->pageEditor : ui->pageDefault;
-    ui->stackedWidget->setCurrentWidget(w);
-}
-
 QString defaultSysex() {
     return readTextFile(":/default-sysex.sql");
 }
@@ -302,15 +288,6 @@ void MainWindow::on_actionDeleteProgram_triggered()
 void MainWindow::on_actionQuit_triggered()
 {
     qApp->quit();
-}
-
-void MainWindow::on_programsView_activated(const QModelIndex& idx)
-{
-    Q_ASSERT(idx.isValid());
-    Q_CHECK_PTR(idx.model());
-    Q_CHECK_PTR(app);
-
-    app->setActiveProgramId(getProgramId(idx.model(), idx.row()));
 }
 
 void MainWindow::refreshUiAccordingToSelection()

@@ -25,13 +25,10 @@ private slots:
     void on_actionDeleteProgram_triggered();
     void on_actionQuit_triggered();
 
-    void on_programsView_activated(const QModelIndex&);
-
     void on_actionImportProgram_triggered();
     void on_actionExportProgram_triggered();
 
     void refreshUiAccordingToSelection();
-    void refreshWidgetStack();
 
 private:
     int currentSelectedProjectId() const;
