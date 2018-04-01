@@ -7,10 +7,8 @@ SOURCES += src/main.cpp \
     src/application.cpp \
     src/db.cpp \
     src/utils.cpp \
-    src/qmltablemodelproxy.cpp \
     src/lpd8_sysex.cpp \
     src/mainwindow.cpp \
-    src/programproxymodel.cpp \
     src/midivaluedelegate.cpp \
     src/commands.cpp \
     src/programsmodel.cpp \
@@ -49,10 +47,8 @@ HEADERS += \
     src/application.h \
     src/db.h \
     src/utils.h \
-    src/qmltablemodelproxy.h \
     src/lpd8_sysex.h \
     src/mainwindow.h \
-    src/programproxymodel.h \
     src/midivaluedelegate.h \
     src/enums.h \
     src/commands.h \
