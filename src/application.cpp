@@ -15,10 +15,7 @@ static const QString SETTINGS_KEY_ACTIVE_PROGRAM_ID = "active/program_id";
 
 Application::Application(QObject *parent):
     QObject(parent),
-    m_my_programs(Q_NULLPTR),
-    m_programs(Q_NULLPTR),
-    m_pads(Q_NULLPTR),
-    m_knobs(Q_NULLPTR)
+    m_my_programs(Q_NULLPTR)
 {
     if (!initFilesystem()) {
         throw std::runtime_error("Failed filesystem initialization");
@@ -28,27 +25,6 @@ Application::Application(QObject *parent):
     }
 
     m_my_programs = new ProgramsModel(this);
-
-    m_programs = new QSqlTableModel(this);
-    m_programs->setTable("programs");
-    m_programs->setEditStrategy(QSqlTableModel::OnFieldChange);
-    m_programs->select();
-
-    m_pads = new QSqlTableModel(this);
-    m_pads->setTable("pads");
-    m_pads->setEditStrategy(QSqlTableModel::OnFieldChange);
-    m_pads->select();
-
-    m_knobs = new QSqlTableModel(this);
-    m_knobs->setTable("knobs");
-    m_knobs->setEditStrategy(QSqlTableModel::OnFieldChange);
-    m_knobs->select();
-
-    connect(this,
-            &Application::activeProgramIdChanged,
-            &Application::refreshModels);
-
-    refreshModels();
 }
 
 QAbstractItemModel* Application::programs() const {
@@ -57,14 +33,6 @@ QAbstractItemModel* Application::programs() const {
 
 ProgramsModel* Application::myPrograms() const {
     return m_my_programs;
-}
-
-QAbstractItemModel* Application::pads() const {
-    return m_pads;
-}
-
-QAbstractItemModel* Application::knobs() const {
-    return m_knobs;
 }
 
 int Application::activeProgramId() const {
@@ -95,15 +63,6 @@ void Application::setActiveProgramChannel(int channel)
             }
         }
     }
-}
-
-void Application::refreshModels() {
-    Q_CHECK_PTR(m_pads);
-    Q_CHECK_PTR(m_knobs);
-
-    const QString filter = QString("programId=%1").arg(activeProgramId());
-    m_pads->setFilter(filter);
-    m_knobs->setFilter(filter);
 }
 
 char getChar(const QSqlRecord& r, const QString& name) {

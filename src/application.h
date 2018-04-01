@@ -22,8 +22,6 @@ public:
 
     QAbstractItemModel* programs() const;
     ProgramsModel* myPrograms() const;
-    QAbstractItemModel* pads() const;
-    QAbstractItemModel* knobs() const;
 
 public slots:
     void setActiveProgramId(int);
@@ -34,14 +32,8 @@ signals:
     void activeProgramChannelChanged(int);
     void connectedChanged(bool);
 
-private slots:
-    void refreshModels();
-
 private:
     ProgramsModel* m_my_programs;
-    QSqlTableModel* m_programs;
-    QSqlTableModel* m_pads;
-    QSqlTableModel* m_knobs;
 };
 
 #endif // APPLICATION_H
