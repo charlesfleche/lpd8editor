@@ -1,7 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include "application.h"
 #include "db.h"
 #include "commands.h"
 #include "iomidi.h"
@@ -25,14 +24,13 @@
 static const QString SETTINGS_KEY_DEFAULT_NAME = "default/name";
 static const QString SETTINGS_KEY_DEFAULT_SYSEX = "default/sysex";
 
-MainWindow::MainWindow(Application* app, QWidget *parent) :
+MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    app(app)
+    programsModel(nullptr)
 {
-    Q_CHECK_PTR(app);
-
-    IOMidi* io = new IOMidi(this);
+    programsModel = new ProgramsModel(this);
+    auto io = new IOMidi(this);
 
     ui->setupUi(this);
     setStatusBar(Q_NULLPTR);
@@ -65,31 +63,31 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     ui->newProgramButton->setDefaultAction(ui->actionNewProgram);
     ui->deleteProgramButton->setDefaultAction(ui->actionDeleteProgram);
 
-    ui->programsView->setModel(app->programs());
+    ui->programsView->setModel(programsModel);
     ui->programsView->setModelColumn(programModelColumn());
 
     QDataWidgetMapper *mapper = new QDataWidgetMapper(this);
-    mapper->setModel(app->programs());
+    mapper->setModel(programsModel);
     mapper->setItemDelegate(new MidiValueDelegate(this));
     mapper->addMapping(ui->channelSpinBox, 2); // XXX
 
     ui->padsView->setItemDelegate(new MidiValueDelegate(this));
-    ui->padsView->setModel(app->programs());
+    ui->padsView->setModel(programsModel);
     ui->padsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     QHeaderView* headerView = new QHeaderView(Qt::Horizontal, this);
-    headerView->setModel(app->myPrograms()->padsHeaderModel());
+    headerView->setModel(programsModel->padsHeaderModel());
     ui->padsView->setHorizontalHeader(headerView);
 
     ui->padsView->hideColumn(0);
     ui->padsView->hideColumn(1);
 
     ui->knobsView->setItemDelegate(new MidiValueDelegate(this));
-    ui->knobsView->setModel(app->programs());
+    ui->knobsView->setModel(programsModel);
     ui->knobsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     headerView = new QHeaderView(Qt::Horizontal, this);
-    headerView->setModel(app->myPrograms()->knobsHeaderModel());
+    headerView->setModel(programsModel->knobsHeaderModel());
     ui->knobsView->setHorizontalHeader(headerView);
 
     ui->knobsView->hideColumn(0);
@@ -112,20 +110,18 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
     connect(sel,
             &QItemSelectionModel::currentRowChanged,
             [=](const QModelIndex &current) {
-                Q_CHECK_PTR(app->myPrograms());
+                Q_CHECK_PTR(programsModel);
 
-                ui->padsView->setRootIndex(app->myPrograms()->padsParentIndex(current));
-                ui->knobsView->setRootIndex(app->myPrograms()->knobsParentIndex(current));
+                ui->padsView->setRootIndex(programsModel->padsParentIndex(current));
+                ui->knobsView->setRootIndex(programsModel->knobsParentIndex(current));
             }
     );
 
-    connect(app->programs(),
+    connect(programsModel,
             &QAbstractItemModel::modelReset,
             this,
             &MainWindow::refreshUiAccordingToSelection
     );
-
-    refreshUiAccordingToSelection();
 
     clientComboBox->setModel(connectionsModel);
     Q_ASSERT(clientComboBox->count() > 0);
@@ -152,7 +148,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             &SysexHandler::programReceived,
             [=](const QByteArray& sysex) {
                 Q_CHECK_PTR(ui->programsView->selectionModel());
-                Q_CHECK_PTR(app->myPrograms());
+                Q_CHECK_PTR(programsModel);
                 Q_CHECK_PTR(undoStack());
 
                 const int programId = currentSelectedProjectId();
@@ -160,7 +156,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
                     Q_UNIMPLEMENTED();
                 } else {
                     UpdateProgramFromSysexCommand* cmd = new UpdateProgramFromSysexCommand(
-                        app->myPrograms(),
+                        programsModel,
                         programId,
                         sysex
                     );
@@ -169,11 +165,11 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             });
 
     ProgramIdSelectionRestorer *restorer = new ProgramIdSelectionRestorer(ui->programsView->selectionModel(), this);
-    connect(app->myPrograms(),
+    connect(programsModel,
             &ProgramsModel::modelAboutToBeReset,
             restorer,
             &ProgramIdSelectionRestorer::store);
-    connect(app->myPrograms(),
+    connect(programsModel,
             &ProgramsModel::modelReset,
             restorer,
             &ProgramIdSelectionRestorer::restore);
@@ -209,7 +205,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
             midiReceiveActions[i],
             &QAction::triggered,
             [=]() {
-                const QByteArray sysex = app->myPrograms()->programSysex(currentSelectedProjectId());
+                const QByteArray sysex = programsModel->programSysex(currentSelectedProjectId());
                 sysexHandler->sendProgram(sysex, i+1);
             }
         );
@@ -238,7 +234,7 @@ MainWindow::MainWindow(Application* app, QWidget *parent) :
         midiActionsSetEnabled
     );
     connect(
-        app->myPrograms(),
+        programsModel,
         &ProgramsModel::modelReset,
         midiActionsSetEnabled
     );
@@ -260,10 +256,11 @@ QString defaultSysex() {
 
 void MainWindow::on_actionNewProgram_triggered()
 {
+    Q_CHECK_PTR(programsModel);
     Q_CHECK_PTR(undoStack());
 
     QUndoCommand* cmd = new CreateProgramCommand(
-        app->myPrograms(),
+        programsModel,
         QSettings().value(SETTINGS_KEY_DEFAULT_NAME).toString(),
         QSettings().value(SETTINGS_KEY_DEFAULT_SYSEX).toByteArray()
     );
@@ -272,6 +269,7 @@ void MainWindow::on_actionNewProgram_triggered()
 
 void MainWindow::on_actionDeleteProgram_triggered()
 {
+    Q_CHECK_PTR(programsModel);
     Q_CHECK_PTR(undoStack());
 
     QItemSelectionModel* selection_model = ui->programsView->selectionModel();
@@ -279,7 +277,7 @@ void MainWindow::on_actionDeleteProgram_triggered()
     Q_ASSERT(selection_model->hasSelection());
 
     QUndoCommand *cmd = new DeleteProgramCommand(
-        app->myPrograms(),
+        programsModel,
         selectedProgramId(selection_model)
     );
     undoStack()->push(cmd);
@@ -297,13 +295,13 @@ void MainWindow::refreshUiAccordingToSelection()
 
     ui->actionDeleteProgram->setEnabled(sel->hasSelection());
 
-    Q_CHECK_PTR(app);
     QWidget* w = sel->currentIndex().row() != -1 ? ui->pageEditor : ui->pageDefault;
     ui->stackedWidget->setCurrentWidget(w);
 }
 
 void MainWindow::on_actionImportProgram_triggered()
 {
+    Q_CHECK_PTR(programsModel);
     Q_CHECK_PTR(undoStack());
 
     const QString path(
@@ -316,7 +314,7 @@ void MainWindow::on_actionImportProgram_triggered()
     }
 
     QUndoCommand* cmd = new CreateProgramCommand(
-        app->myPrograms(),
+        programsModel,
         QDir(path).dirName(),
         fromSysexTextFile(path)
     );
@@ -325,8 +323,6 @@ void MainWindow::on_actionImportProgram_triggered()
 
 void MainWindow::on_actionExportProgram_triggered()
 {
-    Q_CHECK_PTR(app);
-
     QItemSelectionModel *m = ui->programsView->selectionModel();
     Q_CHECK_PTR(m);
 

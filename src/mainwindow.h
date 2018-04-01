@@ -3,21 +3,18 @@
 
 #include <QMainWindow>
 
+class ProgramsModel;
+
 namespace Ui {
 class MainWindow;
 }
-
-class Application;
-
-class QPushButton;
-class QUndoStack;
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(Application*, QWidget *parent = 0);
+    explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
 private slots:
@@ -35,8 +32,7 @@ private:
     int programModelColumn() const;
 
     Ui::MainWindow *ui;
-    Application* app;
-    QList<QPushButton*> midiChannelButtons;
+    ProgramsModel* programsModel;
 };
 
 #endif // MAINWINDOW_H

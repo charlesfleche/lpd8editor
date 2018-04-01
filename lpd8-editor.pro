@@ -4,7 +4,6 @@ CONFIG += c++11 link_pkgconfig warn_on
 QMAKE_CXXFLAGS += -Werror
 
 SOURCES += src/main.cpp \
-    src/application.cpp \
     src/db.cpp \
     src/utils.cpp \
     src/lpd8_sysex.cpp \
@@ -44,7 +43,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 INCLUDEPATH += $$PWD/src
 
 HEADERS += \
-    src/application.h \
     src/db.h \
     src/utils.h \
     src/lpd8_sysex.h \

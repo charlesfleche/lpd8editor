@@ -1,8 +1,6 @@
-#include "application.h"
 #include "mainwindow.h"
 
 #include <QApplication>
-#include <QMainWindow>
 
 int main(int argc, char *argv[])
 {
@@ -14,8 +12,7 @@ int main(int argc, char *argv[])
     app.setApplicationName("lpd8-editor");
     app.setApplicationVersion("0.0.0");
 
-    Application application;
-    MainWindow win(&application);
+    MainWindow win;
     win.show();
     return app.exec();
 }
