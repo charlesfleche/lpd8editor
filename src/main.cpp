@@ -1,5 +1,7 @@
 #include "application.h"
+#include "db.h"
 #include "mainwindow.h"
+#include "utils.h"
 
 #include <QApplication>
 #include <QMainWindow>
@@ -15,6 +17,13 @@ int main(int argc, char *argv[])
     app.setOrganizationName("lpd8-editor");
     app.setApplicationName("lpd8-editor");
     app.setApplicationVersion("0.0.0");
+
+    if (!initFilesystem()) {
+        throw std::runtime_error("Failed filesystem initialization");
+    }
+    if (initDb(defaultDbPath()).isValid()) {
+        throw std::runtime_error("Failed database initialization");
+    }
 
     Application application;
     MainWindow win(&application);

@@ -17,13 +17,6 @@ Application::Application(QObject *parent):
     QObject(parent),
     m_my_programs(Q_NULLPTR)
 {
-    if (!initFilesystem()) {
-        throw std::runtime_error("Failed filesystem initialization");
-    }
-    if (initDb(defaultDbPath()).isValid()) {
-        throw std::runtime_error("Failed database initialization");
-    }
-
     m_my_programs = new ProgramsModel(this);
 }
 
