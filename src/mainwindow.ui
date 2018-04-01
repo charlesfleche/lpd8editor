@@ -439,15 +439,6 @@
     <string>Ctrl+E</string>
    </property>
   </action>
-  <action name="actionRescan">
-   <property name="icon">
-    <iconset theme="system-reboot">
-     <normaloff>.</normaloff>.</iconset>
-   </property>
-   <property name="text">
-    <string>Rescan MIDI devices</string>
-   </property>
-  </action>
  </widget>
  <customwidgets>
   <customwidget>

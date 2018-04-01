@@ -19,8 +19,6 @@
 #include <QStandardItemModel>
 #include <QUndoStack>
 
-#include <QtDebug>
-
 static const QString SETTINGS_KEY_DEFAULT_NAME = "default/name";
 static const QString SETTINGS_KEY_DEFAULT_SYSEX = "default/sysex";
 
@@ -58,7 +56,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QComboBox* clientComboBox = new QComboBox(this);
     clientComboBox->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     ui->toolBar->addWidget(clientComboBox);
-    ui->toolBar->addAction(ui->actionRescan);
 
     ui->newProgramButton->setDefaultAction(ui->actionNewProgram);
     ui->deleteProgramButton->setDefaultAction(ui->actionDeleteProgram);
@@ -130,7 +127,6 @@ MainWindow::MainWindow(QWidget *parent) :
             &MidiConnectionsModel::connectedPortChanged,
             [=](const QModelIndex &index) {
                 clientComboBox->setEnabled(index.isValid());
-                ui->actionRescan->setEnabled(index.isValid());
                 if (index.isValid()) {
                     clientComboBox->setCurrentIndex(index.row());
                 }
