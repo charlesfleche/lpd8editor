@@ -4,6 +4,7 @@
 #include "db.h"
 #include "enums.h"
 #include "lpd8_sysex.h"
+#include "utils.h"
 
 #include <QSortFilterProxyModel>
 #include <QStandardItemModel>
@@ -42,6 +43,13 @@ ProgramsModel::ProgramsModel(QObject *parent) :
     m_programs(Q_NULLPTR),
     m_empty(Q_NULLPTR)
 {
+    if (!initFilesystem()) {
+        throw std::runtime_error("Failed filesystem initialization");
+    }
+    if (initDb(defaultDbPath()).isValid()) {
+        throw std::runtime_error("Failed database initialization");
+    }
+
     // LUTs
 
     for (int i = 0 ; i <= 127 ; ++i) {
