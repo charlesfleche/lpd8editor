@@ -52,8 +52,27 @@ ProgramsModel::ProgramsModel(QObject *parent) :
 
     // LUTs
 
+    const QStringList notes = {
+        "C",
+        "C♯/D♭",
+        "D",
+        "D#/E♭",
+        "E",
+        "F",
+        "F♯/G♭",
+        "G",
+        "G♯/A♭",
+        "A",
+        "A♯/B♭",
+        "B"
+    };
+
     for (int i = 0 ; i <= 127 ; ++i) {
         m_lut_default << QString::number(i);
+
+        const QString &note = notes[i % notes.count()];
+        const int octave = i / notes.count() - 2;
+        m_lut_note << QString("%1: %2%3").arg(i).arg(note).arg(octave);
     }
 
     for (int i = 0 ; i <= 15 ; ++i) {
@@ -64,7 +83,7 @@ ProgramsModel::ProgramsModel(QObject *parent) :
     m_lut_toggle << toggle_label;
 
     m_luts[channel_field_name] = m_lut_channel;
-    m_luts[note_field_name] = m_lut_default;
+    m_luts[note_field_name] = m_lut_note;
     m_luts[pc_field_name] = m_lut_default;
     m_luts[cc_field_name] = m_lut_default;
     m_luts[toggle_field_name] = m_lut_toggle;

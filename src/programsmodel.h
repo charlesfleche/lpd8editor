@@ -66,6 +66,7 @@ private:
     QStandardItemModel* m_empty;
 
     QStringList m_lut_default;
+    QStringList m_lut_note;
     QStringList m_lut_channel;
     QStringList m_lut_toggle;
     QHash<QString, QStringList> m_luts;
