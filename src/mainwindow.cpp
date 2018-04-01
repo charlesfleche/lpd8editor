@@ -270,7 +270,7 @@ void MainWindow::on_actionDeleteProgram_triggered()
 
     QItemSelectionModel* selection_model = ui->programsView->selectionModel();
     Q_CHECK_PTR(selection_model);
-    Q_ASSERT(selection_model->hasSelection());
+    Q_ASSERT(selection_model->currentIndex().row() > -1);
 
     QUndoCommand *cmd = new DeleteProgramCommand(
         programsModel,

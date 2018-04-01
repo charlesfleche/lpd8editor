@@ -546,14 +546,8 @@ bool ProgramsModel::updateProgramFromSysex(int programId, const QByteArray &syse
     return ret;
 }
 
-
-
 int selectedProgramId(QItemSelectionModel* model) {
     Q_CHECK_PTR(model);
-
-    if (!model->hasSelection()) {
-        return -1;
-    }
 
     const QAbstractItemModel *m = model->model();
     Q_CHECK_PTR(m);
