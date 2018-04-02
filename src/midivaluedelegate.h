@@ -10,7 +10,7 @@ class MidiValueDelegate : public QStyledItemDelegate
     Q_OBJECT
 
 public:
-    MidiValueDelegate(QObject* parent = Q_NULLPTR);
+    MidiValueDelegate(QObject* parent = nullptr);
 
     void paint(QPainter*, const QStyleOptionViewItem&, const QModelIndex&) const Q_DECL_OVERRIDE;
     QWidget* createEditor(QWidget*, const QStyleOptionViewItem&, const QModelIndex&) const Q_DECL_OVERRIDE;
@@ -26,7 +26,7 @@ class LutSpinBox : public QSpinBox {
     Q_OBJECT
 
 public:
-    LutSpinBox(QWidget *parent = Q_NULLPTR);
+    LutSpinBox(QWidget *parent = nullptr);
 
     void setLut(const QStringList &lut);
 

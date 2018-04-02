@@ -15,7 +15,7 @@ class ProgramsModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
-    ProgramsModel(QObject* parent = Q_NULLPTR);
+    ProgramsModel(QObject* parent = nullptr);
 
     int columnCount(const QModelIndex &parent = QModelIndex()) const Q_DECL_OVERRIDE;
     QVariant data(const QModelIndex &idx, int role = Qt::DisplayRole) const Q_DECL_OVERRIDE;
@@ -77,7 +77,7 @@ class ProgramIdSelectionRestorer : public QObject {
     Q_OBJECT
 
 public:
-    ProgramIdSelectionRestorer(QItemSelectionModel* model, QObject *parent = Q_NULLPTR);
+    ProgramIdSelectionRestorer(QItemSelectionModel* model, QObject *parent = nullptr);
 
 public slots:
     void store();

@@ -37,11 +37,11 @@ QStandardItemModel* m_knobs_header_model;
 
 ProgramsModel::ProgramsModel(QObject *parent) :
     QAbstractItemModel(parent),
-    m_groups(Q_NULLPTR),
-    m_pads(Q_NULLPTR),
-    m_knobs(Q_NULLPTR),
-    m_programs(Q_NULLPTR),
-    m_empty(Q_NULLPTR)
+    m_groups(nullptr),
+    m_pads(nullptr),
+    m_knobs(nullptr),
+    m_programs(nullptr),
+    m_empty(nullptr)
 {
     if (!initFilesystem()) {
         throw std::runtime_error("Failed filesystem initialization");

@@ -17,7 +17,7 @@ QUndoStack* undoStack() {
     Q_CHECK_PTR(qApp);
 
     QUndoStack* stack = qApp->findChild<QUndoStack*>(undo_stack_object_name, Qt::FindDirectChildrenOnly);
-    if (stack == Q_NULLPTR) {
+    if (stack == nullptr) {
         stack = setupUndoStack(qApp);
     }
     Q_CHECK_PTR(stack);

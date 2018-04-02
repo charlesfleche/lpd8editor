@@ -31,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
     auto io = new IOMidi(this);
 
     ui->setupUi(this);
-    setStatusBar(Q_NULLPTR);
+    setStatusBar(nullptr);
 
     auto sysexHandler = new SysexHandler(io);
     auto connectionsModel = new MidiConnectionsModel(io);

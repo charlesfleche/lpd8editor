@@ -7,9 +7,9 @@
 
 IOMidi::IOMidi(QObject *parent) :
     QObject(parent),
-    m_seq_handle(Q_NULLPTR),
+    m_seq_handle(nullptr),
     m_seq_port(-1),
-    m_pfds(Q_NULLPTR)
+    m_pfds(nullptr)
 {
     qDebug() << "Opening MIDI sequencer";
 

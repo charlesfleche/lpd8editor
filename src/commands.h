@@ -17,7 +17,7 @@ int selectedProgramId(QItemSelectionModel* model);
 
 class CreateProgramCommand : public QUndoCommand {
 public:
-    CreateProgramCommand(ProgramsModel* model, const QString&, const QByteArray&, QUndoCommand* parent = Q_NULLPTR);
+    CreateProgramCommand(ProgramsModel* model, const QString&, const QByteArray&, QUndoCommand* parent = nullptr);
 
     void undo() Q_DECL_OVERRIDE;
     void redo() Q_DECL_OVERRIDE;
@@ -31,7 +31,7 @@ private:
 
 class DeleteProgramCommand : public QUndoCommand {
 public:
-    DeleteProgramCommand(ProgramsModel* model, int programId, QUndoCommand* parent = Q_NULLPTR);
+    DeleteProgramCommand(ProgramsModel* model, int programId, QUndoCommand* parent = nullptr);
 
     void undo() Q_DECL_OVERRIDE;
     void redo() Q_DECL_OVERRIDE;
@@ -51,7 +51,7 @@ public:
         int column,
         const QVariant& value,
         int role,
-        QUndoCommand *parent = Q_NULLPTR
+        QUndoCommand *parent = nullptr
     );
 
     void undo() Q_DECL_OVERRIDE;
@@ -73,7 +73,7 @@ public:
         ProgramsModel* model,
         int programId,
         const QByteArray& sysex,
-        QUndoCommand *parent = Q_NULLPTR);
+        QUndoCommand *parent = nullptr);
 
     void undo() Q_DECL_OVERRIDE;
     void redo() Q_DECL_OVERRIDE;
