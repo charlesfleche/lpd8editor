@@ -35,10 +35,6 @@ QString defaultDbPath() {
     return dataDir().filePath("db.sqlite3");
 }
 
-bool checkValue(int v, int min, int max) {
-    return v >= min && v <= max;
-}
-
 char readAndValidateChar(QTextStream& in, char expected) {
     if (in.atEnd()) {
         throw std::runtime_error("Trying to read from an ended text stream");
@@ -135,12 +131,4 @@ void writeProgramFile(const QByteArray &sysex, const QString &path) {
     for (auto it = sysex.constBegin() ; it != sysex.constEnd() ; ++it) {
         out << static_cast<unsigned char>(*it) << " ";
     }
-}
-
-int getProgramId(const QAbstractItemModel* model, int row)
-{
-    Q_CHECK_PTR(model);
-    Q_ASSERT(row >= 0);
-
-    return model->data(model->index(row, 0)).toInt();
 }
