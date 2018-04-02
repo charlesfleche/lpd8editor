@@ -1,6 +1,3 @@
 - Tests
 - Debian package
 - NetBSD
-- Q_NULLPRT -> nullptr
-- Q_DECL_OVERRIDE -> override
-- auto everywhere
