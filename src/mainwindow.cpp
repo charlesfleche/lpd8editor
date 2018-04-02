@@ -309,10 +309,17 @@ void MainWindow::on_actionImportProgram_triggered()
         return;
     }
 
+    const QByteArray sysex = fromSysexTextFile(path);
+    if (sysex.isNull()) {
+        return;
+    }
+
+    const QString name = QDir(path).dirName();
+
     QUndoCommand* cmd = new CreateProgramCommand(
         programsModel,
-        QDir(path).dirName(),
-        fromSysexTextFile(path)
+        name,
+        sysex
     );
     undoStack()->push(cmd);
 }

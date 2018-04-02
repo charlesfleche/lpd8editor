@@ -1,7 +1,7 @@
 #include "utils.h"
 
-#include <QAbstractItemModel>
-#include <QBuffer>
+#include "lpd8_sysex.h"
+
 #include <QDir>
 #include <QStandardPaths>
 #include <QTextStream>
@@ -78,42 +78,22 @@ QByteArray fromSysexTextFile(const QString &path) {
     QByteArray ret;
 
     QFile data(path);
-    try {
-        if (!data.open(QFile::ReadOnly | QFile::Truncate)) {
-            throw std::runtime_error("Cannot open file");
-        }
-
-        QTextStream in(&data);
-
-        // Header
-
-        ret.append(readAndValidateChar(in, 0xf0)); // Sysex Start
-        ret.append(readAndValidateChar(in, 0x47)); // Manufacturer
-        ret.append(readAndValidateChar(in, 0x7f)); // Model byte 1
-        ret.append(readAndValidateChar(in, 0x75)); // Model byte 2
-        ret.append(readAndValidateChar(in, 0x61)); // Opcode set program: byte1
-        ret.append(readAndValidateChar(in, 0x00)); // Opcode set program: byte2
-        ret.append(readAndValidateChar(in, 0x3a)); // Opcode set program: byte3
-        ret.append(readAndValidateChar(in, 1, 4)); // program id
-        ret.append(readAndValidateChar(in, 0, 15)); // midi channel
-
-        for (int i = 0 ; i < 8 ; ++i) {
-            ret.append(readAndValidateChar(in, 0, 127)); // pad node
-            ret.append(readAndValidateChar(in, 0, 127)); // pad pc
-            ret.append(readAndValidateChar(in, 0, 127)); // pad cc
-            ret.append(readAndValidateChar(in, 0, 1));   // pad toggle
-        }
-
-        for (int i = 0 ; i < 8 ; ++i) {
-            ret.append(readAndValidateChar(in, 0, 127)); // knob cc
-            ret.append(readAndValidateChar(in, 0, 127)); // knob low
-            ret.append(readAndValidateChar(in, 0, 127)); // knob high
-        }
-
-        ret.append(readAndValidateChar(in, 0xf7)); // Sysex End
-    } catch (const std::runtime_error& e) {
-        qWarning() << "Failed to parse sysex text file:" << path << "[" << e.what() << "]";
+    if (!data.open(QFile::ReadOnly | QFile::Truncate)) {
+        qWarning() << "Cannot open sysex file" << path;
         return QByteArray();
+    }
+
+    QTextStream in(&data);
+    for (int i = 0 ; i < sysex::programRequestSize() ; ++i) {
+        if (in.atEnd()) {
+            qWarning() << "Reading from sysex file ended prematurely at position" << i;
+            return QByteArray();
+        }
+
+        int c = 0;
+        in >> c;
+        const char ch = static_cast<char>(c);
+        ret.append(ch);
     }
 
     return ret;

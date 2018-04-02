@@ -10,6 +10,7 @@ enum Type {
     TypeProgram
 };
 
+int programRequestSize();
 int padsCount();
 int knobsCount();
 

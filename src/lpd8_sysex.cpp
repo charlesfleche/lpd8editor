@@ -26,6 +26,10 @@ static const char sysex_set_program_req_size = 66;
 
 namespace sysex {
 
+int programRequestSize() {
+    return sysex_set_program_req_size;
+}
+
 int padsCount() {
     return 8;
 }
