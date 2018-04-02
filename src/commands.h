@@ -19,8 +19,8 @@ class CreateProgramCommand : public QUndoCommand {
 public:
     CreateProgramCommand(ProgramsModel* model, const QString&, const QByteArray&, QUndoCommand* parent = nullptr);
 
-    void undo() Q_DECL_OVERRIDE;
-    void redo() Q_DECL_OVERRIDE;
+    void undo() override;
+    void redo() override;
 
 private:
     ProgramsModel *m_model;
@@ -33,8 +33,8 @@ class DeleteProgramCommand : public QUndoCommand {
 public:
     DeleteProgramCommand(ProgramsModel* model, int programId, QUndoCommand* parent = nullptr);
 
-    void undo() Q_DECL_OVERRIDE;
-    void redo() Q_DECL_OVERRIDE;
+    void undo() override;
+    void redo() override;
 
 private:
     ProgramsModel *m_model;
@@ -54,8 +54,8 @@ public:
         QUndoCommand *parent = nullptr
     );
 
-    void undo() Q_DECL_OVERRIDE;
-    void redo() Q_DECL_OVERRIDE;
+    void undo() override;
+    void redo() override;
 
 private:
     void setDataAndKeepPrevious();
@@ -75,8 +75,8 @@ public:
         const QByteArray& sysex,
         QUndoCommand *parent = nullptr);
 
-    void undo() Q_DECL_OVERRIDE;
-    void redo() Q_DECL_OVERRIDE;
+    void undo() override;
+    void redo() override;
 
 private:
     bool setSysexAndKeepPrevious();
