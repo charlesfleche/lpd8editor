@@ -124,6 +124,5 @@ QString LutSpinBox::textFromValue(int value) const {
 }
 
 int LutSpinBox::valueFromText(const QString &text) const {
-    Q_ASSERT(m_lut.indexOf(text) != -1);
     return m_lut.indexOf(text);
 }
