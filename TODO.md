@@ -1,13 +1,6 @@
-- disconnect when new midi client appears (like running KMidimon after starting lpd8-editor)
-- KMidiMon knows when new clients / ports connect ?
-- Extract devices model to its own model
-- NetBSD
 - Tests
 - Debian package
-- Stream sysex:
-  - what is we receive huge forged sysex from ALSA ?
-  - txt representation -> binary repr -> handle sysex
-  - alsa representation -> read by chunk / byte -> handle sysex
+- NetBSD
 - Q_NULLPRT -> nullptr
 - Q_DECL_OVERRIDE -> override
 - auto everywhere
