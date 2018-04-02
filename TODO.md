@@ -1,3 +1,4 @@
 - Tests
+- Translations
 - Debian package
 - NetBSD
