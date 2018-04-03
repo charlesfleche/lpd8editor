@@ -25,6 +25,9 @@ private slots:
     void on_actionImportProgram_triggered();
     void on_actionExportProgram_triggered();
 
+    void on_actionAbout_triggered();
+    void on_actionAboutQt_triggered();
+
     void refreshUiAccordingToSelection();
 
 private:

@@ -10,9 +10,15 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     app.setOrganizationName("lpd8-editor");
     app.setApplicationName("lpd8-editor");
-    app.setApplicationVersion("0.0.0");
+    app.setApplicationVersion("0.0.7");
+
+    app.setProperty("applicationLink", "https://github.com/charlesfleche/lpd8-editor");
+    app.setProperty("applicationLicense", "MIT License");
+    app.setProperty("applicationCopyright", "Copyright (c) 2017-2018 Charles Flèche");
 
     MainWindow win;
+    win.setWindowTitle(app.applicationName());
+    win.setWindowIcon(QIcon(":/icon.svg"));
     win.show();
     return app.exec();
 }

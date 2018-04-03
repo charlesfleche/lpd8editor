@@ -43,3 +43,5 @@ CMakeLists.txt.user*
 
 .directory
 
+# python
+env

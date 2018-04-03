@@ -5,6 +5,11 @@
 #include <QApplication>
 #include <QItemSelectionModel>
 
+#if (QT_VERSION < QT_VERSION_CHECK(5, 9, 0))
+void setObsolete(bool) {
+}
+#endif
+
 static const QString undo_stack_object_name = "undo_stack";
 
 QUndoStack* setupUndoStack(QObject* parent) {
