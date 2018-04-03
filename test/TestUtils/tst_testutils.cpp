@@ -11,39 +11,12 @@ class TestUtils : public QObject
 {
     Q_OBJECT
 
-public:
-    TestUtils();
-    ~TestUtils();
-
 private slots:
-    void initTestCase();
-    void cleanupTestCase();
-
     void test_readTextFile();
 
     void test_sysexTextFile_data();
     void test_sysexTextFile();
 };
-
-TestUtils::TestUtils()
-{
-
-}
-
-TestUtils::~TestUtils()
-{
-
-}
-
-void TestUtils::initTestCase()
-{
-
-}
-
-void TestUtils::cleanupTestCase()
-{
-
-}
 
 void TestUtils::test_readTextFile()
 {
