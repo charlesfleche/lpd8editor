@@ -17,6 +17,8 @@ int main(int argc, char *argv[])
     app.setProperty("applicationCopyright", "Copyright (c) 2017-2018 Charles Flèche");
 
     MainWindow win;
+    win.setWindowTitle(app.applicationName());
+    win.setWindowIcon(QIcon(":/icon.svg"));
     win.show();
     return app.exec();
 }
