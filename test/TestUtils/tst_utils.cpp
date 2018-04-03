@@ -81,4 +81,4 @@ void TestUtils::test_sysexTextFile()
 
 QTEST_MAIN(TestUtils)
 
-#include "tst_testutils.moc"
+#include "tst_utils.moc"
