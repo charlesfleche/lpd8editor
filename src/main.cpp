@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     app.setOrganizationName("lpd8-editor");
     app.setApplicationName("lpd8-editor");
-    app.setApplicationVersion("0.0.0");
+    app.setApplicationVersion("0.0.5");
 
     MainWindow win;
     win.show();
