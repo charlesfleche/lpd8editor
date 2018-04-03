@@ -10,10 +10,12 @@
 #include "sysexhandler.h"
 #include "utils.h"
 
+#include <QApplication>
 #include <QComboBox>
 #include <QDataWidgetMapper>
 #include <QFileDialog>
 #include <QPushButton>
+#include <QMessageBox>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QStandardItemModel>
@@ -353,3 +355,22 @@ int MainWindow::currentSelectedProjectId() const {
 
     return selectedProgramId(ui->programsView->selectionModel());
 }
+
+void MainWindow::on_actionAbout_triggered() {
+    QMessageBox::about(
+        this,
+        QString("About %1").arg(qApp->applicationName()),
+        QString("<h1>%1 v%2</h1><a href=\"%3\">%4</a><p>%5</p><p>%6</p>")
+            .arg(qApp->applicationName())
+            .arg(qApp->applicationVersion())
+            .arg(qApp->property("applicationLink").toString())
+            .arg(qApp->property("applicationLink").toString())
+            .arg(qApp->property("applicationLicense").toString())
+            .arg(qApp->property("applicationCopyright").toString())
+    );
+}
+
+void MainWindow::on_actionAboutQt_triggered() {
+    qApp->aboutQt();
+}
+

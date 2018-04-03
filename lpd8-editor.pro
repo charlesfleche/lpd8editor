@@ -58,7 +58,8 @@ HEADERS += \
 DISTFILES += \
     README.md \
     TODO.md \
-    NOTES.md
+    NOTES.md \
+    LICENSE.md
 
 PKGCONFIG += alsa
 

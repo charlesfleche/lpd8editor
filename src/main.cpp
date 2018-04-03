@@ -12,6 +12,10 @@ int main(int argc, char *argv[])
     app.setApplicationName("lpd8-editor");
     app.setApplicationVersion("0.0.5");
 
+    app.setProperty("applicationLink", "https://github.com/charlesfleche/lpd8-editor");
+    app.setProperty("applicationLicense", "MIT License");
+    app.setProperty("applicationCopyright", "Copyright (c) 2017-2018 Charles Flèche");
+
     MainWindow win;
     win.show();
     return app.exec();
