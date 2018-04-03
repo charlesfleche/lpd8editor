@@ -8,17 +8,23 @@ A Linux editor for the [Akai LPD8 pad controller](http://www.akaipro.com/product
 
 ## Dependencies
 
-- Qt5
-- Alsa
+- alsa
+- c++11
+- pkg-config
+- qt5
+  - QtSql
+  - QtSVG
+  - QtWidgets
 
 ## Build and run
 
 ``` sh
+$ cd lpd8-editor
 $ qmake
 $ make
 $ ./lpd8-editor
 ```
 
-Then connect the LPD8 with qjackctl:
+## LPD8 sysex
 
-![qjackctl screenshot](doc/qjackctl.png?raw=true "qjackctl connections")
+Akai does not provide a MIDI and Sysex implementation sheet, so we [reverse engineered our own](doc/SYSEX.md).
