@@ -59,7 +59,9 @@ DISTFILES += \
     README.md \
     TODO.md \
     NOTES.md \
-    LICENSE.md
+    LICENSE.md \
+    requirements.txt \
+    .bumpversion.cfg
 
 PKGCONFIG += alsa
 
