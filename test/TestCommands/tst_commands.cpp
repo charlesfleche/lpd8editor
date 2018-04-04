@@ -1,8 +1,10 @@
-#include <QtTest>
-
 #include "commands.h"
 #include "db.h"
 #include "programsmodel.h"
+
+#include <QStandardItemModel>
+
+#include <QtTest>
 
 class TestCommands : public QObject
 {
@@ -15,6 +17,7 @@ private slots:
 
     void test_CreateProgramCommand();
     void test_DeleteProgramCommand();
+    void test_UpdateParameterCommand();
 
 private:
     QSqlDatabase db;
@@ -67,6 +70,22 @@ void TestCommands::test_DeleteProgramCommand()
 
     cmd.undo();
     QCOMPARE(programIds(), QList<int>() << 1 << 2 << 3 << 4);
+}
+
+void TestCommands::test_UpdateParameterCommand()
+{
+
+    createProgram();
+    pm->select();
+    const int r = 0;
+    const int c = 2; // MIDI channel
+    pm->setData(pm->index(r, c), 0, Qt::EditRole);
+
+    UpdateParameterCommand cmd(pm, r, c, 7, Qt::EditRole);
+    cmd.redo();
+    QCOMPARE(pm->data(pm->index(r, c)).toInt(), 7);
+    cmd.undo();
+    QCOMPARE(pm->data(pm->index(r, c)).toInt(), 0);
 }
 
 QTEST_APPLESS_MAIN(TestCommands)
