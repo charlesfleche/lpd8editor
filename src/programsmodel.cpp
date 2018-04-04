@@ -43,10 +43,20 @@ ProgramsModel::ProgramsModel(QObject *parent) :
     m_programs(nullptr),
     m_empty(nullptr)
 {
+    // Database
+
     if (!initFilesystem()) {
         throw std::runtime_error("Failed filesystem initialization");
     }
-    if (initDb(defaultDbPath()).isValid()) {
+
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName(defaultDbPath());
+
+    if (!db.open()) {
+        throw std::runtime_error(QString("Failed to open db %1").arg(defaultDbPath()).toStdString());
+    }
+
+    if (initDb(db).isValid()) {
         throw std::runtime_error("Failed database initialization");
     }
 

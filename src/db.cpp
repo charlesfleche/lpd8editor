@@ -254,8 +254,7 @@ bool isInitialized(const QSqlDatabase& db) {
     return db.tables().contains("programs");
 }
 
-QSqlError initDb(const QString& path) {
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+QSqlError initDb(const QSqlDatabase &db) {
     QSqlDriver *driver = db.driver();
 
     Q_CHECK_PTR(driver);
@@ -266,16 +265,9 @@ QSqlError initDb(const QString& path) {
     Q_ASSERT(driver->hasFeature(QSqlDriver::LastInsertId));
     Q_ASSERT(driver->hasFeature(QSqlDriver::EventNotifications));
 
-    db.setDatabaseName(path);
-
-    if (!db.open()) {
-        qWarning() << "Failed to open db" << path;
-        goto end;
-    }
-
     if (!isInitialized(db)) {
         if (!initialize()) {
-            qWarning() << "Failed to initialize db" << path;
+            qWarning() << "Failed to initialize db" << db.databaseName();
             goto end;
         }
     }

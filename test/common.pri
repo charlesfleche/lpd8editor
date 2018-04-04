@@ -6,5 +6,7 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
+RESOURCES += $$PWD/../src/sql.qrc
+
 INCLUDEPATH += $$PWD/../src
 LIBS += -L../../src -llpd8editor

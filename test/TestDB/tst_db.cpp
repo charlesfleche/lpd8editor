@@ -1,9 +1,6 @@
-#include "utils.h"
+#include "db.h"
 
-#include <QCoreApplication>
-#include <QDir>
-#include <QTemporaryFile>
-#include <QTextStream>
+#include <QSqlDatabase>
 
 #include <QtTest>
 
@@ -13,17 +10,36 @@ class TestDB : public QObject
 
 private slots:
     void initTestCase();
-    void cleanupTestCase();
+    void init();
+    void cleanup();
+
+    void test_1();
+    void test_2();
+
+private:
+    QSqlDatabase db;
 };
 
-void TestDB::initTestCase()
-{
-
+void TestDB::initTestCase() {
+    db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName(":memory:");
 }
 
-void TestDB::cleanupTestCase()
-{
+void TestDB::init() {
+    db.open();
+    initDb(db);
+}
 
+void TestDB::cleanup() {
+    db.close();
+}
+
+void TestDB::test_1() {
+    QCOMPARE(true, true);
+}
+
+void TestDB::test_2() {
+    QCOMPARE(true, true);
 }
 
 QTEST_MAIN(TestDB)
