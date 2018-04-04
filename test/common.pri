@@ -8,5 +8,5 @@ TEMPLATE = app
 
 RESOURCES += $$PWD/../src/sql.qrc
 
-INCLUDEPATH += $$PWD/../src
+INCLUDEPATH += $$PWD/../src $$PWD/include
 LIBS += -L../../src -llpd8editor
