@@ -100,6 +100,7 @@ private slots:
     void cleanup();
 
     void test_idsSequence();
+    void test_fromSysex();
 
     void test_createProgram();
     void test_createProgram_data();
@@ -127,6 +128,13 @@ void TestDB::test_idsSequence() {
     QCOMPARE(createProgram(), 2);
     QVERIFY(deleteProgram(2));
     QCOMPARE(createProgram(), 3);
+}
+
+void TestDB::test_fromSysex() {
+    const int id = createProgram();
+    const QByteArray sysex(allzero_sysex, default_sysex_size);
+    QVERIFY(fromSysex(id, sysex));
+    QCOMPARE(programSysex(id), sysex);
 }
 
 void TestDB::test_createProgram_data() {
