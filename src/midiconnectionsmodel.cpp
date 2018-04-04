@@ -143,7 +143,7 @@ void MidiConnectionsModel::disconnectAllPorts() const {
     snd_seq_query_subscribe_set_type(subs, SND_SEQ_QUERY_SUBS_READ);
     while (snd_seq_query_port_subscribers(m_io->handle(), subs) >= 0) {
         addr = *snd_seq_query_subscribe_get_addr(subs);
-        if (snd_seq_disconnect_to(m_io->handle(), m_io->portId(), addr.client, addr.port)) {
+        if (snd_seq_disconnect_to(m_io->handle(), m_io->portId(), addr.client, addr.port) < 0) {
             qWarning() << "Cannot disconnect to" << addr.client << addr.port;
         }
     }
@@ -151,7 +151,7 @@ void MidiConnectionsModel::disconnectAllPorts() const {
     snd_seq_query_subscribe_set_type(subs, SND_SEQ_QUERY_SUBS_WRITE);
     while (snd_seq_query_port_subscribers(m_io->handle(), subs) >= 0) {
         addr = *snd_seq_query_subscribe_get_addr(subs);
-        if (snd_seq_disconnect_from(m_io->handle(), m_io->portId(), addr.client, addr.port)) {
+        if (snd_seq_disconnect_from(m_io->handle(), m_io->portId(), addr.client, addr.port) < 0) {
             qWarning() << "Cannot disconnect from" << addr.client << addr.port;
         }
     }
