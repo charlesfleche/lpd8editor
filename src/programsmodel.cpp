@@ -35,7 +35,7 @@ static const int program_id_column_index = 0;
 QStandardItemModel* m_pads_header_model;
 QStandardItemModel* m_knobs_header_model;
 
-ProgramsModel::ProgramsModel(QObject *parent) :
+ProgramsModel::ProgramsModel(QObject *parent, QSqlDatabase db) :
     QAbstractItemModel(parent),
     m_groups(nullptr),
     m_pads(nullptr),
@@ -43,23 +43,6 @@ ProgramsModel::ProgramsModel(QObject *parent) :
     m_programs(nullptr),
     m_empty(nullptr)
 {
-    // Database
-
-    if (!initFilesystem()) {
-        throw std::runtime_error("Failed filesystem initialization");
-    }
-
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(defaultDbPath());
-
-    if (!db.open()) {
-        throw std::runtime_error(QString("Failed to open db %1").arg(defaultDbPath()).toStdString());
-    }
-
-    if (initDb(db).isValid()) {
-        throw std::runtime_error("Failed database initialization");
-    }
-
     // LUTs
 
     const QStringList notes = {
@@ -104,18 +87,18 @@ ProgramsModel::ProgramsModel(QObject *parent) :
 
     m_empty = new QStandardItemModel(this);
 
-    m_knobs = new QSqlTableModel(this);
+    m_knobs = new QSqlTableModel(this, db);
     m_knobs->setEditStrategy(QSqlTableModel::OnFieldChange);
     m_knobs->setTable("knobs");
 
-    m_pads = new QSqlTableModel(this);
+    m_pads = new QSqlTableModel(this, db);
     m_pads->setEditStrategy(QSqlTableModel::OnFieldChange);
     m_pads->setTable("pads");
 
     m_groups = new QStandardItemModel(this);
     m_groups->setHorizontalHeaderLabels({program_id_field_name, name_field_name});
 
-    m_programs = new QSqlTableModel(this);
+    m_programs = new QSqlTableModel(this, db);
     m_programs->setTable("programs");
     m_programs->setEditStrategy(QSqlTableModel::OnFieldChange);
 

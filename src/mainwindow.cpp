@@ -29,7 +29,24 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow),
     programsModel(nullptr)
 {
-    programsModel = new ProgramsModel(this);
+    // Database
+
+    if (!initFilesystem()) {
+        throw std::runtime_error("Failed filesystem initialization");
+    }
+
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName(defaultDbPath());
+
+    if (!db.open()) {
+        throw std::runtime_error(QString("Failed to open db %1").arg(defaultDbPath()).toStdString());
+    }
+
+    if (initDb(db).isValid()) {
+        throw std::runtime_error("Failed database initialization");
+    }
+
+    programsModel = new ProgramsModel(this, db);
     auto io = new IOMidi(this);
 
     ui->setupUi(this);

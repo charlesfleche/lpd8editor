@@ -2,4 +2,5 @@ TEMPLATE = subdirs
 
 SUBDIRS += \
         TestDB \
-        TestUtils
+        TestUtils \
+    TestCommands
