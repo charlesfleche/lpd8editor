@@ -6,3 +6,5 @@ SUBDIRS = \
 
 app.file = app.pro
 lib.file = lib.pro
+
+app.depends = lib

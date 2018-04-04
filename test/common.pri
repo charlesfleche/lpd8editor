@@ -7,3 +7,4 @@ CONFIG -= app_bundle
 TEMPLATE = app
 
 INCLUDEPATH += $$PWD/../src
+LIBS += -L../../src -llpd8editor

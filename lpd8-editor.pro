@@ -17,3 +17,5 @@ DISTFILES += \
 SUBDIRS += \
         src \
         test
+
+test.depends += src
