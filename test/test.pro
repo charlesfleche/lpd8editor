@@ -1,6 +1,7 @@
 TEMPLATE = subdirs
 
 SUBDIRS += \
-        TestDB \
-        TestUtils \
-    TestCommands
+    TestDB \
+    TestCommands \
+    TestUtils \
+    TestIOMidi
