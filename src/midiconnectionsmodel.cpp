@@ -148,7 +148,7 @@ void MidiConnectionsModel::disconnectAllPorts() const {
 
             // This happens when a2j is running: the index is never incremented
             // by snd_seq_query_port_subscribers, so it is manually incremented here
-            const int idx = ++snd_seq_query_subscribe_get_index(subs);
+            const int idx = snd_seq_query_subscribe_get_index(subs) + 1;
             snd_seq_query_subscribe_set_index(subs, idx);
         }
     }
@@ -161,7 +161,7 @@ void MidiConnectionsModel::disconnectAllPorts() const {
 
             // This happens when a2j is running: the index is never incremented
             // by snd_seq_query_port_subscribers, so it is manually incremented here
-            const int idx = ++snd_seq_query_subscribe_get_index(subs);
+            const int idx = snd_seq_query_subscribe_get_index(subs) + 1;
             snd_seq_query_subscribe_set_index(subs, idx);
         }
     }
