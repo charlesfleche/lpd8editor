@@ -74,18 +74,17 @@ void TestCommands::test_DeleteProgramCommand()
 
 void TestCommands::test_UpdateParameterCommand()
 {
+    const QString initial("initial");
+    const QString updated("updated");
 
-    createProgram();
-    pm->select();
-    const int r = 0;
-    const int c = 2; // MIDI channel
-    pm->setData(pm->index(r, c), 0, Qt::EditRole);
+    QStandardItemModel m;
+    m.appendRow(new QStandardItem(initial));
 
-    UpdateParameterCommand cmd(pm, r, c, 7, Qt::EditRole);
+    UpdateParameterCommand cmd(&m, 0, 0, updated, Qt::DisplayRole);
     cmd.redo();
-    QCOMPARE(pm->data(pm->index(r, c)).toInt(), 7);
+    QCOMPARE(m.data(m.index(0, 0)).toString(), updated);
     cmd.undo();
-    QCOMPARE(pm->data(pm->index(r, c)).toInt(), 0);
+    QCOMPARE(m.data(m.index(0, 0)).toString(), initial);
 }
 
 QTEST_APPLESS_MAIN(TestCommands)
