@@ -145,6 +145,11 @@ void MidiConnectionsModel::disconnectAllPorts() const {
         addr = *snd_seq_query_subscribe_get_addr(subs);
         if (snd_seq_disconnect_to(m_io->handle(), m_io->portId(), addr.client, addr.port) < 0) {
             qWarning() << "Cannot disconnect to" << addr.client << addr.port;
+
+            // This happens when a2j is running: the index is never incremented
+            // by snd_seq_query_port_subscribers, so it is manually incremented here
+            const int idx = ++snd_seq_query_subscribe_get_index(subs);
+            snd_seq_query_subscribe_set_index(subs, idx);
         }
     }
     snd_seq_query_subscribe_set_index(subs, 0);
@@ -153,6 +158,11 @@ void MidiConnectionsModel::disconnectAllPorts() const {
         addr = *snd_seq_query_subscribe_get_addr(subs);
         if (snd_seq_disconnect_from(m_io->handle(), m_io->portId(), addr.client, addr.port) < 0) {
             qWarning() << "Cannot disconnect from" << addr.client << addr.port;
+
+            // This happens when a2j is running: the index is never incremented
+            // by snd_seq_query_port_subscribers, so it is manually incremented here
+            const int idx = ++snd_seq_query_subscribe_get_index(subs);
+            snd_seq_query_subscribe_set_index(subs, idx);
         }
     }
 }
