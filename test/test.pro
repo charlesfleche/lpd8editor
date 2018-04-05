@@ -4,4 +4,5 @@ SUBDIRS += \
     TestDB \
     TestCommands \
     TestUtils \
-    TestIOMidi
+    TestIOMidi \
+    TestLpd8Sysex

@@ -17,10 +17,9 @@ int knobsCount();
 void makeSetProgramRequest(QByteArray &sysex, int programId);
 
 Type type(const QByteArray&);
-void addHeader(QByteArray&);
+void addProgramHeader(QByteArray&, int);
 void addFooter(QByteArray&);
 QByteArray getProgram(int);
-void addProgramHeader(QByteArray&, int);
 
 char channel(const QByteArray&);
 }
