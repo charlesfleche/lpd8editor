@@ -18,6 +18,7 @@ private slots:
     void test_CreateProgramCommand();
     void test_DeleteProgramCommand();
     void test_UpdateParameterCommand();
+    void test_UpdateProgramFromSysexCommand();
 
 private:
     QSqlDatabase db;
@@ -85,6 +86,20 @@ void TestCommands::test_UpdateParameterCommand()
     QCOMPARE(m.data(m.index(0, 0)).toString(), updated);
     cmd.undo();
     QCOMPARE(m.data(m.index(0, 0)).toString(), initial);
+}
+
+void TestCommands::test_UpdateProgramFromSysexCommand()
+{
+    const int id = createProgram();
+    const QByteArray initial = programSysex(id);
+    QByteArray updated(initial);
+    updated[21] = (char)0;
+    QVERIFY(initial != updated);
+    UpdateProgramFromSysexCommand cmd(pm, id, updated);
+    cmd.redo();
+    QCOMPARE(programSysex(id), updated);
+    cmd.undo();
+    QCOMPARE(programSysex(id), initial);
 }
 
 QTEST_APPLESS_MAIN(TestCommands)
