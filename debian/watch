@@ -1,0 +1,4 @@
+version=3
+opts=filenamemangle=s/.+\/v?(\d\S*)\.tar\.gz/lpd8-editor-$1\.tar\.gz/ \
+  https://github.com/charlesfleche/lpd8-editor/tags .*/v?(\d\S*)\.tar\.gz
+

@@ -1,0 +1,29 @@
+Source: lpd8-editor
+Section: sound
+Priority: optional
+Maintainer: Équipe LibraZiK <librazik@tuxfamily.org>
+Uploaders: Olivier Humbert <trebmuh@tuxfamily.org>
+Build-Depends:
+ debhelper (>= 10),
+ libasound2-dev,
+ libqt5svg5-dev,
+ qtbase5-dev,
+ qttools5-dev-tools,
+ pkg-config,
+Standards-Version: 3.9.8
+Homepage: https://github.com/charlesfleche/lpd8-editor
+
+Package: lpd8-editor
+Architecture: any
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ libqt5sql5-sqlite,
+Description: linux editor for the Akai LPD8
+ A Linux editor for the Akai LPD8 pad controller.
+ .
+ See http://www.akaipro.com/product/lpd8 .
+ .
+ Documentation page : http://librazik.tuxfamily.org/doc2/paquets
+ .
+ LibraZiK audio studio package 2018 ©
