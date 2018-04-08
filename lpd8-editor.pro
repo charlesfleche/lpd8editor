@@ -61,8 +61,6 @@ DISTFILES += \
     README.md \
     NOTES.md \
     LICENSE.md \
-    requirements.txt \
-    .bumpversion.cfg \
     doc/SYSEX.md
 
 PKGCONFIG += alsa
