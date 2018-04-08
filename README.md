@@ -25,6 +25,12 @@ $ make
 $ ./lpd8-editor
 ```
 
+## Build Debian package
+
+```sh
+dpkg-buildpackage -b -rfakeroot -us -uc
+```
+
 ## LPD8 sysex
 
 Akai does not provide a MIDI and Sysex implementation sheet, so we [reverse engineered our own](doc/SYSEX.md).

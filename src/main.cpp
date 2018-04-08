@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 
     MainWindow win;
     win.setWindowTitle(app.applicationName());
-    win.setWindowIcon(QIcon(":/icon.svg"));
+    win.setWindowIcon(QIcon(":/lpd8-editor.svg"));
     win.show();
     return app.exec();
 }
