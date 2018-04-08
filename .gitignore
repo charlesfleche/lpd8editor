@@ -49,6 +49,7 @@ debian/lpd8-editor/
 
 # File system
 .directory
+.tmp
 
 # python
 env
