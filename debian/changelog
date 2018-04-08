@@ -1,0 +1,57 @@
+lpd8-editor (0.0.10-0librazik1) stretch; urgency=medium
+
+  * Reconstruction avec pbuilder pour LibraZiK-2.
+    - ajout d'un fichier desktop et d'une icône.
+    - nouvelle version amont.
+  * debian/lpd8-editor.svg :
+    - copie du fichier ./icon.svg .
+  * debian/lpd8-editor.desktop :
+    - création du fichier.
+  * debian/install :
+    - création du fichier.
+  * debian/control :
+    - déplacement de la dépendance à "libqt5sql5-sqlite" de la construction
+      pour l'exécution.
+
+ -- Olivier Humbert <trebmuh@tuxfamily.org>  Fri, 06 Apr 2018 15:18:35 +0200
+
+lpd8-editor (0.0.9+20180405~git9204940-0librazik1) stretch; urgency=medium
+
+  * Reconstruction avec pbuilder pour LibraZiK-2.
+    - nouvelle version amont.
+    - à partir du GIT du jour.
+  * debian/control :
+    - ajout d'une dépendance à "libqt5sql5-sqlite" suggérée par Charles.
+  * debian/patches/3000-dest_install.patch :
+    - suppression de la rustine (intégrée en amont).
+  * debian/patches/series :
+    - suppression du fichier (inutile à présent).
+
+ -- Olivier Humbert <trebmuh@tuxfamily.org>  Thu, 05 Apr 2018 17:31:04 +0200
+
+lpd8-editor (0.0.8-0librazik2) stretch; urgency=medium
+
+  * Reconstruction avec pbuilder pour LibraZiK-2.
+    - amélioration de la construction.
+  * debian/install :
+    - suppression du fichier (inutile à présent).
+  * debian/patches/series :
+    - création du fichier (avec dquilt).
+  * debian/patches/3000-dest_install.patch :
+    - création de la rustine (avec dquilt).
+
+ -- Olivier Humbert <trebmuh@tuxfamily.org>  Wed, 04 Apr 2018 15:35:18 +0200
+
+lpd8-editor (0.0.8-0librazik1) stretch; urgency=medium
+
+  * Reconstruction avec pbuilder pour LibraZiK-2.
+    - nouvelle version amont.
+
+ -- Olivier Humbert <trebmuh@tuxfamily.org>  Wed, 04 Apr 2018 15:15:35 +0200
+
+lpd8-editor (0.0.7+20180404~gitfd29b30-0librazik1) stretch; urgency=medium
+
+  * Construction initiale avec pbuilder pour LibraZiK-2.
+
+ -- Olivier Humbert <trebmuh@tuxfamily.org>  Wed, 04 Apr 2018 12:11:33 +0200
+
