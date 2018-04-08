@@ -1,5 +1,7 @@
 QT += sql svg widgets
 
+VERSION = 0.0.10
+
 CONFIG += c++11 link_pkgconfig warn_on
 QMAKE_CXXFLAGS += -Werror
 
@@ -57,7 +59,6 @@ HEADERS += \
 
 DISTFILES += \
     README.md \
-    TODO.md \
     NOTES.md \
     LICENSE.md \
     requirements.txt \
@@ -68,3 +69,4 @@ PKGCONFIG += alsa
 
 FORMS += \
     src/mainwindow.ui
+
