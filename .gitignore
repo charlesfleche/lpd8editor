@@ -41,7 +41,15 @@ CMakeLists.txt.user*
 # lpd8-editor
 /lpd8-editor
 
+# Packages
+.debhelper
+debian/files
+debian/lpd8-editor.substvars
+debian/lpd8-editor/
+
+# File system
 .directory
+.tmp
 
 # python
 env

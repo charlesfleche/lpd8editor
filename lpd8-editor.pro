@@ -7,11 +7,8 @@ else: unix:!android: target.path = /usr/bin
 
 DISTFILES += \
     README.md \
-    TODO.md \
     NOTES.md \
     LICENSE.md \
-    requirements.txt \
-    .bumpversion.cfg \
     doc/SYSEX.md
 
 SUBDIRS += \

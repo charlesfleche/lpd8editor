@@ -288,6 +288,10 @@ Qt::ItemFlags ProgramsModel::flags(const QModelIndex &index) const {
         flags &= ~Qt::ItemIsEditable;
     }
 
+    if (columnName == toggle_field_name) {
+        flags &= ~Qt::ItemIsEnabled;
+    }
+
     return flags;
 }
 
