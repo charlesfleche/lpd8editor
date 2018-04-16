@@ -6,4 +6,5 @@ SUBDIRS += \
     TestUtils \
     TestIOMidi \
     TestLpd8Sysex \
-    TestMidiValueDelegate
+    TestMidiValueDelegate \
+    TestProgramsModel

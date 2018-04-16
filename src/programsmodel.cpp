@@ -69,7 +69,7 @@ ProgramsModel::ProgramsModel(QObject *parent, QSqlDatabase db) :
     }
 
     for (int i = 0 ; i <= 15 ; ++i) {
-        m_lut_channel<< QString::number(i+1);
+        m_lut_channel << QString::number(i+1);
     }
 
     m_lut_toggle << momentary_label;
@@ -155,6 +155,7 @@ void ProgramsModel::select() {
 
     for (auto it = ids.begin() ; it != ids.end() ; ++it) {
         const int id = *it;
+        qDebug() << "YO:" << m_groups_proxies << m_pads_proxies << m_knobs_proxies;
         Q_ASSERT(m_groups_proxies.contains(id));
         Q_ASSERT(m_pads_proxies.contains(id));
         Q_ASSERT(m_knobs_proxies.contains(id));
