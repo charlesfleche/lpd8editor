@@ -5,4 +5,5 @@ SUBDIRS += \
     TestCommands \
     TestUtils \
     TestIOMidi \
-    TestLpd8Sysex
+    TestLpd8Sysex \
+    TestMidiValueDelegate
