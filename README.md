@@ -16,12 +16,13 @@ A Linux editor for the [Akai LPD8 pad controller](http://www.akaipro.com/product
   - QtSVG
   - QtWidgets
 
-## Build and run
+## Build, test and run
 
 ``` sh
 $ cd lpd8-editor
 $ qmake
 $ make
+$ make check
 $ ./lpd8-editor
 ```
 
