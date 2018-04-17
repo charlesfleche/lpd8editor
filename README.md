@@ -29,8 +29,12 @@ $ ./lpd8-editor
 ## Build Debian package
 
 ```sh
-dpkg-buildpackage -b -rfakeroot -us -uc
+$ dpkg-buildpackage -b -rfakeroot -us -uc
 ```
+
+## Want to contribute a translation ?
+
+It's actually easy and should not take more than a few minutes for a full translation. Please [get in touch on Gitter](https://gitter.im/lpd8-editor/Lobby) or create a new issue on GitHub.
 
 ## LPD8 sysex
 

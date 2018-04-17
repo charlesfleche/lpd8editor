@@ -16,3 +16,6 @@ SUBDIRS += \
         test
 
 test.depends += src
+
+TRANSLATIONS = \
+    translations/lpd8-editor.fr.ts

@@ -60,10 +60,10 @@ MainWindow::MainWindow(QWidget *parent) :
     QUndoStack* stack = undoStack();
     Q_CHECK_PTR(stack);
 
-    QAction* undoAction = stack->createUndoAction(this, "&Undo");
+    QAction* undoAction = stack->createUndoAction(this, tr("Undo"));
     undoAction->setShortcuts(QKeySequence::Undo);
 
-    QAction* redoAction = stack->createRedoAction(this, tr("&Redo"));
+    QAction* redoAction = stack->createRedoAction(this, tr("Redo"));
     redoAction->setShortcuts(QKeySequence::Redo);
 
     ui->menuEdit->insertAction(ui->actionNewProgram, redoAction);

@@ -68,7 +68,7 @@ int MidiConnectionsModel::rowCount(const QModelIndex &parent) const {
 QVariant MidiConnectionsModel::data(const QModelIndex &index, int role) const {
     if (index.row() == 0) {
         if (role == Qt::DisplayRole) {
-            return "Disconnect";
+            return tr("Disconnect");
         }
     }
 
