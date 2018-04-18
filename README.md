@@ -26,6 +26,12 @@ $ make check
 $ ./lpd8-editor
 ```
 
+## Usage
+
+First, you should connect lpd8-editor to the hardware lpd8 with qjackctl or catia, (or other equivalent).
+Then, when you are happy with a setting, go to the Lpd8 menu, then select the memory you want to store the preset to.
+
+
 ## Build Debian package
 
 ```sh
