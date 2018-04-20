@@ -9,3 +9,6 @@ SOURCES += main.cpp
 RESOURCES += \
     sql.qrc
 
+target.path = $${INSTALL_BIN}
+
+INSTALLS += target
