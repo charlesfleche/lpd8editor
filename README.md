@@ -23,7 +23,17 @@ $ cd lpd8-editor
 $ qmake
 $ make
 $ make check
-$ ./lpd8-editor
+$ sudo make install
+$ /usr/bin/lpd8-editor
+```
+
+## Changing the installation prefix
+
+``` sh
+$ export INSTALL_PREFIX=/my/own/path
+$ [build, test...]
+$ make install
+$ /my/own/path/bin/lpd8-editor
 ```
 
 ## Build Debian package
