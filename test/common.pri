@@ -3,7 +3,7 @@ include(../common.pri)
 QT += testlib sql
 QT -= gui
 
-CONFIG += qt console warn_on depend_includepath testcase
+CONFIG += qt console warn_on depend_includepath testcase no_testcase_installs
 CONFIG -= app_bundle
 
 TEMPLATE = app
