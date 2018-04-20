@@ -1,3 +1,5 @@
+include(common.pri)
+
 TEMPLATE = subdirs
 
 DISTFILES += \
@@ -14,3 +16,8 @@ test.depends += src
 
 TRANSLATIONS = \
     translations/lpd8-editor.fr.ts
+
+trans.files += translations/lpd8-editor.fr.qm
+trans.path = $${INSTALL_TRANSLATION}
+
+INSTALLS += trans
