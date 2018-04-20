@@ -14,10 +14,9 @@ SUBDIRS += \
 
 test.depends += src
 
-TRANSLATIONS = \
-    translations/lpd8-editor.fr.ts
+TRANSLATIONS = translations/*.ts
 
-trans.files += translations/lpd8-editor.fr.qm
+trans.files += translations/*.qm
 trans.path = $${INSTALL_TRANSLATION}
 
 INSTALLS += trans
