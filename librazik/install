@@ -1,4 +1,2 @@
 debian/lpd8-editor.desktop      usr/share/applications
 lpd8-editor.svg       		usr/share/pixmaps
-translations/lpd8-editor.fr.qm	usr/share/lpd8-editor/lpd8-editor
-
