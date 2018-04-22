@@ -3,22 +3,18 @@ Section: sound
 Priority: optional
 Maintainer: Équipe LibraZiK <librazik@tuxfamily.org>
 Uploaders: Olivier Humbert <trebmuh@tuxfamily.org>
-Build-Depends:
- debhelper (>= 9),
- libasound2-dev,
- libqt5svg5-dev,
- qtbase5-dev,
- qttools5-dev-tools,
- pkg-config,
+Build-Depends: debhelper (>= 9),
+               libasound2-dev,
+               libqt5svg5-dev,
+               pkg-config,
+               qtbase5-dev,
+               qttools5-dev-tools
 Standards-Version: 3.9.8
 Homepage: https://github.com/charlesfleche/lpd8editor
 
 Package: lpd8editor
 Architecture: any
-Depends:
- ${shlibs:Depends},
- ${misc:Depends},
- libqt5sql5-sqlite,
+Depends: libqt5sql5-sqlite, ${misc:Depends}, ${shlibs:Depends}
 Description: linux editor for the Akai LPD8
  A Linux editor for the Akai LPD8 pad controller.
  .
