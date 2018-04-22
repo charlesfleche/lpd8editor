@@ -1,6 +1,6 @@
 include(../common.pri)
 
-TARGET = lpd8-editor
+TARGET = lpd8editor
 
 LIBS += -L. -llpd8editor
 

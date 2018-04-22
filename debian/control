@@ -1,4 +1,4 @@
-Source: lpd8-editor
+Source: lpd8editor
 Section: sound
 Priority: optional
 Maintainer: Équipe LibraZiK <librazik@tuxfamily.org>
@@ -13,7 +13,7 @@ Build-Depends:
 Standards-Version: 3.9.8
 Homepage: https://github.com/charlesfleche/lpd8-editor
 
-Package: lpd8-editor
+Package: lpd8editor
 Architecture: any
 Depends:
  ${shlibs:Depends},

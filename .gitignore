@@ -38,8 +38,8 @@ qmake_qmake_immediate.qrc
 # QtCtreator CMake
 CMakeLists.txt.user*
 
-# lpd8-editor
-/lpd8-editor
+# lpd8editor
+/lpd8editor
 
 # Packages
 .debhelper
