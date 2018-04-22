@@ -1,6 +1,6 @@
 QT += sql svg widgets
 
-APPNAME = lpd8-editor
+APPNAME = lpd8editor
 
 INSTALL_PREFIX = $$(INSTALL_PREFIX)
 isEmpty( INSTALL_PREFIX ) {

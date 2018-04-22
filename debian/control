@@ -11,7 +11,7 @@ Build-Depends:
  qttools5-dev-tools,
  pkg-config,
 Standards-Version: 3.9.8
-Homepage: https://github.com/charlesfleche/lpd8-editor
+Homepage: https://github.com/charlesfleche/lpd8editor
 
 Package: lpd8editor
 Architecture: any

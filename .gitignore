@@ -44,8 +44,8 @@ CMakeLists.txt.user*
 # Packages
 .debhelper
 debian/files
-debian/lpd8-editor.substvars
-debian/lpd8-editor/
+debian/lpd8editor.substvars
+debian/lpd8editor/
 
 # File system
 .directory
