@@ -16,12 +16,12 @@
     <message>
         <location filename="../src/mainwindow.ui" line="84"/>
         <source>Create a new program or import one from LPD8</source>
-        <translation>Créez ou importez un programme</translation>
+        <translation>Créez un nouveau programme ou importez-en un depuis le LPD8</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="98"/>
         <source>Knobs</source>
-        <translation>Knobs</translation>
+        <translation>Boutons</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="138"/>
@@ -31,7 +31,7 @@
     <message>
         <location filename="../src/mainwindow.ui" line="205"/>
         <source>&amp;Midi channel</source>
-        <translation>&amp;Canal MIDI</translation>
+        <translation>Canal &amp;MIDI</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="247"/>
@@ -86,7 +86,7 @@
     <message>
         <location filename="../src/mainwindow.ui" line="338"/>
         <source>Del</source>
-        <translation>Supprimer</translation>
+        <translation>Suppr</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="347"/>
@@ -200,7 +200,7 @@
     </message>
     <message>
         <source>&amp;Undo</source>
-        <translation type="obsolete">Annuler</translation>
+        <translation type="obsolete">Ann&amp;uler</translation>
     </message>
     <message>
         <source>&amp;Redo</source>
