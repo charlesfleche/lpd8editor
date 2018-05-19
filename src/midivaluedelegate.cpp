@@ -120,9 +120,17 @@ void LutSpinBox::setLut(const QStringList &lut) {
 }
 
 QString LutSpinBox::textFromValue(int value) const {
-    return m_lut.isEmpty() ? QString() : m_lut.at(value);
+    return lutTextFromValue(m_lut, value);
 }
 
 int LutSpinBox::valueFromText(const QString &text) const {
-    return m_lut.indexOf(text);
+    return lutValueFromText(m_lut, text);
+}
+
+QString lutTextFromValue(const QStringList &lut, int value) {
+    return lut.isEmpty() ? QString() : lut.at(value);
+}
+
+int lutValueFromText(const QStringList &lut, const QString &text) {
+    return lut.indexOf(text);
 }

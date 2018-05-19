@@ -38,4 +38,7 @@ private:
     QStringList m_lut;
 };
 
+QString lutTextFromValue(const QStringList &lut, int value);
+int lutValueFromText(const QStringList &lut, const QString &text);
+
 #endif // MIDIVALUEDELEGATE_H
