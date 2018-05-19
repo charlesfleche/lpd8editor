@@ -38,8 +38,13 @@ $ /my/own/path/bin/lpd8editor
 
 ## Build Debian package
 
+Download an archive from the release section of the GitHub project or generate one from the cloned repo with `git archive git archive --prefix=lpd8editor-xx.yy.zz/  --output ../lpd8editor-xx.yy.zz.tar.gz debian`
+
 ```sh
-$ dpkg-buildpackage -b -rfakeroot -us -uc
+$ tar xf lpd8editor-xx.yy.zz.tar.gz
+$ cd lpd8editor-xx.yy.zz
+$ debmake
+$ debuild
 ```
 
 ## Want to contribute a translation ?
