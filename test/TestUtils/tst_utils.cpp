@@ -44,15 +44,16 @@ void TestUtils::test_sysexTextFile_data()
     QTest::addColumn<int>("readCount");
     QTest::addColumn<char>("readBegin");
     QTest::addColumn<char>("readEnd");
+    QTest::addColumn<QString>("warningMsg");
 
     const char short_buf[] = {0x70, 0x60, 0x7F};
-    QTest::newRow("Short") << QByteArray(short_buf, 3) << 0 << char(0) << char(0);
+    QTest::newRow("Short") << QByteArray(short_buf, 3) << 0 << char(0) << char(0) << "Reading from sysex file ended prematurely at position 4";
 
     QByteArray long_buf;
     for (char c = 0 ; c < 100 ; ++c) {
         long_buf.append(c);
     }
-    QTest::newRow("Long") << long_buf << 66 << char(0) << char(65);
+    QTest::newRow("Long") << long_buf << 66 << char(0) << char(65) << QString();
 }
 
 void TestUtils::test_sysexTextFile()
@@ -68,8 +69,13 @@ void TestUtils::test_sysexTextFile()
     QFETCH(int, readCount);
     QFETCH(char, readBegin);
     QFETCH(char, readEnd);
+    QFETCH(QString, warningMsg);
 
     writeProgramFile(bytes, p);
+
+    if (!warningMsg.isNull()) {
+        QTest::ignoreMessage(QtWarningMsg, warningMsg.toLatin1());
+    }
     const QByteArray read = fromSysexTextFile(p);
     QCOMPARE(read.count(), readCount);
 
