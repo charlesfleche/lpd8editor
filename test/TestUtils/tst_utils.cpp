@@ -85,6 +85,6 @@ void TestUtils::test_sysexTextFile()
     }
 }
 
-QTEST_MAIN(TestUtils)
+QTEST_APPLESS_MAIN(TestUtils)
 
 #include "tst_utils.moc"

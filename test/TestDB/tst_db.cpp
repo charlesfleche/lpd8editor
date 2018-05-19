@@ -128,6 +128,6 @@ void TestDB::test_createProgram() {
     QCOMPARE(programSysex(resId), resSysex);
 }
 
-QTEST_MAIN(TestDB)
+QTEST_APPLESS_MAIN(TestDB)
 
 #include "tst_db.moc"
