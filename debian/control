@@ -3,7 +3,7 @@ Section: sound
 Priority: optional
 Maintainer: Équipe LibraZiK <librazik@tuxfamily.org>
 Uploaders: Olivier Humbert <trebmuh@tuxfamily.org>
-Build-Depends: debhelper (>= 9),
+Build-Depends: debhelper (>= 10),
                libasound2-dev,
                libqt5svg5-dev,
                pkg-config,
