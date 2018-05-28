@@ -38,7 +38,7 @@ $ /my/own/path/bin/lpd8editor
 
 ## Build Debian package
 
-Download an archive from the release section of the GitHub project or generate one from the cloned repo with `git archive git archive --prefix=lpd8editor-xx.yy.zz/  --output ../lpd8editor-xx.yy.zz.tar.gz debian`
+Download an archive from the release section of the GitHub project or generate one from the cloned repo with `git archive --prefix=lpd8editor-xx.yy.zz/  --output ../lpd8editor-xx.yy.zz.tar.gz debian`
 
 ```sh
 $ tar xf lpd8editor-xx.yy.zz.tar.gz
@@ -54,4 +54,3 @@ It's actually easy and should not take more than a few minutes for a full transl
 ## LPD8 sysex
 
 Akai does not provide a MIDI and Sysex implementation sheet, so we [reverse engineered our own](doc/SYSEX.md).
-
