@@ -3,7 +3,6 @@ install:
   - sudo apt-get update
   - sudo apt install build-essential libasound2-dev libgl1-mesa-dev pkg-config qt55base qt55svg
 script:
-  - sudo modprobe snd-virmidi snd_index=1
   - source /opt/qt55/bin/qt55-env.sh
   - qmake
   - make check
