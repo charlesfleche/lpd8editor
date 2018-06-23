@@ -339,6 +339,9 @@
    </property>
   </action>
   <action name="actionGetProgram1">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset theme="go-bottom">
      <normaloff>.</normaloff>.</iconset>
@@ -351,6 +354,9 @@
    </property>
   </action>
   <action name="actionGetProgram2">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset theme="go-bottom">
      <normaloff>.</normaloff>.</iconset>
@@ -363,6 +369,9 @@
    </property>
   </action>
   <action name="actionGetProgram3">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset theme="go-bottom">
      <normaloff>.</normaloff>.</iconset>
@@ -375,6 +384,9 @@
    </property>
   </action>
   <action name="actionGetProgram4">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset theme="go-bottom">
      <normaloff>.</normaloff>.</iconset>
@@ -387,6 +399,9 @@
    </property>
   </action>
   <action name="actionSendToProgram1">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset theme="go-top">
      <normaloff>.</normaloff>.</iconset>
@@ -399,6 +414,9 @@
    </property>
   </action>
   <action name="actionSendToProgram2">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset theme="go-top">
      <normaloff>.</normaloff>.</iconset>
@@ -411,6 +429,9 @@
    </property>
   </action>
   <action name="actionSendToProgram3">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset theme="go-top">
      <normaloff>.</normaloff>.</iconset>
@@ -423,6 +444,9 @@
    </property>
   </action>
   <action name="actionSendToProgram4">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset theme="go-top">
      <normaloff>.</normaloff>.</iconset>
@@ -452,12 +476,12 @@
   </action>
   <action name="actionAbout">
    <property name="text">
-    <string>About</string>
+    <string>&amp;About</string>
    </property>
   </action>
   <action name="actionAboutQt">
    <property name="text">
-    <string>About Qt</string>
+    <string>About &amp;Qt</string>
    </property>
   </action>
  </widget>
