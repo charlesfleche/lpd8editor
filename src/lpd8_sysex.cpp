@@ -16,7 +16,7 @@ static const int minimum_rep_sysex_size = 9;
 static const char sysex_program_req[] = {'\x63', '\x00', '\x01'};
 static const char sysex_program_rep[] = {'\x63', '\x00', '\x3a'};
 static const char sysex_program_rep_size = 66;
-static const char sysex_program_rep_payload_offset = 7;
+//static const char sysex_program_rep_payload_offset = 7;
 
 static const char sysex_set_program_req[] = {'\x61', '\x00', '\x3a'};
 static const char sysex_set_program_req_size = 66;

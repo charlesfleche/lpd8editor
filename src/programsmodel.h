@@ -24,7 +24,7 @@ public:
     QModelIndex parent(const QModelIndex &child) const override;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
-    QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+    QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
     QModelIndex padsParentIndex(const QModelIndex &programIndex) const;
     QModelIndex knobsParentIndex(const QModelIndex &programIndex) const;
