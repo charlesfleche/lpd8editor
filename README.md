@@ -18,7 +18,7 @@ A Linux editor for the [Akai LPD8 pad controller](http://www.akaipro.com/product
 
 ### Install dependencies for debian
 
-``` sh
+```
 $ su
 # apt install build-essential libasound2-dev libqt5sql5-sqlite libqt5svg5-dev pkg-config qt5-default
 ```
