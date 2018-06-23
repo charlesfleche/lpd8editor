@@ -1,7 +1,7 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: lpd8-editor
+Upstream-Name: lpd8editor
 Upstream-Contact: Charles Flèche <charles.fleche@free.fr>
-Source: https://github.com/charlesfleche/lpd8-editor
+Source: https://github.com/charlesfleche/lpd8editor
 
 Files: *
 Copyright: 2017-2018 Charles Flèche <charles.fleche@free.fr>
@@ -46,4 +46,3 @@ License: MIT
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
-

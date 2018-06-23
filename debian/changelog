@@ -1,11 +1,11 @@
-lpd8-editor (0.0.10-0librazik1) stretch; urgency=medium
+lpd8editor (0.0.10-0librazik1) stretch; urgency=medium
 
   * Reconstruction avec pbuilder pour LibraZiK-2.
     - ajout d'un fichier desktop et d'une icône.
     - nouvelle version amont.
-  * debian/lpd8-editor.svg :
+  * debian/lpd8editor.svg :
     - copie du fichier ./icon.svg .
-  * debian/lpd8-editor.desktop :
+  * debian/lpd8editor.desktop :
     - création du fichier.
   * debian/install :
     - création du fichier.
@@ -15,7 +15,7 @@ lpd8-editor (0.0.10-0librazik1) stretch; urgency=medium
 
  -- Olivier Humbert <trebmuh@tuxfamily.org>  Fri, 06 Apr 2018 15:18:35 +0200
 
-lpd8-editor (0.0.9+20180405~git9204940-0librazik1) stretch; urgency=medium
+lpd8editor (0.0.9+20180405~git9204940-0librazik1) stretch; urgency=medium
 
   * Reconstruction avec pbuilder pour LibraZiK-2.
     - nouvelle version amont.
@@ -29,7 +29,7 @@ lpd8-editor (0.0.9+20180405~git9204940-0librazik1) stretch; urgency=medium
 
  -- Olivier Humbert <trebmuh@tuxfamily.org>  Thu, 05 Apr 2018 17:31:04 +0200
 
-lpd8-editor (0.0.8-0librazik2) stretch; urgency=medium
+lpd8editor (0.0.8-0librazik2) stretch; urgency=medium
 
   * Reconstruction avec pbuilder pour LibraZiK-2.
     - amélioration de la construction.
@@ -42,14 +42,14 @@ lpd8-editor (0.0.8-0librazik2) stretch; urgency=medium
 
  -- Olivier Humbert <trebmuh@tuxfamily.org>  Wed, 04 Apr 2018 15:35:18 +0200
 
-lpd8-editor (0.0.8-0librazik1) stretch; urgency=medium
+lpd8editor (0.0.8-0librazik1) stretch; urgency=medium
 
   * Reconstruction avec pbuilder pour LibraZiK-2.
     - nouvelle version amont.
 
  -- Olivier Humbert <trebmuh@tuxfamily.org>  Wed, 04 Apr 2018 15:15:35 +0200
 
-lpd8-editor (0.0.7+20180404~gitfd29b30-0librazik1) stretch; urgency=medium
+lpd8editor (0.0.7+20180404~gitfd29b30-0librazik1) stretch; urgency=medium
 
   * Construction initiale avec pbuilder pour LibraZiK-2.
 

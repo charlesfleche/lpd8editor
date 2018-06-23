@@ -38,14 +38,14 @@ qmake_qmake_immediate.qrc
 # QtCtreator CMake
 CMakeLists.txt.user*
 
-# lpd8-editor
-/lpd8-editor
+# lpd8editor
+/lpd8editor
 
 # Packages
 .debhelper
 debian/files
-debian/lpd8-editor.substvars
-debian/lpd8-editor/
+debian/lpd8editor.substvars
+debian/lpd8editor/
 
 # File system
 .directory

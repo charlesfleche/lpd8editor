@@ -1,5 +1,14 @@
 QT += sql svg widgets
 
+APPNAME = lpd8editor
+
+INSTALL_PREFIX = $$(INSTALL_PREFIX)
+isEmpty( INSTALL_PREFIX ) {
+    INSTALL_PREFIX = $$[QT_INSTALL_PREFIX]
+}
+INSTALL_BIN = $${INSTALL_PREFIX}/bin
+INSTALL_TRANSLATION = $${INSTALL_PREFIX}/share/$${APPNAME}/$${APPNAME}
+
 CONFIG += c++11 link_pkgconfig warn_on
 QMAKE_CXXFLAGS += -Werror
 

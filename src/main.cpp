@@ -7,7 +7,7 @@
 
 #include <QtDebug>
 
-const QString app_name = QString("lpd8-editor");
+const QString app_name = QString("lpd8editor");
 
 int main(int argc, char *argv[])
 {
@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     app.setApplicationName(app_name);
     app.setApplicationVersion("0.0.10");
 
-    app.setProperty("applicationLink", "https://github.com/charlesfleche/lpd8-editor");
+    app.setProperty("applicationLink", "https://github.com/charlesfleche/lpd8editor");
     app.setProperty("applicationLicense", "MIT License");
     app.setProperty("applicationCopyright", "Copyright (c) 2017-2018 Charles Flèche");
 
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 
     MainWindow win;
     win.setWindowTitle(app.applicationName());
-    win.setWindowIcon(QIcon(":/lpd8-editor.svg"));
+    win.setWindowIcon(QIcon(":/lpd8editor.svg"));
     win.show();
 
     return app.exec();

@@ -1,11 +1,11 @@
 [Desktop Entry]
-Name=lpd8-editor
+Name=lpd8editor
 GenericName=AKAI LPD8 editor
 GenericName[fr]=Utilitaire de contrôle pour les AKAI LPD8
 Comment=Control AKAI LPD8
 Comment[fr]=Utilitaire de contrôle pour les AKAI LPD8
-Icon=lpd8-editor
+Icon=lpd8editor
 Type=Application
 Categories=AudioVideo;Audio;
-Exec=lpd8-editor
+Exec=lpd8editor
 Terminal=false

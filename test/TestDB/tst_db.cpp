@@ -61,13 +61,18 @@ void TestDB::test_createProgram_data() {
     QTest::addColumn<QByteArray>("resSysex");
     QTest::addColumn<int>("resId");
 
+    QTest::addColumn<QString>("createProgramWarning");
+    QTest::addColumn<QString>("programSysexWarning");
+
     QTest::newRow("All default")
             << QString()
             << QByteArray()
             << -1
             << "P1"
             << default_sysex
-            << 1;
+            << 1
+            << QString()
+            << QString();
 
     QTest::newRow("All specified")
             << "New program"
@@ -75,7 +80,9 @@ void TestDB::test_createProgram_data() {
             << 10
             << "New program"
             << allzero_sysex
-            << 10;
+            << 10
+            << QString()
+            << QString();
 
     QTest::newRow("Short sysex")
             << QString()
@@ -83,7 +90,9 @@ void TestDB::test_createProgram_data() {
             << -1
             << ""
             << QByteArray()
-            << -1;
+            << -1
+            << "Failed to update program from sysex:  \" \""
+            << "Failed to generate sysex for program -1 : \" \"";
 
     QTest::newRow("Out of bound value in sysex")
             << QString()
@@ -91,7 +100,9 @@ void TestDB::test_createProgram_data() {
             << -1
             << ""
             << QByteArray()
-            << -1;
+            << -1
+            << "Failed to update program from sysex:  \"CHECK constraint failed: programs Unable to fetch row\""
+            << "Failed to generate sysex for program -1 : \" \"";
 }
 
 void TestDB::test_createProgram() {
@@ -101,12 +112,22 @@ void TestDB::test_createProgram() {
     QFETCH(QString, resName);
     QFETCH(QByteArray, resSysex);
     QFETCH(int, resId);
+    QFETCH(QString, createProgramWarning);
+    QFETCH(QString, programSysexWarning);
 
+    if (!createProgramWarning.isNull()) {
+        QTest::ignoreMessage(QtWarningMsg, createProgramWarning.toLatin1());
+    }
     QCOMPARE(createProgram(name, sysex, id), resId);
+
     QCOMPARE(programName(resId), resName);
+
+    if (!programSysexWarning.isNull()) {
+        QTest::ignoreMessage(QtWarningMsg, programSysexWarning.toLatin1());
+    }
     QCOMPARE(programSysex(resId), resSysex);
 }
 
-QTEST_MAIN(TestDB)
+QTEST_APPLESS_MAIN(TestDB)
 
 #include "tst_db.moc"

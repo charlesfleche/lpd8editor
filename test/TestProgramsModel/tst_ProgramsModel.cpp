@@ -67,6 +67,6 @@ void TestProgramsModel::test() {
     QCOMPARE(pm->rowCount(), 0);
 }
 
-QTEST_MAIN(TestProgramsModel)
+QTEST_APPLESS_MAIN(TestProgramsModel)
 
 #include "tst_ProgramsModel.moc"
