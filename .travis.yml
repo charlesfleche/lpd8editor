@@ -1,5 +1,5 @@
 install:
-  - apt install build-essential libasound2-dev libqt5sql5-sqlite libqt5svg5-dev pkg-config qt5-default
+  - sudo apt install build-essential libasound2-dev libqt5sql5-sqlite libqt5svg5-dev pkg-config qt5-default
 script:
   - qmake
   - make
