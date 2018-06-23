@@ -8,17 +8,32 @@ class TestIOMIdi : public QObject
     Q_OBJECT
 
 private slots:
+    void initTestCase();
+
     void test_handle();
     void test_clientId();
     void test_portId();
 
 private:
-    IOMidi io;
+    IOMidi* io;
 };
+
+void TestIOMIdi::initTestCase() {
+    io = nullptr;
+    try {
+        io = new IOMidi(this);
+    }
+    catch (const std::exception&) {
+    }
+}
 
 void TestIOMIdi::test_handle()
 {
-    snd_seq_t* seq = io.handle();
+    if (!io) {
+        return;
+    }
+
+    snd_seq_t* seq = io->handle();
     QVERIFY(seq);
 
     snd_seq_client_info_t *info;
@@ -29,12 +44,20 @@ void TestIOMIdi::test_handle()
 
 void TestIOMIdi::test_clientId()
 {
-    QVERIFY(io.clientId() > 0);
+    if (!io) {
+        return;
+    }
+
+    QVERIFY(io->clientId() > 0);
 }
 
 void TestIOMIdi::test_portId()
 {
-    QVERIFY(io.clientId() > 0);
+    if (!io) {
+        return;
+    }
+
+    QVERIFY(io->clientId() > 0);
 }
 
 QTEST_APPLESS_MAIN(TestIOMIdi)
