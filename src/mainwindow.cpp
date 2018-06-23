@@ -21,6 +21,8 @@
 #include <QStandardItemModel>
 #include <QUndoStack>
 
+#include <QtDebug>
+
 static const QString SETTINGS_KEY_DEFAULT_NAME = "default/name";
 static const QString SETTINGS_KEY_DEFAULT_SYSEX = "default/sysex";
 
@@ -147,7 +149,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Enable MIDI send / receive action when connected
 
-    auto io = new IOMidi(this);
+    IOMidi* io = nullptr;
+    try {
+        io = new IOMidi(this);
+    }
+    catch (const std::runtime_error& e) {
+        qWarning() << "Disabling MIDI: " << e.what();
+        return;
+    }
 
     // MIDI connections
 
