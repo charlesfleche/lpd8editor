@@ -151,9 +151,11 @@ MainWindow::MainWindow(QWidget *parent) :
                 }
             });
 
+    // Do not use QOverload for compatibility with older Qt,
+    // as in Linux Mint 18.3
     connect(
         clientComboBox,
-        QOverload<int>::of(&QComboBox::activated),
+        static_cast<void (QComboBox::*)(int)>(&QComboBox::activated),
         [=](int row) {
             connectionsModel->connectPort(connectionsModel->index(row));
         }
