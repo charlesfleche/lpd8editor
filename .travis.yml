@@ -1,6 +1,20 @@
+before_install:
+  - eval "${MATRIX_EVAL}"
 install:
   - sudo apt install build-essential libasound2-dev libqt5sql5-sqlite libqt5svg5-dev pkg-config qt5-default
 script:
   - qmake
   - make
   - make check
+matrix:
+  include:
+    - os: linux
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - g++-5
+    env:
+      - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+
