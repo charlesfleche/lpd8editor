@@ -6,3 +6,7 @@ script:
   - source /opt/qt55/bin/qt55-env.sh
   - qmake
   - make check
+compiler:
+  - clang
+  - gcc
+
