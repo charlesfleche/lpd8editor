@@ -47,13 +47,9 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
     programsModel = new ProgramsModel(this, db);
-    auto io = new IOMidi(this);
 
     ui->setupUi(this);
     setStatusBar(nullptr);
-
-    auto sysexHandler = new SysexHandler(io);
-    auto connectionsModel = new MidiConnectionsModel(io);
 
     // Undo
 
@@ -139,6 +135,24 @@ MainWindow::MainWindow(QWidget *parent) :
             &MainWindow::refreshUiAccordingToSelection
     );
 
+    ProgramIdSelectionRestorer *restorer = new ProgramIdSelectionRestorer(ui->programsView->selectionModel(), this);
+    connect(programsModel,
+            &ProgramsModel::modelAboutToBeReset,
+            restorer,
+            &ProgramIdSelectionRestorer::store);
+    connect(programsModel,
+            &ProgramsModel::modelReset,
+            restorer,
+            &ProgramIdSelectionRestorer::restore);
+
+    // Enable MIDI send / receive action when connected
+
+    auto io = new IOMidi(this);
+
+    // MIDI connections
+
+    auto connectionsModel = new MidiConnectionsModel(io);
+
     clientComboBox->setModel(connectionsModel);
     Q_ASSERT(clientComboBox->count() > 0);
     clientComboBox->setEnabled(connectionsModel->connectedPort().isValid());
@@ -161,6 +175,58 @@ MainWindow::MainWindow(QWidget *parent) :
         }
     );
 
+    // MIDI actions
+
+    QList<QAction *> midiSendActions = {
+        ui->actionGetProgram1,
+        ui->actionGetProgram2,
+        ui->actionGetProgram3,
+        ui->actionGetProgram4
+    };
+
+    QList<QAction *> midiReceiveActions {
+        ui->actionSendToProgram1,
+        ui->actionSendToProgram2,
+        ui->actionSendToProgram3,
+        ui->actionSendToProgram4,
+    };
+
+    QList<QAction *> midiActions = midiSendActions + midiReceiveActions;
+
+    auto midiActionsSetEnabled = [=](){
+        for (auto it = midiActions.begin() ; it != midiActions.end() ; ++it) {
+            QAction* a = *it;
+            Q_CHECK_PTR(a);
+
+            a->setEnabled(connectionsModel->connected() &&
+                          ui->programsView->selectionModel()->currentIndex().row() != -1);
+        }
+    };
+
+    midiActionsSetEnabled();
+
+    connect(
+        connectionsModel,
+        &MidiConnectionsModel::connectedChanged,
+        midiActionsSetEnabled
+    );
+
+    connect(
+        ui->programsView->selectionModel(),
+        &QItemSelectionModel::currentChanged,
+        midiActionsSetEnabled
+    );
+
+    connect(
+        programsModel,
+        &ProgramsModel::modelReset,
+        midiActionsSetEnabled
+    );
+
+    // Sysex
+
+    auto sysexHandler = new SysexHandler(io);
+
     connect(sysexHandler,
             &SysexHandler::programReceived,
             [=](const QByteArray& sysex) {
@@ -181,24 +247,6 @@ MainWindow::MainWindow(QWidget *parent) :
                 }
             });
 
-    ProgramIdSelectionRestorer *restorer = new ProgramIdSelectionRestorer(ui->programsView->selectionModel(), this);
-    connect(programsModel,
-            &ProgramsModel::modelAboutToBeReset,
-            restorer,
-            &ProgramIdSelectionRestorer::store);
-    connect(programsModel,
-            &ProgramsModel::modelReset,
-            restorer,
-            &ProgramIdSelectionRestorer::restore);
-
-    // Enable MIDI send / receive action when connected
-
-    QList<QAction *> midiSendActions = {
-        ui->actionGetProgram1,
-        ui->actionGetProgram2,
-        ui->actionGetProgram3,
-        ui->actionGetProgram4
-    };
     for (int i = 0 ; i < midiSendActions.count() ; ++i) {
         connect(
             midiSendActions[i],
@@ -211,12 +259,6 @@ MainWindow::MainWindow(QWidget *parent) :
         );
     }
 
-    QList<QAction *> midiReceiveActions {
-        ui->actionSendToProgram1,
-        ui->actionSendToProgram2,
-        ui->actionSendToProgram3,
-        ui->actionSendToProgram4,
-    };
     for (int i = 0 ; i < midiReceiveActions.count() ; ++i) {
         connect(
             midiReceiveActions[i],
@@ -227,34 +269,6 @@ MainWindow::MainWindow(QWidget *parent) :
             }
         );
     }
-
-    QList<QAction *> midiActions = midiSendActions + midiReceiveActions;
-    auto midiActionsSetEnabled = [=](){
-        for (auto it = midiActions.begin() ; it != midiActions.end() ; ++it) {
-            QAction* a = *it;
-            Q_CHECK_PTR(a);
-
-            a->setEnabled(connectionsModel->connected() &&
-                          ui->programsView->selectionModel()->currentIndex().row() != -1);
-        }
-    };
-    midiActionsSetEnabled();
-
-    connect(
-        connectionsModel,
-        &MidiConnectionsModel::connectedChanged,
-        midiActionsSetEnabled
-    );
-    connect(
-        ui->programsView->selectionModel(),
-        &QItemSelectionModel::currentChanged,
-        midiActionsSetEnabled
-    );
-    connect(
-        programsModel,
-        &ProgramsModel::modelReset,
-        midiActionsSetEnabled
-    );
 }
 
 MainWindow::~MainWindow()
