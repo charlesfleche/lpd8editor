@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     app.setOrganizationName(app_name);
     app.setApplicationName(app_name);
-    app.setApplicationVersion("0.0.10");
+    app.setApplicationVersion("0.0.11");
 
     app.setProperty("applicationLink", "https://github.com/charlesfleche/lpd8editor");
     app.setProperty("applicationLicense", "MIT License");

@@ -1,4 +1,4 @@
-lpd8editor (0.0.10-0librazik1) stretch; urgency=medium
+lpd8editor (0.0.11-0librazik1) stretch; urgency=medium
 
   * Reconstruction avec pbuilder pour LibraZiK-2.
     - ajout d'un fichier desktop et d'une icône.
