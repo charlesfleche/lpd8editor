@@ -34,7 +34,7 @@ void TestIOMIdi::test_clientId()
 
 void TestIOMIdi::test_portId()
 {
-    QVERIFY(io.clientId() >= 0);
+    QVERIFY(io.clientId() > 0);
 }
 
 QTEST_APPLESS_MAIN(TestIOMIdi)
