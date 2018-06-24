@@ -8,7 +8,9 @@ Copyright: 2017-2018 Charles Flèche <charles.fleche@free.fr>
 License: MIT
 
 Files: debian/*
-Copyright: 2018 Olivier Humbert <trebmuh@tuxfamily.org>
+Copyright:
+ 2018 Olivier Humbert <trebmuh@tuxfamily.org>
+ 2018 Charles Flèche <charles.fleche@free.fr>
 License: GPL-3+
 
 License: GPL-3+

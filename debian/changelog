@@ -1,4 +1,16 @@
-lpd8editor (0.0.12-0librazik1) stretch; urgency=medium
+lpd8editor (0.0.12-1) stretch; urgency=medium
+
+  * New version
+
+ -- Charles Flèche <charles.fleche@free.fr>  Sat, 23 Jun 2018 15:30:30 +0200
+
+lpd8editor (0.0.11-1) stretch; urgency=medium
+
+  * New version
+
+ -- Charles Flèche <charles.fleche@free.fr>  Sat, 23 Jun 2018 09:30:30 +0200
+
+lpd8editor (0.0.10-0librazik1) stretch; urgency=medium
 
   * Reconstruction avec pbuilder pour LibraZiK-2.
     - ajout d'un fichier desktop et d'une icône.
