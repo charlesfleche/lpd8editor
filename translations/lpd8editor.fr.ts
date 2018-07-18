@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="fr_FR">
+<TS version="2.1" language="el_GR">
 <context>
     <name>MainWindow</name>
     <message>
         <location filename="../src/mainwindow.ui" line="14"/>
         <source>MainWindow</source>
-        <translation>Fenêtre principale</translation>
+        <translation>Αρχικό Παράθυρο</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="24"/>
         <source>Programs</source>
-        <translation>Programmes</translation>
+        <translation>προγράμματα </translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="84"/>
         <source>Create a new program or import one from LPD8</source>
-        <translation>Créez un nouveau programme ou importez-en un depuis le LPD8</translation>
+        <translation>Δημιουργήστε ένα νέο πρόγραμμα ή εισάγετε ένα από το LPD8</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="98"/>
         <source>Knobs</source>
-        <translation>Boutons</translation>
+        <translation>Knobs</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="138"/>
@@ -31,17 +31,17 @@
     <message>
         <location filename="../src/mainwindow.ui" line="205"/>
         <source>&amp;Midi channel</source>
-        <translation>Canal &amp;MIDI</translation>
+        <translation>&ampMidi; channel</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="247"/>
         <source>File</source>
-        <translation>Fichier</translation>
+        <translation>Αρχείο</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="256"/>
         <source>Edit</source>
-        <translation>Édition</translation>
+        <translation>Eπεξεργασία</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="263"/>
@@ -51,17 +51,17 @@
     <message>
         <location filename="../src/mainwindow.ui" line="277"/>
         <source>Help</source>
-        <translation>Aide</translation>
+        <translation>Bοήθεια</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="290"/>
         <source>toolBar</source>
-        <translation>Barre d&apos;outils</translation>
+        <translation>Μπάρα-Εργαλείων</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="308"/>
         <source>&amp;Quit</source>
-        <translation>&amp;Quitter</translation>
+        <translation>&amp;Εξοδος</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="311"/>
@@ -71,7 +71,7 @@
     <message>
         <location filename="../src/mainwindow.ui" line="323"/>
         <source>&amp;New program</source>
-        <translation>&amp;Nouveau programme</translation>
+        <translation>&amp;Δημιουργεία πρόγραμματος</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="326"/>
@@ -81,17 +81,17 @@
     <message>
         <location filename="../src/mainwindow.ui" line="335"/>
         <source>&amp;Delete program</source>
-        <translation>&amp;Supprimer programme</translation>
+        <translation>&amp;Διαγραφή προγράμματος</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="338"/>
         <source>Del</source>
-        <translation>Suppr</translation>
+        <translation>Del</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="347"/>
         <source>Get program &amp;1</source>
-        <translation>Recevoir programme &amp;1</translation>
+        <translation>ανάκτηση προγράμματος &amp;1</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="350"/>
@@ -101,7 +101,7 @@
     <message>
         <location filename="../src/mainwindow.ui" line="359"/>
         <source>Get program &amp;2</source>
-        <translation>Recevoir programme &amp;2</translation>
+        <translation>ανάκτηση προγράμματος &amp;2</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="362"/>
@@ -111,7 +111,7 @@
     <message>
         <location filename="../src/mainwindow.ui" line="371"/>
         <source>Get program &amp;3</source>
-        <translation>Recevoir programme &amp;3</translation>
+        <translation>ανάκτηση προγράμματος &amp;3</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="374"/>
@@ -121,7 +121,7 @@
     <message>
         <location filename="../src/mainwindow.ui" line="383"/>
         <source>Get program &amp;4</source>
-        <translation>Recevoir programme &amp;4</translation>
+        <translation>ανάκτηση προγράμματος &amp;4</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="386"/>
@@ -131,7 +131,7 @@
     <message>
         <location filename="../src/mainwindow.ui" line="395"/>
         <source>&amp;Send to program 1</source>
-        <translation>Envoyer vers programme &amp;1</translation>
+        <translation>Στείλε στο πρόγραμμα &amp;1</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="398"/>
@@ -141,7 +141,7 @@
     <message>
         <location filename="../src/mainwindow.ui" line="407"/>
         <source>Send to &amp;program 2</source>
-        <translation>Envoyer vers programme &amp;2</translation>
+        <translation>Στείλε στο πρόγραμμα&amp;2</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="410"/>
@@ -151,7 +151,7 @@
     <message>
         <location filename="../src/mainwindow.ui" line="419"/>
         <source>S&amp;end to program 3</source>
-        <translation>Envoyer vers programme &amp;3</translation>
+        <translation>Στείλε στο πρόγραμμα &amp;3</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="422"/>
@@ -161,7 +161,7 @@
     <message>
         <location filename="../src/mainwindow.ui" line="431"/>
         <source>Se&amp;nd to program 4</source>
-        <translation>Envoyer vers programme &amp;4</translation>
+        <translation>Στείλε στο πρόγραμμα &amp;4</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="434"/>
@@ -171,7 +171,7 @@
     <message>
         <location filename="../src/mainwindow.ui" line="439"/>
         <source>&amp;Import program</source>
-        <translation>&amp;Importer programme</translation>
+        <translation>&amp;Εισαγωγή προγράμματος</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="442"/>
@@ -181,7 +181,7 @@
     <message>
         <location filename="../src/mainwindow.ui" line="447"/>
         <source>&amp;Export program</source>
-        <translation>&amp;Exporter programme</translation>
+        <translation>&amp;Εξαγωγή προγράμματος</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="450"/>
@@ -191,16 +191,16 @@
     <message>
         <location filename="../src/mainwindow.ui" line="455"/>
         <source>About</source>
-        <translation>À propos</translation>
+        <translation>Σχετικά</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="460"/>
         <source>About Qt</source>
-        <translation>À propos de Qt</translation>
+        <translation>Σχετικά Qt</translation>
     </message>
     <message>
         <source>&amp;Undo</source>
-        <translation type="obsolete">Ann&amp;uler</translation>
+        <translation type="obsolete">&amp;Αναιρεση</translation>
     </message>
     <message>
         <source>&amp;Redo</source>
@@ -214,7 +214,7 @@
     <message>
         <location filename="../src/mainwindow.cpp" line="66"/>
         <source>Redo</source>
-        <translation>Refaire</translation>
+        <translation>επανάκτηση</translation>
     </message>
 </context>
 <context>
@@ -222,7 +222,7 @@
     <message>
         <location filename="../src/midiconnectionsmodel.cpp" line="71"/>
         <source>Disconnect</source>
-        <translation>Déconnecté</translation>
+        <translation>αποσυνδεδεμένο</translation>
     </message>
 </context>
 </TS>
