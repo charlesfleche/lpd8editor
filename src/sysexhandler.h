@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-#include <asoundlib.h>
+#include <alsa/asoundlib.h>
 
 class IOMidi;
 

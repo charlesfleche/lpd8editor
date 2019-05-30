@@ -4,7 +4,7 @@ class IOMidi;
 
 #include <QAbstractListModel>
 
-#include <asoundlib.h>
+#include <alsa/asoundlib.h>
 
 class IOMidi;
 
