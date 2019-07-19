@@ -31,7 +31,7 @@
     <message>
         <location filename="../src/mainwindow.ui" line="205"/>
         <source>&amp;Midi channel</source>
-        <translation>&ampMidi; channel</translation>
+        <translation>&amp;Midi channel</translation>
     </message>
     <message>
         <location filename="../src/mainwindow.ui" line="247"/>
