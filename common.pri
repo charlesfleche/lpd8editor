@@ -10,6 +10,6 @@ INSTALL_BIN = $${INSTALL_PREFIX}/bin
 INSTALL_TRANSLATION = $${INSTALL_PREFIX}/share/$${APPNAME}/$${APPNAME}
 
 CONFIG += c++11 link_pkgconfig warn_on
-QMAKE_CXXFLAGS += -Werror
+#QMAKE_CXXFLAGS += -Werror
 
 PKGCONFIG += alsa

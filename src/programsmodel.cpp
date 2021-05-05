@@ -131,7 +131,12 @@ void ProgramsModel::select() {
     Q_CHECK_PTR(m_pads);
     Q_CHECK_PTR(m_knobs);
 
-    const QSet<int> ids(QSet<int>::fromList(programIds()));
+    const auto idsList = programIds();
+#if (QT_VERSION < QT_VERSION_CHECK(5, 14, 0))
+    const QSet<int> ids(QSet<int>::fromList(idsList));
+#else
+    const QSet<int> ids(QSet<int>(idsList.begin(), idsList.end()));
+#endif
     for (auto it = ids.begin() ; it != ids.end() ; ++it) {
         const int id = *it;
         if (!m_groups_proxies.contains(id)) {
@@ -139,7 +144,12 @@ void ProgramsModel::select() {
         }
     }
 
-    const QSet<int> toDeleteIds(QSet<int>::fromList(m_groups_proxies.keys()).subtract(ids));
+    const auto proxyIdsList = m_groups_proxies.keys();
+#if (QT_VERSION < QT_VERSION_CHECK(5, 14, 0))
+    const QSet<int> toDeleteIds(QSet<int>::fromList(proxyIdsList).subtract(ids));
+#else
+    const QSet<int> toDeleteIds(QSet<int>(proxyIdsList.begin(), proxyIdsList.end()).subtract(ids));
+#endif
     for (auto it = toDeleteIds.begin() ; it != toDeleteIds.end() ; ++it) {
         const int id = *it;
         removeFilters(id);
