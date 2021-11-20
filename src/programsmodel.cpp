@@ -165,7 +165,6 @@ void ProgramsModel::select() {
 
     for (auto it = ids.begin() ; it != ids.end() ; ++it) {
         const int id = *it;
-        qDebug() << "YO:" << m_groups_proxies << m_pads_proxies << m_knobs_proxies;
         Q_ASSERT(m_groups_proxies.contains(id));
         Q_ASSERT(m_pads_proxies.contains(id));
         Q_ASSERT(m_knobs_proxies.contains(id));
