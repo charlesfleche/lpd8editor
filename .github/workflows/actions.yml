@@ -7,7 +7,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-18.04]
-        compiler: [g++, clang]
+        compiler: [g++, clang-10]
 
     runs-on: ${{matrix.os}}
 
@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure
-        run: qmake -spec linux-${{matrix.compiler}}
+        run: qmake -spec linux-`echo ${{matrix.compiler}} | cut -d'-' -f1`
 
       - name: Build
         run: make
