@@ -62,7 +62,7 @@ QByteArray programSysex(int programId) {
     GOTO_END_IF_FALSE(q.exec());
 
     GOTO_END_IF_FALSE(q.first());
-    ret += q.value(0).toChar();
+    ret += q.value(0).value<char>();
 
     Q_ASSERT(!q.next());
 
@@ -76,7 +76,7 @@ QByteArray programSysex(int programId) {
     while(q.next()) {
         const QSqlRecord r = q.record();
         for (int i = 0 ; i < r.count() ; ++i) {
-            ret += r.value(i).toChar();
+            ret += r.value(i).value<char>();
         }
         ++count;
     }
@@ -93,7 +93,7 @@ QByteArray programSysex(int programId) {
     while(q.next()) {
         const QSqlRecord r = q.record();
         for (int i = 0 ; i < r.count() ; ++i) {
-            ret += r.value(i).toChar();
+            ret += r.value(i).value<char>();
         }
         ++count;
     }

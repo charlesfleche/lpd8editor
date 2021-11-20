@@ -91,8 +91,8 @@ void TestDB::test_createProgram_data() {
             << ""
             << QByteArray()
             << -1
-            << "Failed to update program from sysex:  \" \""
-            << "Failed to generate sysex for program -1 : \" \"";
+            << "Failed to update program from sysex:  \"\""
+            << "Failed to generate sysex for program -1 : \"\"";
 
     QTest::newRow("Out of bound value in sysex")
             << QString()
@@ -101,8 +101,8 @@ void TestDB::test_createProgram_data() {
             << ""
             << QByteArray()
             << -1
-            << "Failed to update program from sysex:  \"CHECK constraint failed: programs Unable to fetch row\""
-            << "Failed to generate sysex for program -1 : \" \"";
+            << "Failed to update program from sysex:  \"CHECK constraint failed: channel >= 0 AND channel <= 15 Unable to fetch row\""
+            << "Failed to generate sysex for program -1 : \"\"";
 }
 
 void TestDB::test_createProgram() {

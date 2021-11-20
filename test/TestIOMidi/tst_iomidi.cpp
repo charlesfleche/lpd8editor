@@ -60,6 +60,6 @@ void TestIOMIdi::test_portId()
     QVERIFY(io->clientId() > 0);
 }
 
-QTEST_APPLESS_MAIN(TestIOMIdi)
+QTEST_GUILESS_MAIN(TestIOMIdi)
 
 #include "tst_iomidi.moc"

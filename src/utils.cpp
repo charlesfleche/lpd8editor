@@ -78,7 +78,7 @@ QByteArray fromSysexTextFile(const QString &path) {
     QByteArray ret;
 
     QFile data(path);
-    if (!data.open(QFile::ReadOnly | QFile::Truncate)) {
+    if (!data.open(QFile::ReadOnly)) {
         qWarning() << "Cannot open sysex file" << path;
         return QByteArray();
     }
