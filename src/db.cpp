@@ -7,6 +7,22 @@
 
 #define GOTO_END_IF_FALSE(X) if (!X) goto end;
 
+template <typename T>
+static bool error(const T& val) {
+    return val.lastError().isValid();
+}
+
+template <typename T>
+static QString errorText(const T& val) {
+    return errorText(val.lastError());
+}
+
+template <>
+QString errorText(const QSqlError& err) {
+    Q_ASSERT(err.isValid());
+    return err.text().trimmed();
+}
+
 QList<int> programIds() {
     QList<int> ret;
 
@@ -19,8 +35,8 @@ QList<int> programIds() {
     }
 
 end:
-    if (q.lastError().isValid()) {
-        qWarning() << "Failed to retrieve a list of program ids:" << q.lastError().text();
+    if (error(q)) {
+        qWarning() << "Failed to retrieve a list of program ids:" << errorText(q);
     }
     return ret;
 }
@@ -38,8 +54,8 @@ QString programName(int programId) {
     Q_ASSERT(!q.next());
 
 end:
-    if (q.lastError().isValid()) {
-        qWarning() << "Failed to retrieve program" << programId << "name:" << q.lastError().text();
+    if (error(q)) {
+        qWarning() << "Failed to retrieve program" << programId << "name:" << errorText(q);
     }
     return ret;
 }
@@ -105,8 +121,12 @@ QByteArray programSysex(int programId) {
     success = true;
 
 end:
-    if (!success || q.lastError().isValid()) {
-        qWarning() << "Failed to generate sysex for program" << programId << ":" << q.lastError().text();
+    if (!success) {
+        qWarning() << "Failed to generate sysex for program" << programId;
+        return QByteArray();
+    }
+    if (error(q)) {
+        qWarning() << errorText(q);
         return QByteArray();
     }
     return ret;
@@ -168,8 +188,8 @@ bool updateProgramFromSysex(int programId, const QByteArray &sysex) {
 
     ret = true;
 end:
-    if (!ret || q.lastError().isValid()) {
-        qWarning() << "Failed to update program from sysex: " << q.lastError().text();
+    if (!ret || error(q)) {
+        qWarning() << "Failed to update program from sysex:" << sysex << (error(q) ? errorText(q) : "");
     }
     return ret;
 }
@@ -207,12 +227,12 @@ int createProgram(const QString &name, const QByteArray &sysex, int programId) {
     ret = programId;
 
 end:
-    if (q.lastError().isValid()) {
-        qWarning() << "Failed to create program: " << q.lastError().text();
+    if (error(q)) {
+        qWarning() << "Failed to create program: " << errorText(q);
         ret = -1;
     }
     if (!QSqlDatabase::database().commit()) {
-        qWarning() << "Failed to commit program creation transaction:" << QSqlDatabase::database().lastError().text();
+        qWarning() << "Failed to commit program creation transaction:" << errorText(QSqlDatabase::database());
         ret = -1;
     }
     return ret;
@@ -238,8 +258,8 @@ bool deleteProgram(int programId) {
     }
 
 end:
-    if (q.lastError().isValid()) {
-        qWarning() << "Failed to delete program: " << q.lastError().text();
+    if (error(q)) {
+        qWarning() << "Failed to delete program: " << errorText(q);
         return false;
     }
     return true;
