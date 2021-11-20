@@ -401,7 +401,7 @@ int MainWindow::currentSelectedProjectId() const {
 void MainWindow::on_actionAbout_triggered() {
     QMessageBox::about(
         this,
-        QString("About %1").arg(qApp->applicationName()),
+        QString("%1 %2").arg(tr("About", "About dialog title")).arg(qApp->applicationName()),
         QString("<h1>%1 v%2</h1><a href=\"%3\">%4</a><p>%5</p><p>%6</p>")
             .arg(qApp->applicationName())
             .arg(qApp->applicationVersion())
@@ -411,8 +411,3 @@ void MainWindow::on_actionAbout_triggered() {
             .arg(qApp->property("applicationCopyright").toString())
     );
 }
-
-void MainWindow::on_actionAboutQt_triggered() {
-    qApp->aboutQt();
-}
-
