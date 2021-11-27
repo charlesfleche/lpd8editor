@@ -87,7 +87,15 @@ jobs:
 
     steps:
       - name: Install dependencies
-        run: sudo apt install cmake libasound2-dev libqt5sql5-sqlite libqt5svg5-dev pkg-config qt5-default $PKG
+        run: sudo apt install
+          cmake
+          libasound2-dev
+          libqt5sql5-sqlite
+          libqt5svg5-dev
+          pkg-config
+          qt5-default
+          qttools5-dev-tools
+          $PKG
 
       - name: Check out repository code
         uses: actions/checkout@v2

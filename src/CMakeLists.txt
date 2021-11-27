@@ -76,6 +76,7 @@ target_link_libraries(${_lib}
 
 add_executable(${_exe}
     main.cpp
+    app_info.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/app_info.h
 )
 

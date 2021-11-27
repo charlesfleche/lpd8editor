@@ -19,7 +19,7 @@ message(STATUS "Git describe version: ${GIT_DESCRIBE_VERSION}")
 message(STATUS "Project version: ${_app_version}")
 
 project(lpd8editor
-    VERSION ${_app_version}
+#    VERSION ${_app_version}
     HOMEPAGE_URL https://github.com/charlesfleche/lpd8editor
     DESCRIPTION "A linux editor for the Akai LPD8"
     LANGUAGES CXX
