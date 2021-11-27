@@ -41,3 +41,8 @@ find_package(Qt5 COMPONENTS LinguistTools Sql Svg Test Widgets REQUIRED)
 
 add_subdirectory(translations)
 add_subdirectory(src)
+
+add_custom_target(github
+  SOURCES
+    .github/workflows/actions.yml
+)
