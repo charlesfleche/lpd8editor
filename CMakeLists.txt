@@ -10,10 +10,13 @@ execute_process(
         GIT_DESCRIBE_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+
 string(REGEX MATCH [0-9]+\.[0-9]+\.[0-9]+
     _app_version
     ${GIT_DESCRIBE_VERSION}
 )
+message(STATUS "Git describe version: ${GIT_DESCRIBE_VERSION}")
+message(STATUS "Project version: ${_app_version}")
 
 project(lpd8editor
     VERSION ${_app_version}
