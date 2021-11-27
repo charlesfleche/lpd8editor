@@ -19,7 +19,7 @@ install(
   FILES
     ${_qm_files}
   DESTINATION
-    "${CMAKE_INSTALL_FULL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/${CMAKE_PROJECT_NAME}"
+    "${CMAKE_INSTALL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/${CMAKE_PROJECT_NAME}"
 )
 
 qt5_add_resources(_rcc_sources
@@ -93,7 +93,7 @@ install(
   TARGETS
     ${_exe}
   DESTINATION
-    "${CMAKE_INSTALL_FULL_BINDIR}"
+    "${CMAKE_INSTALL_BINDIR}"
 )
 
 function(_add_test _name)

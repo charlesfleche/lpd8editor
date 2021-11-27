@@ -6,84 +6,24 @@ jobs:
   build:
     strategy:
       matrix:
-        os:
-          - ubuntu-18.04
-        build_type:
-          - Debug
-          - Release
         compiler: [{
             pkg: "clang",
-            version: "3.9",
+            version: "12",
             cc: "clang",
             cxx: "clang++",
           }, {
-            pkg: "clang",
-            version: "4.0",
-            cc: "clang",
-            cxx: "clang++",
-          }, {
-            pkg: "clang",
-            version: "5.0",
-            cc: "clang",
-            cxx: "clang++",
-          }, {
-            pkg: "clang",
-            version: "6.0",
-            cc: "clang",
-            cxx: "clang++",
-          }, {
-            pkg: "clang",
-            version: "7",
-            cc: "clang",
-            cxx: "clang++",
-          }, {
-            pkg: "clang",
-            version: "8",
-            cc: "clang",
-            cxx: "clang++",
-          }, {
-            pkg: "clang",
-            version: "9",
-            cc: "clang",
-            cxx: "clang++",
-          }, {
-            pkg: "clang",
+            pkg: "g++",
             version: "10",
-            cc: "clang",
-            cxx: "clang++",
-          }, {
-            pkg: "g++",
-            version: "4.8",
             cc: "gcc",
             cxx: "g++",
-          }, {
-            pkg: "g++",
-            version: "5",
-            cc: "gcc",
-            cxx: "g++",
-          }, {
-            pkg: "g++",
-            version: "6",
-            cc: "gcc",
-            cxx: "g++",
-          }, {
-            pkg: "g++",
-            version: "7",
-            cc: "gcc",
-            cxx: "g++",
-          }, {
-            pkg: "g++",
-            version: "8",
-            cc: "gcc",
-            cxx: "g++",
-        }]
+          }]
 
     env:
       PKG: ${{ matrix.compiler.pkg }}-${{ matrix.compiler.version }}
       CC: ${{ matrix.compiler.cc }}-${{ matrix.compiler.version }}
       CXX: ${{ matrix.compiler.cxx }}-${{ matrix.compiler.version }}
 
-    runs-on: ${{matrix.os}}
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Install dependencies
@@ -101,10 +41,10 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Configure
-        run: cmake . -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        run: cmake . -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build .
 
       - name: Test
-        run: make test
+        run: cmake --build . --target test

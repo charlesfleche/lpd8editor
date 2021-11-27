@@ -4,7 +4,7 @@
 #include <QString>
 
 const QString appName = "${PROJECT_NAME}";
-const QString appVersion = "${GIT_DESCRIBE_VERSION}";
+const QString appVersion = "${LPD8EDITOR_QAPPLICATION_VERSION}";
 const QString appUrl = "${PROJECT_HOMEPAGE_URL}";
 
 #endif
