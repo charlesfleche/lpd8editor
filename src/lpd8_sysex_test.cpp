@@ -90,4 +90,4 @@ void TestLpd8Sysex::test_channel()
 
 QTEST_APPLESS_MAIN(TestLpd8Sysex)
 
-#include "tst_lpd8_sysex.moc"
+#include "lpd8_sysex_test.moc"

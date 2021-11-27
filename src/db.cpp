@@ -266,6 +266,8 @@ end:
 }
 
 bool initialize() {
+    Q_INIT_RESOURCE(sql);
+
     QSqlQuery q;
     if (!q.exec(readTextFile(":/create_table_programs.sql"))) return false;
     if (!q.exec(readTextFile(":/create_table_pads.sql"))) return false;

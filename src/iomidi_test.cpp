@@ -62,4 +62,4 @@ void TestIOMIdi::test_portId()
 
 QTEST_GUILESS_MAIN(TestIOMIdi)
 
-#include "tst_iomidi.moc"
+#include "iomidi_test.moc"

@@ -1,13 +1,13 @@
 #include "mainwindow.h"
+#include "app_info.h"
 
 #include <QApplication>
+#include <QDir>
 #include <QLocale>
 #include <QStandardPaths>
 #include <QTranslator>
 
 #include <QtDebug>
-
-const QString app_name = QString("lpd8editor");
 
 int main(int argc, char *argv[])
 {
@@ -15,21 +15,34 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
     QApplication app(argc, argv);
-    app.setOrganizationName(app_name);
-    app.setApplicationName(app_name);
-    app.setApplicationVersion("0.0.13");
 
-    app.setProperty("applicationLink", "https://github.com/charlesfleche/lpd8editor");
+    app.setOrganizationName(appName);
+    app.setApplicationName(appName);
+    app.setApplicationVersion(appVersion);
+
+    app.setProperty("applicationLink", appUrl);
     app.setProperty("applicationLicense", "MIT License");
     app.setProperty("applicationCopyright", "Copyright (c) 2017-2018 Charles Flèche");
 
+    auto shareDir = QDir(app.applicationDirPath());
+    shareDir.cdUp();
+    shareDir.cd("share");
+    shareDir.cd(app.organizationName());
+    shareDir.cd(app.applicationName());
+    QStringList paths = {
+        app.applicationDirPath(),  // Useful for testing from the build folder
+        shareDir.path()            // Useful for installations in a non-standard location
+    };
+    paths += QStandardPaths::standardLocations(QStandardPaths::AppDataLocation);
+
     QTranslator translator;
     const QLocale locale = QLocale::system();
-    const QStringList paths = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation);
+
     for (auto it = paths.constBegin() ; it != paths.constEnd() ; ++it) {
-        if (translator.load(locale, app_name, ".", *it)) {
-            qDebug() << "Loaded translation for" << locale << "from" << *it;
+        qDebug() << "Looking for translations" << locale << "in folder" << *it;
+        if (translator.load(locale, appName, ".", *it)) {
             app.installTranslator(&translator);
+            qDebug() << "Loaded translation" << locale << "from" << *it;
             break;
         }
     }

@@ -44,4 +44,4 @@ void TestMidiValueDelegate::test_textFromValue()
 
 QTEST_APPLESS_MAIN(TestMidiValueDelegate)
 
-#include "tst_MidiValueDelegate.moc"
+#include "midivaluedelegate_test.moc"

@@ -1,0 +1,10 @@
+#ifndef VERSION_H
+#define VERSION_H
+
+#include <QString>
+
+const QString appName = "${PROJECT_NAME}";
+const QString appVersion = "${GIT_DESCRIBE_VERSION}";
+const QString appUrl = "${PROJECT_HOMEPAGE_URL}";
+
+#endif

@@ -194,17 +194,17 @@
         <translation>Σχετικά</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.cpp" line="61"/>
+        <location filename="../src/mainwindow.cpp" line="63"/>
         <source>Undo</source>
         <translation>Annuler</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.cpp" line="64"/>
+        <location filename="../src/mainwindow.cpp" line="66"/>
         <source>Redo</source>
         <translation>επανάκτηση</translation>
     </message>
     <message>
-        <location filename="../src/mainwindow.cpp" line="404"/>
+        <location filename="../src/mainwindow.cpp" line="406"/>
         <source>About</source>
         <comment>About dialog title</comment>
         <translation type="unfinished">Σχετικά</translation>

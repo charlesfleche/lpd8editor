@@ -130,4 +130,4 @@ void TestDB::test_createProgram() {
 
 QTEST_APPLESS_MAIN(TestDB)
 
-#include "tst_db.moc"
+#include "db_test.moc"
