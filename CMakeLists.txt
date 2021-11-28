@@ -16,17 +16,21 @@ if (GIT_EXECUTABLE)
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
-    string(REGEX MATCH [0-9]+\.[0-9]+\.[0-9]+
+    string(REGEX MATCH [0-9]+[.][0-9]+[.][0-9]+
         _parsed_git_describe_version
         ${LPD8EDITOR_QAPPLICATION_VERSION}
     )
+
     message(STATUS "Git describe version: ${LPD8EDITOR_QAPPLICATION_VERSION}")
     message(STATUS "Parsed git describe version: ${_parsed_git_describe_version}")
 
     if (_parsed_git_describe_version VERSION_GREATER _project_version)
+        message(STATUS "Setting project version to ${_parsed_git_describe_version}")
         set(_project_version ${_parsed_git_describe_version})
     endif()
 endif()
+
+message(STATUS "***** project version to ${_project_version}")
 
 project(lpd8editor
     VERSION ${_project_version}
