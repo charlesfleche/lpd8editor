@@ -30,8 +30,6 @@ if (GIT_EXECUTABLE)
     endif()
 endif()
 
-message(STATUS "***** project version to ${_project_version}")
-
 project(lpd8editor
     VERSION ${_project_version}
     HOMEPAGE_URL https://github.com/charlesfleche/lpd8editor
@@ -68,6 +66,7 @@ add_custom_target(github
     .github/workflows/release.yml
 )
 
+set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR}/packages)
 set(CPACK_PACKAGE_CONTACT "Charles Flèche <charles.fleche@free.fr>")
 set(CPACK_PACKAGE_VENDOR "charlesfleche")
 set(CPACK_RESOURCE_FILE_README ${CMAKE_SOURCE_DIR}/README.md)

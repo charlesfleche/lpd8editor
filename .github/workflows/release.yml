@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - '*'
+      - 'v*'
 
 jobs:
   release:
@@ -28,11 +28,10 @@ jobs:
       - name: Configure
         run: cmake . -DCMAKE_BUILD_TYPE=Release
 
-      - name: Build
-        run: cmake --build .
-
-      - name: Test
-        run: cmake --build . --target test
-
       - name: Package
         run: cmake --build . --target package
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: packages/*
