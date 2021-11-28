@@ -4,52 +4,50 @@ A Linux editor for the [Akai LPD8 pad controller](http://www.akaipro.com/product
 
 ![lpd8-editor screenshot](doc/screenshot.png?raw=true "lpd8editor")
 
-## Dependencies
+## Prebuilt binaries
 
-- alsa
-- c++11
-- pkg-config
-- qt5
-  - QtSql
-  - QtSVG
-  - QtWidgets
+Check the [releases](https://github.com/charlesfleche/lpd8editor/releases) page for ready to use packages.
 
-### Install dependencies for debian
+## Building
 
-```
-$ su
-# apt install build-essential libasound2-dev libqt5sql5-sqlite libqt5svg5-dev pkg-config qt5-default
-```
+Building lpd8editor requires a C++-11 compiler, cmake, Alsa and Qt5 with its internationalization tools. The [Github actions](.github/workflows/release.yml) provides detailed step by step to install dependencies, build, test and release.
 
-### Install dependencies for ubuntu / mint systems
+After dependencies are installed:
 
-``` sh
-$ sudo apt install build-essential libasound2-dev libqt5sql5-sqlite libqt5svg5-dev pkg-config qt5-default
-```
+```bash
+# Clone the code repository
+git clone https://github.com/charlesfleche/lpd8editor.git
 
-## Build, test and run
+# Create the build directory
+mkdir build-lpd8editor
+cd build-lpd8editor
 
-``` sh
-$ cd lpd8editor
-$ qmake
-$ make
-$ make check
-$ sudo make install
-$ /usr/bin/lpd8editor
+# Configure the build system
+cmake ../lpd8editor -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/lpd8editor
+
+# Build and install
+cmake --build . --target install
+
+# Run lpd8editor
+~/lpd8editor/bin/lpd8editor
 ```
 
-## Changing the installation prefix
+### Running the tests
 
-``` sh
-$ export INSTALL_PREFIX=/my/own/path
-$ [build, test...]
-$ make install
-$ /my/own/path/bin/lpd8editor
+```bash
+cmake --build . --target test
+```
+
+### Building the binary packages
+
+```bash
+# Packages will be generated in the `packages` folder
+cmake --build . --target package
 ```
 
 ## Want to contribute a translation ?
 
-It's actually easy and should not take more than a few minutes for a full translation. Please [get in touch on Gitter](https://gitter.im/lpd8-editor/Lobby) or create a new issue on GitHub.
+Although not currently thoroughly documented, adding a new translation is actually easy and should not take more than a few minutes for a full translation. Please [create a GitHub issue](https://github.com/charlesfleche/lpd8editor/issues/new?title=New+translation+request) and we'll guide you.
 
 ## LPD8 sysex
 

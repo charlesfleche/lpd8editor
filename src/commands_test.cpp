@@ -104,4 +104,4 @@ void TestCommands::test_UpdateProgramFromSysexCommand()
 
 QTEST_APPLESS_MAIN(TestCommands)
 
-#include "tst_commands.moc"
+#include "commands_test.moc"

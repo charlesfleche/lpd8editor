@@ -1,8 +1,0 @@
-#!/usr/bin/make -f
-
-export QTDIR=/usr/share/qt5
-export QT_SELECT=qt5
-
-%:
-	dh $@
-

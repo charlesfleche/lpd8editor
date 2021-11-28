@@ -69,4 +69,4 @@ void TestProgramsModel::test() {
 
 QTEST_APPLESS_MAIN(TestProgramsModel)
 
-#include "tst_ProgramsModel.moc"
+#include "programsmodel_test.moc"

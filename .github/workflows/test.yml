@@ -1,0 +1,54 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        compiler: [{
+            pkg: "clang",
+            version: "12",
+            cc: "clang",
+            cxx: "clang++",
+          }, {
+            pkg: "g++",
+            version: "10",
+            cc: "gcc",
+            cxx: "g++",
+          }]
+
+    env:
+      PKG: ${{ matrix.compiler.pkg }}-${{ matrix.compiler.version }}
+      CC: ${{ matrix.compiler.cc }}-${{ matrix.compiler.version }}
+      CXX: ${{ matrix.compiler.cxx }}-${{ matrix.compiler.version }}
+
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Dependencies
+        run: sudo apt install
+          cmake
+          libasound2-dev
+          libqt5sql5-sqlite
+          libqt5svg5-dev
+          pkg-config
+          qt5-default
+          qttools5-dev
+          qttools5-dev-tools
+          $PKG
+
+      - name: Code
+        uses: actions/checkout@v2
+
+      - name: Configure
+        run: cmake . -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build .
+
+      - name: Test
+        run: cmake --build . --target test

@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: Dependencies
+        run: sudo apt install
+          build-essential
+          cmake
+          libasound2-dev
+          libqt5sql5-sqlite
+          libqt5svg5-dev
+          pkg-config
+          qt5-default
+          qttools5-dev
+          qttools5-dev-tools
+
+      - name: Code
+        uses: actions/checkout@v2
+
+      - name: Configure
+        run: cmake . -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build .
+
+      - name: Test
+        run: cmake --build . --target test
+
+      - name: Package
+        run: cmake --build . --target package
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: packages/*

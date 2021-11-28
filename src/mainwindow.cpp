@@ -31,6 +31,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow),
     programsModel(nullptr)
 {
+    Q_INIT_RESOURCE(sql);
+
     // Database
 
     if (!initFilesystem()) {
@@ -402,7 +404,7 @@ void MainWindow::on_actionAbout_triggered() {
     QMessageBox::about(
         this,
         QString("%1 %2").arg(tr("About", "About dialog title")).arg(qApp->applicationName()),
-        QString("<h1>%1 v%2</h1><a href=\"%3\">%4</a><p>%5</p><p>%6</p>")
+        QString("<h1>%1</h1><h2>%2</h2><a href=\"%3\">%4</a><p>%5</p><p>%6</p>")
             .arg(qApp->applicationName())
             .arg(qApp->applicationVersion())
             .arg(qApp->property("applicationLink").toString())
