@@ -60,7 +60,8 @@ add_subdirectory(src)
 
 add_custom_target(github
   SOURCES
-    .github/workflows/actions.yml
+    .github/workflows/test.yml
+    .github/workflows/release.yml
 )
 
 set(CPACK_PACKAGE_CONTACT "Charles Flèche <charles.fleche@free.fr>")
