@@ -3,7 +3,7 @@ name: Build and test
 on: [push]
 
 jobs:
-  build:
+  test:
     strategy:
       matrix:
         compiler: [{

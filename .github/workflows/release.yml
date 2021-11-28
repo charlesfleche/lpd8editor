@@ -2,13 +2,11 @@ name: Build and test
 
 on:
   push:
-    branches:
-      - cmake
     tags:
       - '*'
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-18.04
 
     steps:
