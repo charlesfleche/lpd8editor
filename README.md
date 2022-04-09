@@ -14,6 +14,8 @@ Check the [releases](https://github.com/charlesfleche/lpd8editor/releases) page 
 
 Building lpd8editor requires a C++-11 compiler, cmake, Alsa and Qt5 with its internationalization tools. The [Github actions](.github/workflows/release.yml) provides detailed step by step to install dependencies, build, test and release.
 
+### Building from git clone
+
 After dependencies are installed:
 
 ```bash
@@ -26,6 +28,33 @@ cd build-lpd8editor
 
 # Configure the build system
 cmake ../lpd8editor -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/lpd8editor
+
+# Build and install
+cmake --build . --target install
+
+# Run lpd8editor
+~/lpd8editor/bin/lpd8editor
+```
+
+### Building from a compressed source folder
+
+GitHub automatically publishes compressed source folders (.tar.gz or .zip archives) for each [release](releases). To build lpd8editor from those archives:
+
+```bash
+# In the following instructions, replace x.y.z by the actual version of the downloaded archive
+
+# Extract the downloaded .tar.gz archive
+tar xf lpd8editor-x.y.z.tar.gz
+
+# Or, for a .zip
+unzip lpd8editor-x.y.z.zip
+
+# Create the build directory
+mkdir build-lpd8editor
+cd build-lpd8editor
+
+# Configure the build system
+cmake ../lpd8editor-x.y.z -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/lpd8editor
 
 # Build and install
 cmake --build . --target install

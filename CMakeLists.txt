@@ -14,20 +14,41 @@ if (GIT_EXECUTABLE)
         OUTPUT_VARIABLE
             LPD8EDITOR_QAPPLICATION_VERSION
         OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-
-    string(REGEX MATCH [0-9]+[.][0-9]+[.][0-9]+
-        _parsed_git_describe_version
-        ${LPD8EDITOR_QAPPLICATION_VERSION}
+	ERROR_QUIET
     )
 
     message(STATUS "Git describe version: ${LPD8EDITOR_QAPPLICATION_VERSION}")
-    message(STATUS "Parsed git describe version: ${_parsed_git_describe_version}")
 
-    if (_parsed_git_describe_version VERSION_GREATER _project_version)
-        message(STATUS "Setting project version to ${_parsed_git_describe_version}")
-        set(_project_version ${_parsed_git_describe_version})
+    if (LPD8EDITOR_QAPPLICATION_VERSION)
+        string(REGEX MATCH [0-9]+[.][0-9]+[.][0-9]+
+            _parsed_git_describe_version
+            ${LPD8EDITOR_QAPPLICATION_VERSION}
+        )
+
+        message(STATUS "Parsed git describe version: ${_parsed_git_describe_version}")
+
+        if (_parsed_git_describe_version VERSION_GREATER _project_version)
+	    message(STATUS "Found a valid version from git describe")
+            set(_project_version ${_parsed_git_describe_version})
+        endif()
+    else()
+        message(STATUS "Could not find a version from git describe")
     endif()
+endif()
+
+if (NOT LPD8EDITOR_QAPPLICATION_VERSION)
+    message(STATUS "Trying to get a version from source folder name ${CMAKE_SOURCE_DIR}")
+    string(REGEX MATCH [0-9]+[.][0-9]+[.][0-9]+$
+           _parsed_source_folder_name_version
+	   ${CMAKE_SOURCE_DIR}
+    )
+    if (_parsed_source_folder_name_version VERSION_GREATER _project_version)
+        set(_project_version ${_parsed_source_folder_name_version})
+    else()
+        message(STATUS "Could not find a version from source folder name ${CMAKE_SOURCE_DIR}")
+    endif()
+
+    set(LPD8EDITOR_QAPPLICATION_VERSION ${_project_version})
 endif()
 
 project(lpd8editor
