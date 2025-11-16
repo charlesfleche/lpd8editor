@@ -3,13 +3,13 @@ configure_file(app_info.h.in ${CMAKE_CURRENT_BINARY_DIR}/app_info.h)
 set(_exe ${CMAKE_PROJECT_NAME})
 set(_lib ${CMAKE_PROJECT_NAME}-lib)
 
-qt5_create_translation(_qm_files
+qt_create_translation(_qm_files
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/translations/lpd8editor.el.ts
     ${CMAKE_SOURCE_DIR}/translations/lpd8editor.fr.ts
     ${CMAKE_SOURCE_DIR}/translations/lpd8editor.it.ts
 )
-qt5_add_translation(_qm_files
+qt_add_translation(_qm_files
     ${CMAKE_SOURCE_DIR}/translations/lpd8editor.el.ts
     ${CMAKE_SOURCE_DIR}/translations/lpd8editor.fr.ts
     ${CMAKE_SOURCE_DIR}/translations/lpd8editor.it.ts
@@ -22,7 +22,7 @@ install(
     "${CMAKE_INSTALL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/${CMAKE_PROJECT_NAME}"
 )
 
-qt5_add_resources(_rcc_sources
+qt_add_resources(_rcc_sources
     sql.qrc
 )
 
@@ -58,7 +58,7 @@ add_library(${_lib}
     utils.cpp
     utils.h
     ${_rcc_sources}
-    ${_qm_files}
+    #    ${_qm_files}
 )
 
 target_include_directories(${_lib}
@@ -68,9 +68,9 @@ target_include_directories(${_lib}
 )
 
 target_link_libraries(${_lib}
-    Qt5::Sql
-    Qt5::Svg
-    Qt5::Widgets
+    Qt::Sql
+    Qt::Svg
+    Qt::Widgets
     ${ALSA_LIBRARIES}
 )
 
@@ -102,7 +102,7 @@ function(_add_test _name)
         ${_target}.cpp
     )
     target_link_libraries(${_target}
-        Qt5::Test
+        Qt::Test
         ${_lib}
     )
     add_test(

@@ -372,7 +372,7 @@ void ProgramsModel::addFilters(int programId) {
 
     // Regexes
 
-    const QRegExp regex(QString("^%1$").arg(programId));
+    const QRegularExpression regex(QString("^%1$").arg(programId));
 
     // Groups
 
@@ -391,7 +391,7 @@ void ProgramsModel::addFilters(int programId) {
     QSortFilterProxyModel* proxy = new QSortFilterProxyModel(this);
     proxy->setSourceModel(m_groups);
     proxy->setFilterKeyColumn(program_id_column_index);
-    proxy->setFilterRegExp(regex);
+    proxy->setFilterRegularExpression(regex);
     m_groups_proxies[programId] = proxy;
 
     // Pads
@@ -399,7 +399,7 @@ void ProgramsModel::addFilters(int programId) {
     proxy = new QSortFilterProxyModel(this);
     proxy->setSourceModel(m_pads);
     proxy->setFilterKeyColumn(program_id_column_index);
-    proxy->setFilterRegExp(regex);
+    proxy->setFilterRegularExpression(regex);
     m_pads_proxies[programId] = proxy;
 
     connect(proxy,
@@ -417,7 +417,7 @@ void ProgramsModel::addFilters(int programId) {
     proxy = new QSortFilterProxyModel(this);
     proxy->setSourceModel(m_knobs);
     proxy->setFilterKeyColumn(program_id_column_index);
-    proxy->setFilterRegExp(regex);
+    proxy->setFilterRegularExpression(regex);
     m_knobs_proxies[programId] = proxy;
 
     connect(proxy,

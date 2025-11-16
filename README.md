@@ -12,7 +12,7 @@ Check the [releases](https://github.com/charlesfleche/lpd8editor/releases) page 
 
 ## Building
 
-Building lpd8editor requires a C++-11 compiler, cmake, Alsa and Qt5 with its internationalization tools. The [Github actions](.github/workflows/release.yml) provides detailed step by step to install dependencies, build, test and release.
+Building lpd8editor requires a C++-11 compiler, cmake, Alsa and Qt6 with its internationalization tools. The [Github actions](.github/workflows/release.yml) provides detailed step by step to install dependencies, build, test and release.
 
 ### Building from git clone
 

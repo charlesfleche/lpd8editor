@@ -1,7 +1,7 @@
 #ifndef PROGRAMSMODEL_H
 #define PROGRAMSMODEL_H
 
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QSqlTableModel>
 
 class QAbstractItemModel;

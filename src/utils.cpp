@@ -20,10 +20,7 @@ QString readTextFile(const QString& path) {
 }
 
 QDir dataDir() {
-    QStandardPaths::StandardLocation location = QStandardPaths::DataLocation;
-#if QT_VERSION >= 0x050400
-    location = QStandardPaths::AppDataLocation;
-#endif
+    const auto& location = QStandardPaths::AppLocalDataLocation;
     return QDir(QStandardPaths::writableLocation(location));
 }
 
