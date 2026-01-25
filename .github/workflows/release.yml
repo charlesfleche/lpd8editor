@@ -6,24 +6,19 @@ on:
       - 'v*'
 
 jobs:
-  release:
-    runs-on: ubuntu-18.04
+  test:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Dependencies
         run: sudo apt install
-          build-essential
-          cmake
           libasound2-dev
-          libqt5sql5-sqlite
-          libqt5svg5-dev
-          pkg-config
-          qt5-default
-          qttools5-dev
-          qttools5-dev-tools
+          qt6-svg-dev
+          qt6-base-dev
+          qt6-tools-dev
 
       - name: Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
 
       - name: Configure
         run: cmake . -DCMAKE_BUILD_TYPE=Release
@@ -38,6 +33,7 @@ jobs:
         run: cmake --build . --target package
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: packages/*
+

@@ -7,42 +7,18 @@ on:
 
 jobs:
   test:
-    strategy:
-      matrix:
-        compiler: [{
-            pkg: "clang",
-            version: "12",
-            cc: "clang",
-            cxx: "clang++",
-          }, {
-            pkg: "g++",
-            version: "10",
-            cc: "gcc",
-            cxx: "g++",
-          }]
-
-    env:
-      PKG: ${{ matrix.compiler.pkg }}-${{ matrix.compiler.version }}
-      CC: ${{ matrix.compiler.cc }}-${{ matrix.compiler.version }}
-      CXX: ${{ matrix.compiler.cxx }}-${{ matrix.compiler.version }}
-
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Dependencies
         run: sudo apt install
-          cmake
           libasound2-dev
-          libqt5sql5-sqlite
-          libqt5svg5-dev
-          pkg-config
-          qt5-default
-          qttools5-dev
-          qttools5-dev-tools
-          $PKG
+          qt6-svg-dev
+          qt6-base-dev
+          qt6-tools-dev
 
       - name: Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
 
       - name: Configure
         run: cmake . -DCMAKE_BUILD_TYPE=Release
@@ -52,3 +28,4 @@ jobs:
 
       - name: Test
         run: cmake --build . --target test
+
