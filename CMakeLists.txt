@@ -78,7 +78,6 @@ find_package(ALSA REQUIRED)
 find_package(Git REQUIRED)
 find_package(Qt6 COMPONENTS LinguistTools Sql Svg Test Widgets REQUIRED)
 
-add_subdirectory(translations)
 add_subdirectory(src)
 
 add_custom_target(github

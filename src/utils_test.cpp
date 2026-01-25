@@ -34,8 +34,8 @@ void TestUtils::test_readTextFile()
     f.close();
 
     QCOMPARE(readTextFile(f.fileName()), QString("0 127 256"));
-    QVERIFY_EXCEPTION_THROWN(readTextFile("This path does not exist"),
-                             std::runtime_error);
+    QVERIFY_THROWS_EXCEPTION(std::runtime_error, 
+		             readTextFile("This path does not exist"));
 }
 
 void TestUtils::test_sysexTextFile_data()
@@ -77,7 +77,7 @@ void TestUtils::test_sysexTextFile()
         QTest::ignoreMessage(QtWarningMsg, warningMsg.toLatin1());
     }
     const QByteArray read = fromSysexTextFile(p);
-    QCOMPARE(read.count(), readCount);
+    QCOMPARE(read.size(), readCount);
 
     if (readCount > 0) {
         QCOMPARE(read.at(0), readBegin);
