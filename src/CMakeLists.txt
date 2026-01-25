@@ -3,25 +3,6 @@ configure_file(app_info.h.in ${CMAKE_CURRENT_BINARY_DIR}/app_info.h)
 set(_exe ${CMAKE_PROJECT_NAME})
 set(_lib ${CMAKE_PROJECT_NAME}-lib)
 
-qt_create_translation(_qm_files
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/translations/lpd8editor.el.ts
-    ${CMAKE_SOURCE_DIR}/translations/lpd8editor.fr.ts
-    ${CMAKE_SOURCE_DIR}/translations/lpd8editor.it.ts
-)
-qt_add_translation(_qm_files
-    ${CMAKE_SOURCE_DIR}/translations/lpd8editor.el.ts
-    ${CMAKE_SOURCE_DIR}/translations/lpd8editor.fr.ts
-    ${CMAKE_SOURCE_DIR}/translations/lpd8editor.it.ts
-)
-
-install(
-  FILES
-    ${_qm_files}
-  DESTINATION
-    "${CMAKE_INSTALL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/${CMAKE_PROJECT_NAME}"
-)
-
 qt_add_resources(_rcc_sources
     sql.qrc
 )
@@ -58,7 +39,6 @@ add_library(${_lib}
     utils.cpp
     utils.h
     ${_rcc_sources}
-    #    ${_qm_files}
 )
 
 target_include_directories(${_lib}

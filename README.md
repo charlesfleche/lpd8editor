@@ -76,10 +76,6 @@ cmake --build . --target test
 cmake --build . --target package
 ```
 
-## Want to contribute a translation ?
-
-Although not currently thoroughly documented, adding a new translation is actually easy and should not take more than a few minutes for a full translation. Please [create a GitHub issue](https://github.com/charlesfleche/lpd8editor/issues/new?title=New+translation+request) and we'll guide you.
-
 ## LPD8 sysex
 
 Akai does not provide a MIDI and Sysex implementation sheet, so we [reverse engineered our own](doc/SYSEX.md).

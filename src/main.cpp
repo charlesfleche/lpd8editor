@@ -5,7 +5,6 @@
 #include <QDir>
 #include <QLocale>
 #include <QStandardPaths>
-#include <QTranslator>
 
 #include <QtDebug>
 
@@ -31,18 +30,6 @@ int main(int argc, char *argv[])
         shareDir.path()            // Useful for installations in a non-standard location
     };
     paths += QStandardPaths::standardLocations(QStandardPaths::AppDataLocation);
-
-    QTranslator translator;
-    const QLocale locale = QLocale::system();
-
-    for (auto it = paths.constBegin() ; it != paths.constEnd() ; ++it) {
-        qDebug() << "Looking for translations" << locale << "in folder" << *it;
-        if (translator.load(locale, appName, ".", *it)) {
-            app.installTranslator(&translator);
-            qDebug() << "Loaded translation" << locale << "from" << *it;
-            break;
-        }
-    }
 
     MainWindow win;
     win.setWindowTitle(app.applicationName());
