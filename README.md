@@ -8,7 +8,7 @@ A Linux editor for the [Akai LPD8 pad controller](http://www.akaipro.com/product
 
 ## Supported devices
 
-Only the original LPD8 devices is supported. There is however an interest for the [LPD8 Mk2](https://www.akaipro.com/lpd8-mk2/) #49 and the [LPD8 Wireless](https://www.akaipro.com/downloads-and-support/downloads/?product=LPD8%20Wireless&legacy=true) #47. I don't own these devices but i live in Montréal, Québec: if I can borrow one of those or if you can ship them to me, I'd be happy to support them.
+Only the original LPD8 devices is supported. There is however an interest for the [LPD8 Mk2](https://www.akaipro.com/lpd8-mk2/) [#49](https://github.com/charlesfleche/lpd8editor/issues/49) and the [LPD8 Wireless](https://www.akaipro.com/downloads-and-support/downloads/?product=LPD8%20Wireless&legacy=true) [#47](https://github.com/charlesfleche/lpd8editor/issues/47). I don't own these devices but i live in Montréal, Québec: if I can borrow one of those or if you can ship them to me, I'd be happy to support them.
 
 ## Prebuilt binaries
 
