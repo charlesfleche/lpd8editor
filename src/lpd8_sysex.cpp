@@ -91,7 +91,7 @@ QByteArray getProgram(int programId) {
 }
 
 void makeSetProgramRequest(QByteArray &sysex, int programId) {
-    Q_ASSERT(sysex.count() == sysex_set_program_req_size);
+    Q_ASSERT(sysex.size() == sysex_set_program_req_size);
     Q_ASSERT(programId >= 1 && programId <= 4);
 
     sysex[opcode_offset + 0] = sysex_set_program_req[0];

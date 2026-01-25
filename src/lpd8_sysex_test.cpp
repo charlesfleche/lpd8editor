@@ -59,7 +59,7 @@ void TestLpd8Sysex::test_type()
     sysex[4] = 0x63;
     sysex[5] = 0x00;
     sysex[6] = 0x3a;
-    sysex[sysex.count()-1] = 0xf7;
+    sysex[sysex.size()-1] = 0xf7;
     QCOMPARE(type(sysex), Type::TypeProgram);
 }
 
@@ -74,7 +74,7 @@ void TestLpd8Sysex::test_addFooter()
 {
     QByteArray sysex;
     addFooter(sysex);
-    QCOMPARE(sysex.count(), 1);
+    QCOMPARE(sysex.size(), 1);
     QCOMPARE(sysex.at(0), (char)0xf7);
 }
 
