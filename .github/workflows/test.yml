@@ -21,11 +21,14 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Configure
-        run: cmake . -DCMAKE_BUILD_TYPE=Release
+        run: cmake . -DCMAKE_INSTALL_PREFIX=/tmp/lpd8editor -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build .
 
       - name: Test
         run: cmake --build . --target test
+
+      - name: Install
+        run: cmake --build . --target install
 
