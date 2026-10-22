@@ -66,10 +66,6 @@ target_link_libraries(${_lib}
         lpd8editor_warnings
     PUBLIC
         Qt::Sql
-        # The SVG window icon is loaded by Qt's SVG image format plugin, not
-        # through this library. Linking it makes the plugin's package a
-        # dependency of the .deb (CPACK_DEBIAN_PACKAGE_SHLIBDEPS).
-        Qt::Svg
         Qt::Widgets
         ${ALSA_LIBRARIES}
 )

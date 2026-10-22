@@ -80,7 +80,7 @@ include(cmake/Cppcheck.cmake)
 
 find_package(ALSA REQUIRED)
 # Qt 6.8 is the version in Debian trixie, the oldest target we build and test.
-find_package(Qt6 6.8 REQUIRED COMPONENTS Sql Svg Widgets)
+find_package(Qt6 6.8 REQUIRED COMPONENTS Sql Widgets)
 
 # CTest defines the BUILD_TESTING option (ON by default). Packagers can
 # configure with -DBUILD_TESTING=OFF to skip building the tests.
@@ -111,5 +111,20 @@ set(CPACK_GENERATOR "DEB;TGZ")
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_SECTION sound)
+# Qt loads these as plugins at run time, so dpkg-shlibdeps can't find them
+# in the binary: the SQLite driver for the database, and the SVG image and
+# icon plugins for the window icon. CPack adds what dpkg-shlibdeps finds.
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt6sql6-sqlite, qt6-svg-plugins")
+
+# A package built on one distribution links against that distribution's
+# libraries, so the release builds one per distribution, and names them
+# apart with Debian's convention: lpd8editor_<version>-1~debian13_amd64.deb.
+set(LPD8EDITOR_PACKAGE_DISTRO "" CACHE STRING
+    "Distribution the packages are built for, added to their names (debian13, ubuntu26.04...)")
+if (LPD8EDITOR_PACKAGE_DISTRO)
+    set(CPACK_DEBIAN_PACKAGE_RELEASE "1~${LPD8EDITOR_PACKAGE_DISTRO}")
+    set(CPACK_PACKAGE_FILE_NAME
+        "${PROJECT_NAME}-${PROJECT_VERSION}-${LPD8EDITOR_PACKAGE_DISTRO}-${CMAKE_SYSTEM_PROCESSOR}")
+endif()
 
 include(CPack)

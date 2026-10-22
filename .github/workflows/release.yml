@@ -1,38 +1,97 @@
 name: Release
 
+# Pushing a version tag (v1.2.3) builds, tests and packages lpd8editor for
+# each supported distribution, then publishes a GitHub release with the
+# packages and their SHA-256 checksums.
+
 on:
   push:
     tags:
       - 'v*'
 
+# Read-only by default. Only the final 'publish' job may write (to create
+# the release).
+permissions:
+  contents: read
+
 jobs:
-  test:
-    runs-on: ubuntu-latest
-
+  package-trixie:
+    name: Package for Debian trixie
+    runs-on: ubuntu-26.04
+    container: debian:trixie
     steps:
-      - name: Dependencies
-        run: sudo apt install
-          libasound2-dev
-          qt6-svg-dev
-          qt6-base-dev
+      - name: Install git
+        run: apt-get update && apt-get install --yes --no-install-recommends ca-certificates git
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The whole history with its tags, for 'git describe' (the version).
+          fetch-depth: 0
+      - name: Install dependencies
+        # dpkg-dev and file are what CPack uses to compute the .deb's
+        # library dependencies (dpkg-shlibdeps).
+        run: tools/ci/install-dependencies.sh dpkg-dev file
+      - name: Build, test and package
+        run: |
+          cmake --preset gcc-release -DLPD8EDITOR_WERROR=ON -DLPD8EDITOR_PACKAGE_DISTRO=debian13
+          cmake --build --preset gcc-release
+          ctest --preset gcc-release
+          cmake --build --preset gcc-release --target package
+      - name: Keep the packages
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: packages-debian13
+          path: |
+            build/gcc-release/packages/*.deb
+            build/gcc-release/packages/*.tar.gz
+          if-no-files-found: error
 
-      - name: Code
-        uses: actions/checkout@v6
+  package-ubuntu:
+    name: Package for Ubuntu 26.04
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Install dependencies
+        run: tools/ci/install-dependencies.sh dpkg-dev file
+      - name: Build, test and package
+        run: |
+          cmake --preset gcc-release -DLPD8EDITOR_WERROR=ON -DLPD8EDITOR_PACKAGE_DISTRO=ubuntu26.04
+          cmake --build --preset gcc-release
+          ctest --preset gcc-release
+          cmake --build --preset gcc-release --target package
+      - name: Keep the packages
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: packages-ubuntu26.04
+          path: |
+            build/gcc-release/packages/*.deb
+            build/gcc-release/packages/*.tar.gz
+          if-no-files-found: error
 
-      - name: Configure
-        run: cmake . -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build
-        run: cmake --build .
-
-      - name: Test
-        run: cmake --build . --target test
-
-      - name: Package
-        run: cmake --build . --target package
-
-      - name: Release
-        uses: softprops/action-gh-release@v2
+  publish:
+    name: Publish the release
+    needs: [package-trixie, package-ubuntu]
+    runs-on: ubuntu-26.04
+    permissions:
+      # Creating a release and uploading its files needs write access.
+      contents: write
+    steps:
+      - name: Collect the packages
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: packages-*
+          path: packages
+          merge-multiple: true
+      - name: Compute checksums
+        # Lets users check that a download is complete and unmodified:
+        #     sha256sum --check --ignore-missing SHA256SUMS
+        working-directory: packages
+        run: sha256sum -- * > SHA256SUMS && cat SHA256SUMS
+      - name: Create the release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           files: packages/*
-
+          fail_on_unmatched_files: true

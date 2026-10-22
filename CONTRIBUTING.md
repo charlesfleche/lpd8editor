@@ -13,7 +13,7 @@ The code must build and pass its tests with **both GCC and Clang** on:
 Dependencies on Debian or Ubuntu:
 
 ```bash
-sudo apt install cmake ninja-build g++ clang libasound2-dev qt6-base-dev qt6-svg-dev
+sudo apt install cmake ninja-build g++ clang libasound2-dev qt6-base-dev libqt6sql6-sqlite qt6-svg-plugins
 # For the checks below:
 sudo apt install clang-format clang-tidy cppcheck valgrind
 ```

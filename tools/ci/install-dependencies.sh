@@ -18,7 +18,8 @@ packages="
     clang
     libasound2-dev
     qt6-base-dev
-    qt6-svg-dev
+    libqt6sql6-sqlite
+    qt6-svg-plugins
 "
 
 sudo=""

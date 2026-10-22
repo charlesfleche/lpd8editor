@@ -8,7 +8,7 @@ lpd8editor is a Linux-only Qt6 desktop editor for the original Akai LPD8 pad con
 
 ## Build and test
 
-Dependencies (Debian/Ubuntu): `cmake ninja-build g++ clang libasound2-dev qt6-base-dev qt6-svg-dev`, plus `clang-format clang-tidy cppcheck valgrind` for the checks. Targets are Debian trixie (GCC 14, Clang 19, Qt 6.8, CMake 3.31: the oldest versions allowed) and GitHub's ubuntu-26.04 image. Code must build with both GCC and Clang.
+Dependencies (Debian/Ubuntu): `cmake ninja-build g++ clang libasound2-dev qt6-base-dev libqt6sql6-sqlite qt6-svg-plugins`, plus `clang-format clang-tidy cppcheck valgrind` for the checks. Targets are Debian trixie (GCC 14, Clang 19, Qt 6.8, CMake 3.31: the oldest versions allowed) and GitHub's ubuntu-26.04 image. Code must build with both GCC and Clang.
 
 Use the CMake presets (`cmake --list-presets`). Each builds into `build/<preset>/`:
 
