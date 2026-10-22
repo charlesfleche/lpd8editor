@@ -105,8 +105,8 @@ Decisions made before starting:
 - [x] 3.6 [`2775f9b`](https://github.com/charlesfleche/lpd8editor/commit/2775f9bfdb0cdc58e570a46b5bb2a56bea9683ad) Give every lambda `connect` a context object.
 - [x] 3.7 [`91e31ac`](https://github.com/charlesfleche/lpd8editor/commit/91e31aca58dddfd9bbb437c1db14c61afac9d59d) `createProgram` rolls back instead of committing on failure, and
       `fromSysex` reports failures. Add regression tests.
-- [x] 3.8 `updateProgramFromSysex`: check bounds *before* dereferencing.
-- [ ] 3.9 `initDb`: report query errors and create the schema inside one
+- [x] 3.8 [`64e1f24`](https://github.com/charlesfleche/lpd8editor/commit/64e1f24898f3d0d59117fba9b6532a274ccf01d8) `updateProgramFromSysex`: check bounds *before* dereferencing.
+- [x] 3.9 `initDb`: report query errors and create the schema inside one
       transaction.
 - [ ] 3.10 `ProgramsModel`: respect the `QAbstractItemModel` contract for
       invalid indexes and `hasIndex`, checked by `QAbstractItemModelTester`

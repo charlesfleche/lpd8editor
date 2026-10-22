@@ -3,6 +3,7 @@
 #include "lpd8_sysex.h"
 #include "utils.h"
 
+#include <array>
 #include <exception>
 
 #define GOTO_END_IF_FALSE(X)                                                                       \
@@ -28,6 +29,15 @@ QString errorText(const QSqlError &val)
 {
     Q_ASSERT(val.isValid());
     return val.text().trimmed();
+}
+
+// Rolls back the current transaction. Failing to do so is rare, but then
+// the database state is unknown, which deserves a warning.
+void rollback(QSqlDatabase &db)
+{
+    if (!db.rollback()) {
+        qWarning() << "Failed to roll back a transaction:" << errorText(db);
+    }
 }
 
 } // namespace
@@ -254,12 +264,12 @@ bool inTransaction(const char *what, Work work)
         return false;
     }
     if (!work()) {
-        db.rollback();
+        rollback(db);
         return false;
     }
     if (!db.commit()) {
         qWarning() << "Failed to commit the transaction to" << what << ":" << errorText(db);
-        db.rollback();
+        rollback(db);
         return false;
     }
     return true;
@@ -348,25 +358,46 @@ end:
 
 namespace {
 
-bool initialize()
+// The schema, in creation order: the tables first, then the triggers that
+// use them.
+constexpr std::array<const char *, 5> schema_files{
+        ":/create_table_programs.sql",
+        ":/create_table_pads.sql",
+        ":/create_table_knobs.sql",
+        ":/create_trigger_add_program.sql",
+        ":/create_trigger_delete_program.sql",
+};
+
+// Creates the schema in one transaction (SQLite can roll back CREATE
+// statements), and returns the error of the statement that failed, or an
+// invalid QSqlError on success. QSqlDatabase is a handle to a connection,
+// so a copy is cheap and refers to the same connection.
+QSqlError initialize(QSqlDatabase db)
 {
-    QSqlQuery q;
-    if (!q.exec(readTextFile(":/create_table_programs.sql"))) {
-        return false;
+    if (!db.transaction()) {
+        return db.lastError();
     }
-    if (!q.exec(readTextFile(":/create_table_pads.sql"))) {
-        return false;
+    // Run the files in order, stopping at the first one that fails. A loop
+    // rather than std::ranges::find_if: the 'predicate' would run SQL, and
+    // [alg.find] specifies find_if's result, not the order in which it
+    // applies the predicate.
+    QSqlQuery q(db);
+    for (const char *file : schema_files) {
+        // cppcheck-suppress useStlAlgorithm ; the loop body has side effects
+        if (!q.exec(readTextFile(file))) {
+            // A failing query records its error on itself, not on the
+            // database: db.lastError() would say that all is well.
+            QSqlError error = q.lastError();
+            rollback(db);
+            return error;
+        }
     }
-    if (!q.exec(readTextFile(":/create_table_knobs.sql"))) {
-        return false;
+    if (!db.commit()) {
+        QSqlError error = db.lastError();
+        rollback(db);
+        return error;
     }
-    if (!q.exec(readTextFile(":/create_trigger_add_program.sql"))) {
-        return false;
-    }
-    if (!q.exec(readTextFile(":/create_trigger_delete_program.sql"))) {
-        return false;
-    }
-    return true;
+    return {};
 }
 
 bool isInitialized(const QSqlDatabase &db)
@@ -395,13 +426,12 @@ QSqlError initDb(const QSqlDatabase &db)
     Q_ASSERT(driver->hasFeature(QSqlDriver::LastInsertId));
     Q_ASSERT(driver->hasFeature(QSqlDriver::EventNotifications));
 
-    if (!isInitialized(db)) {
-        if (!initialize()) {
-            qWarning() << "Failed to initialize db" << db.databaseName();
-            goto end;
-        }
+    if (isInitialized(db)) {
+        return {};
     }
-
-end:
-    return db.lastError();
+    QSqlError error = initialize(db);
+    if (error.isValid()) {
+        qWarning() << "Failed to initialize db" << db.databaseName() << ":" << error.text();
+    }
+    return error;
 }

@@ -3,6 +3,8 @@
 #include "test_sysex.h"
 
 #include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QTemporaryFile>
 
 #include <QtTest>
 
@@ -24,6 +26,9 @@ private slots:
     void test_failedCreateProgramLeavesNothing_data();
     void test_failedCreateProgramLeavesNothing();
     void test_failedFromSysexChangesNothing();
+
+    void test_initDbReportsErrors();
+    void test_initDbIsAllOrNothing();
 
 private:
     QSqlDatabase db;
@@ -148,6 +153,44 @@ void TestDB::test_failedFromSysexChangesNothing()
 
     QVERIFY(!fromSysex(id, sysex));
     QCOMPARE(programSysex(id), before);
+}
+
+void TestDB::test_initDbReportsErrors()
+{
+    // An empty file is an empty SQLite database. Opened read-only, creating
+    // the schema must fail, and initDb() must say so.
+    QTemporaryFile file;
+    QVERIFY(file.open());
+    file.close();
+    {
+        QSqlDatabase readOnly = QSqlDatabase::addDatabase("QSQLITE", "readonly");
+        readOnly.setDatabaseName(file.fileName());
+        readOnly.setConnectOptions("QSQLITE_OPEN_READONLY");
+        QVERIFY(readOnly.open());
+        QVERIFY(initDb(readOnly).isValid());
+        readOnly.close();
+    }
+    QSqlDatabase::removeDatabase("readonly");
+}
+
+void TestDB::test_initDbIsAllOrNothing()
+{
+    {
+        QSqlDatabase other = QSqlDatabase::addDatabase("QSQLITE", "partial");
+        other.setDatabaseName(":memory:");
+        QVERIFY(other.open());
+        // A table named like the third table of the schema makes its creation
+        // fail after 'programs' and 'pads' were created.
+        QSqlQuery q(other);
+        QVERIFY(q.exec("create table knobs(x integer)"));
+
+        QVERIFY(initDb(other).isValid());
+        // Rolled back: no half-created schema that would later pass for
+        // initialized (isInitialized() only looks for 'programs').
+        QVERIFY(!other.tables().contains("programs"));
+        other.close();
+    }
+    QSqlDatabase::removeDatabase("partial");
 }
 
 QTEST_GUILESS_MAIN(TestDB)
