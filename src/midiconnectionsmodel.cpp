@@ -142,7 +142,7 @@ void MidiConnectionsModel::connectPort(const QModelIndex &idx)
         connectPort(m_addrs[idx.row()]);
     }
 
-    emit dataChanged(index(0), index(static_cast<int>(m_addrs.count())));
+    emit dataChanged(index(0), index(static_cast<int>(m_addrs.count()) - 1));
 }
 
 void MidiConnectionsModel::disconnectAllPorts() const
