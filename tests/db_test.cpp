@@ -5,6 +5,7 @@
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
+#include <QTemporaryDir>
 #include <QTemporaryFile>
 
 #include <QtTest>
@@ -31,6 +32,8 @@ private slots:
     void test_exportImportRoundTrip();
 
     void test_initDbReportsErrors();
+    void test_openDatabaseCreatesFolderAndSchema();
+    void test_openDatabaseReportsErrors();
     void test_initDbIsAllOrNothing();
 
 private:
@@ -196,6 +199,37 @@ void TestDB::test_initDbReportsErrors()
         readOnly.close();
     }
     QSqlDatabase::removeDatabase("readonly");
+}
+
+void TestDB::test_openDatabaseCreatesFolderAndSchema()
+{
+    const QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString path = dir.filePath("not/yet/there/db.sqlite3");
+    {
+        const auto opened = openDatabase(path, "open");
+        // Not QVERIFY2(opened, opened.error()): its message is evaluated even
+        // when the check passes, and error() on a value is undefined.
+        if (!opened) {
+            QFAIL(qPrintable(opened.error()));
+        }
+        QVERIFY(opened->tables().contains("programs"));
+    }
+    QSqlDatabase::removeDatabase("open");
+}
+
+void TestDB::test_openDatabaseReportsErrors()
+{
+    // A regular file can't contain a folder, so the database's folder
+    // can't be created.
+    QTemporaryFile file;
+    QVERIFY(file.open());
+    const QString path = file.fileName() + "/sub/db.sqlite3";
+
+    const auto opened = openDatabase(path, "unopenable");
+    QVERIFY(!opened.has_value());
+    QVERIFY2(opened.error().contains("Cannot create the folder"), qPrintable(opened.error()));
+    QSqlDatabase::removeDatabase("unopenable");
 }
 
 void TestDB::test_initDbIsAllOrNothing()

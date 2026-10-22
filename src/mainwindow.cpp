@@ -26,30 +26,10 @@
 static const QString SETTINGS_KEY_DEFAULT_NAME = "default/name";
 static const QString SETTINGS_KEY_DEFAULT_SYSEX = "default/sysex";
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
-    Q_INIT_RESOURCE(sql);
-
-    // Database
-
-    if (!initFilesystem()) {
-        throw std::runtime_error("Failed filesystem initialization");
-    }
-
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(defaultDbPath());
-
-    if (!db.open()) {
-        throw std::runtime_error(
-                QString("Failed to open db %1").arg(defaultDbPath()).toStdString());
-    }
-
-    if (initDb(db).isValid()) {
-        throw std::runtime_error("Failed database initialization");
-    }
-
     programsModel = new ProgramsModel(this, db);
 
     ui->setupUi(this);

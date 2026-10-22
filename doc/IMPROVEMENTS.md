@@ -115,9 +115,9 @@ Decisions made before starting:
       change nothing, and honour the role.
 - [x] 3.12 [`d14dbc5`](https://github.com/charlesfleche/lpd8editor/commit/d14dbc51bcbcb2523b0f08b044830abf1439b60c) SysEx validation: check the manufacturer and model bytes, and
       validate imported files before they reach storage.
-- [x] 3.13 Undo commands store identities, not model pointers. This fixes the
+- [x] 3.13 [`5d101db`](https://github.com/charlesfleche/lpd8editor/commit/5d101dbec67e6e4d4c69b585a8209d669435c606) Undo commands store identities, not model pointers. This fixes the
       heap-use-after-free seen with ASan; add a regression test.
-- [ ] 3.14 Startup: no exceptions escaping `MainWindow`, and a message box on
+- [x] 3.14 Startup: no exceptions escaping `MainWindow`, and a message box on
       fatal errors instead of `std::terminate`.
 - [ ] 3.15 Import and export: show errors to the user, add file filters, use
       `QFileInfo` for names, and wrap user-visible strings in `tr()`.

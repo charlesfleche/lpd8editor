@@ -3,6 +3,8 @@
 
 #include <QtSql>
 
+#include <expected>
+
 int createProgram(const QString &programName = QString(),
                   const QByteArray &sysex = QByteArray(),
                   int programId = -1);
@@ -12,6 +14,13 @@ bool fromSysex(int programId, const QByteArray &sysex);
 QList<int> programIds();
 
 QSqlError initDb(const QSqlDatabase &db);
+
+// Opens the SQLite database at 'path' (creating its folder and the file if
+// needed) as the given connection, and creates its schema. Returns the
+// database, or a message for the user saying what went wrong.
+std::expected<QSqlDatabase, QString>
+openDatabase(const QString &path,
+             const QString &connectionName = QLatin1String(QSqlDatabase::defaultConnection));
 bool deleteProgram(int programId);
 
 #endif // DB_H

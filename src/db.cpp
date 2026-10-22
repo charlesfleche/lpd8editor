@@ -436,3 +436,35 @@ QSqlError initDb(const QSqlDatabase &db)
     }
     return error;
 }
+
+std::expected<QSqlDatabase, QString> openDatabase(const QString &path,
+                                                  const QString &connectionName)
+{
+    const auto tr = [](const char *text) { return QCoreApplication::translate("Database", text); };
+
+    const QString folder = QFileInfo(path).absolutePath();
+    if (!QDir().mkpath(folder)) {
+        return std::unexpected(tr("Cannot create the folder %1.").arg(folder));
+    }
+
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", connectionName);
+    db.setDatabaseName(path);
+    if (!db.open()) {
+        return std::unexpected(
+                tr("Cannot open the database %1:\n%2").arg(path, db.lastError().text()));
+    }
+
+    // initDb() throws if a schema file is missing from the resources, which
+    // is a packaging bug, but still better reported than a crash.
+    try {
+        const QSqlError error = initDb(db);
+        if (error.isValid()) {
+            return std::unexpected(
+                    tr("Cannot create the database %1:\n%2").arg(path, error.text()));
+        }
+    } catch (const std::exception &e) {
+        return std::unexpected(
+                tr("Cannot create the database %1:\n%2").arg(path, QString::fromUtf8(e.what())));
+    }
+    return db;
+}

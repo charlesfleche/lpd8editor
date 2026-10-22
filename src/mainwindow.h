@@ -4,6 +4,7 @@
 #include <QMainWindow>
 
 class ProgramsModel;
+class QSqlDatabase;
 
 namespace Ui {
 class MainWindow;
@@ -15,7 +16,8 @@ class MainWindow : public QMainWindow
     Q_DISABLE_COPY_MOVE(MainWindow)
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    // 'db' is an open database with its schema (see openDatabase()).
+    explicit MainWindow(const QSqlDatabase &db, QWidget *parent = nullptr);
     ~MainWindow() override;
 
 private slots:

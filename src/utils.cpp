@@ -29,11 +29,6 @@ QDir dataDir()
 
 } // namespace
 
-bool initFilesystem()
-{
-    return dataDir().mkpath(".");
-}
-
 QString defaultDbPath()
 {
     return dataDir().filePath("db.sqlite3");
