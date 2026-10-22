@@ -35,6 +35,7 @@ private slots:
 private:
     int currentSelectedProjectId() const;
     int programModelColumn() const;
+    QString programFileFilter() const;
 
     Ui::MainWindow *ui;
     ProgramsModel *programsModel{nullptr};

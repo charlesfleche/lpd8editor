@@ -117,9 +117,9 @@ Decisions made before starting:
       validate imported files before they reach storage.
 - [x] 3.13 [`5d101db`](https://github.com/charlesfleche/lpd8editor/commit/5d101dbec67e6e4d4c69b585a8209d669435c606) Undo commands store identities, not model pointers. This fixes the
       heap-use-after-free seen with ASan; add a regression test.
-- [x] 3.14 Startup: no exceptions escaping `MainWindow`, and a message box on
+- [x] 3.14 [`a9c7f9d`](https://github.com/charlesfleche/lpd8editor/commit/a9c7f9da113f88841180d0b09da8417ad04f19c4) Startup: no exceptions escaping `MainWindow`, and a message box on
       fatal errors instead of `std::terminate`.
-- [ ] 3.15 Import and export: show errors to the user, add file filters, use
+- [x] 3.15 Import and export: show errors to the user, add file filters, use
       `QFileInfo` for names, and wrap user-visible strings in `tr()`.
 - [ ] 3.16 Qt idioms: hold `Ui::MainWindow` by value, get the delegate's style
       from its widget, drop the noisy `Q_CHECK_PTR` calls, and use the

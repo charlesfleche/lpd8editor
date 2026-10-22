@@ -19,6 +19,9 @@ private slots:
 
     void test_sysexTextFileRejectsGarbage_data();
     void test_sysexTextFileRejectsGarbage();
+
+    void test_sysexTextFileRejectsTrailingText();
+    void test_writeProgramFileReportsErrors();
 };
 
 void TestUtils::test_readTextFile()
@@ -46,16 +49,23 @@ void TestUtils::test_sysexTextFile_data()
     QTest::addColumn<int>("readCount");
     QTest::addColumn<char>("readBegin");
     QTest::addColumn<char>("readEnd");
-    QTest::addColumn<QString>("warningMsg");
+    QTest::addColumn<QString>("error");
 
     QTest::newRow("Short") << QByteArrayLiteral("\x70\x60\x7f") << 0 << char(0) << char(0)
-                           << "Reading from sysex file ended prematurely at position 3";
+                           << "ends too early: 3 values instead of 66";
 
     QByteArray long_buf;
     for (char c = 0; c < 100; ++c) {
         long_buf.append(c);
     }
-    QTest::newRow("Long") << long_buf << 66 << char(0) << char(65) << QString();
+    // More than one program's worth of values: rejected rather than cut.
+    QTest::newRow("Long") << long_buf << 0 << char(0) << char(0) << "has data after the 66 values";
+
+    QByteArray exact;
+    for (char c = 0; c < 66; ++c) {
+        exact.append(c);
+    }
+    QTest::newRow("Exactly 66") << exact << 66 << char(0) << char(65) << QString();
 }
 
 void TestUtils::test_sysexTextFile()
@@ -67,27 +77,26 @@ void TestUtils::test_sysexTextFile()
     const QString p = f.fileName();
     f.close();
 
-    // QFETCH declares the variable itself, so it cannot be made const.
-    // NOLINTBEGIN(misc-const-correctness)
+    // NOLINTBEGIN(misc-const-correctness): QFETCH declares the variables
     QFETCH(QByteArray, bytes);
     QFETCH(int, readCount);
     QFETCH(char, readBegin);
     QFETCH(char, readEnd);
-    QFETCH(QString, warningMsg);
+    QFETCH(QString, error);
     // NOLINTEND(misc-const-correctness)
 
-    writeProgramFile(bytes, p);
+    QVERIFY(writeProgramFile(bytes, p).has_value());
 
-    if (!warningMsg.isNull()) {
-        QTest::ignoreMessage(QtWarningMsg, warningMsg.toLatin1());
+    const auto read = fromSysexTextFile(p);
+    if (!error.isNull()) {
+        QVERIFY(!read.has_value());
+        QVERIFY2(read.error().contains(error), qPrintable(read.error()));
+        return;
     }
-    const QByteArray read = fromSysexTextFile(p);
-    QCOMPARE(read.size(), readCount);
-
-    if (readCount > 0) {
-        QCOMPARE(read.at(0), readBegin);
-        QCOMPARE(read.at(readCount - 1), readEnd);
-    }
+    QVERIFY(read.has_value());
+    QCOMPARE(read->size(), readCount);
+    QCOMPARE(read->at(0), readBegin);
+    QCOMPARE(read->at(readCount - 1), readEnd);
 }
 
 void TestUtils::test_sysexTextFileRejectsGarbage_data()
@@ -114,8 +123,36 @@ void TestUtils::test_sysexTextFileRejectsGarbage()
     f.write(content);
     f.close();
 
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("Invalid byte in sysex file"));
-    QCOMPARE(fromSysexTextFile(f.fileName()), QByteArray());
+    const auto read = fromSysexTextFile(f.fileName());
+    QVERIFY(!read.has_value());
+    QVERIFY2(read.error().contains("invalid value at position 65"), qPrintable(read.error()));
+}
+
+void TestUtils::test_sysexTextFileRejectsTrailingText()
+{
+    // 66 valid values, then text: there are not more *values*, so the error
+    // must not say so.
+    QByteArray content;
+    for (int i = 0; i < 66; ++i) {
+        content += "1 ";
+    }
+    content += "abc";
+
+    QTemporaryFile f;
+    QVERIFY(f.open());
+    f.write(content);
+    f.close();
+
+    const auto read = fromSysexTextFile(f.fileName());
+    QVERIFY(!read.has_value());
+    QVERIFY2(read.error().contains("has data after the 66 values"), qPrintable(read.error()));
+}
+
+void TestUtils::test_writeProgramFileReportsErrors()
+{
+    const auto written = writeProgramFile(QByteArray(66, 0), "/this/folder/does/not/exist/p.lpd8");
+    QVERIFY(!written.has_value());
+    QVERIFY2(written.error().startsWith("Cannot write"), qPrintable(written.error()));
 }
 
 QTEST_APPLESS_MAIN(TestUtils)

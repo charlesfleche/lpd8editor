@@ -2,7 +2,9 @@
 
 #include "lpd8_sysex.h"
 
+#include <QCoreApplication>
 #include <QDir>
+#include <QSaveFile>
 #include <QStandardPaths>
 #include <QTextStream>
 
@@ -34,21 +36,36 @@ QString defaultDbPath()
     return dataDir().filePath("db.sqlite3");
 }
 
-QByteArray fromSysexTextFile(const QString &path)
+namespace {
+
+QString tr(const char *text)
+{
+    return QCoreApplication::translate("ProgramFile", text);
+}
+
+} // namespace
+
+std::expected<QByteArray, QString> fromSysexTextFile(const QString &path)
 {
     QByteArray ret;
+    const QString file = QDir::toNativeSeparators(path);
 
     QFile data(path);
     if (!data.open(QFile::ReadOnly)) {
-        qWarning() << "Cannot open sysex file" << path;
-        return {};
+        return std::unexpected(tr("Cannot open %1:\n%2").arg(file, data.errorString()));
     }
+
+    const auto tooShort = [&](int count) {
+        return std::unexpected(tr("%1 ends too early: %2 values instead of %3.")
+                                       .arg(file,
+                                            QString::number(count),
+                                            QString::number(sysex::programRequestSize())));
+    };
 
     QTextStream in(&data);
     for (int i = 0; i < sysex::programRequestSize(); ++i) {
         if (in.atEnd()) {
-            qWarning() << "Reading from sysex file ended prematurely at position" << i;
-            return {};
+            return tooShort(i);
         }
 
         int c = 0;
@@ -57,30 +74,49 @@ QByteArray fromSysexTextFile(const QString &path)
         // ReadPastEnd if only whitespace was left, ReadCorruptData if the
         // next word is not a number.
         if (in.status() == QTextStream::ReadPastEnd) {
-            qWarning() << "Reading from sysex file ended prematurely at position" << i;
-            return {};
+            return tooShort(i);
         }
         if (in.status() != QTextStream::Ok || c < 0 || c > 255) {
-            qWarning() << "Invalid byte in sysex file at position" << i;
-            return {};
+            return std::unexpected(
+                    tr("%1 has an invalid value at position %2.").arg(file, QString::number(i)));
         }
         ret.append(static_cast<char>(c));
+    }
+
+    // Only whitespace may follow (exported files end with a space). More
+    // values mean the file is not one program: two programs back to back,
+    // or something else entirely. Cutting it silently would import
+    // something the user didn't choose.
+    in.skipWhiteSpace();
+    if (!in.atEnd()) {
+        return std::unexpected(
+                tr("%1 has data after the %2 values of a program: it is not one LPD8 program.")
+                        .arg(file, QString::number(sysex::programRequestSize())));
     }
 
     return ret;
 }
 
-void writeProgramFile(const QByteArray &sysex, const QString &path)
+std::expected<void, QString> writeProgramFile(const QByteArray &sysex, const QString &path)
 {
-    QFile f(path);
-    if (!f.open(QFile::WriteOnly | QFile::Truncate)) {
-        qWarning() << "Failed to open" << path;
-        return;
+    // QSaveFile writes to a temporary file and renames it to 'path' only in
+    // commit(), once everything was written. A failed export never leaves a
+    // truncated file, and never destroys the file it was replacing.
+    QSaveFile f(path);
+    if (!f.open(QIODevice::WriteOnly)) {
+        return std::unexpected(
+                tr("Cannot write %1:\n%2").arg(QDir::toNativeSeparators(path), f.errorString()));
     }
 
     QTextStream out(&f);
-
     for (const char byte : sysex) {
         out << static_cast<unsigned char>(byte) << " ";
     }
+    out.flush();
+
+    if (!f.commit()) {
+        return std::unexpected(
+                tr("Cannot write %1:\n%2").arg(QDir::toNativeSeparators(path), f.errorString()));
+    }
+    return {};
 }

@@ -174,11 +174,12 @@ void TestDB::test_exportImportRoundTrip()
     QTemporaryFile file;
     QVERIFY(file.open());
     file.close();
-    writeProgramFile(exported, file.fileName());
+    QVERIFY(writeProgramFile(exported, file.fileName()).has_value());
 
-    const QByteArray imported = fromSysexTextFile(file.fileName());
-    QCOMPARE(imported, exported);
-    const int importedId = createProgram(QStringLiteral("Imported"), imported);
+    const auto imported = fromSysexTextFile(file.fileName());
+    QVERIFY(imported.has_value());
+    QCOMPARE(*imported, exported);
+    const int importedId = createProgram(QStringLiteral("Imported"), *imported);
     QVERIFY(importedId != -1);
     QCOMPARE(programSysex(importedId), exported);
 }

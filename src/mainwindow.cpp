@@ -4,6 +4,7 @@
 #include "commands.h"
 #include "db.h"
 #include "iomidi.h"
+#include "lpd8_sysex.h"
 #include "midiconnectionsmodel.h"
 #include "midivaluedelegate.h"
 #include "programsmodel.h"
@@ -14,6 +15,7 @@
 #include <QComboBox>
 #include <QDataWidgetMapper>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSettings>
@@ -281,53 +283,75 @@ void MainWindow::refreshUiAccordingToSelection()
     Q_CHECK_PTR(sel);
 
     ui->actionDeleteProgram->setEnabled(sel->hasSelection());
+    ui->actionExportProgram->setEnabled(sel->hasSelection());
 
     QWidget *w = sel->currentIndex().row() != -1 ? ui->pageEditor : ui->pageDefault;
     ui->stackedWidget->setCurrentWidget(w);
 }
 
+QString MainWindow::programFileFilter() const
+{
+    // Files exported by older versions have no extension, hence 'All files'.
+    return tr("LPD8 programs (*.lpd8);;All files (*)");
+}
+
 void MainWindow::on_actionImportProgram_triggered()
 {
     Q_CHECK_PTR(programsModel);
-    Q_CHECK_PTR(undoStack());
 
-    const QString path(QFileDialog::getOpenFileName(
+    const QString title = tr("Import LPD8 program");
+    const QString path = QFileDialog::getOpenFileName(
             this,
-            "Import LPD8 program",
-            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)));
+            title,
+            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
+            programFileFilter());
     if (path.isEmpty()) {
         return;
     }
 
-    const QByteArray sysex = fromSysexTextFile(path);
-    if (sysex.isNull()) {
+    const std::expected<QByteArray, QString> sysex = fromSysexTextFile(path);
+    if (!sysex) {
+        QMessageBox::warning(this, title, sysex.error());
+        return;
+    }
+    if (!sysex::isProgram(*sysex)) {
+        QMessageBox::warning(
+                this, title, tr("%1 is not an LPD8 program.").arg(QDir::toNativeSeparators(path)));
         return;
     }
 
-    const QString name = QDir(path).dirName();
-
-    QUndoCommand *cmd = new CreateProgramCommand(programsModel, name, sysex);
-    undoStack()->push(cmd);
+    // 'Drums.lpd8' becomes the program 'Drums'.
+    const QString name = QFileInfo(path).completeBaseName();
+    undoStack()->push(new CreateProgramCommand(programsModel, name, *sysex));
 }
 
 void MainWindow::on_actionExportProgram_triggered()
 {
-    QItemSelectionModel *m = ui->programsView->selectionModel();
-    Q_CHECK_PTR(m);
+    const QString title = tr("Export LPD8 program");
 
-    const int programId = selectedProgramId(m);
-    const QString name = programName(programId);
-    const QByteArray sysex = programSysex(programId);
+    const int programId = currentSelectedProjectId();
+    if (!programsModel->programIndex(programId).isValid()) {
+        return; // nothing selected (the action is disabled then)
+    }
+    const QString name = programsModel->programName(programId);
+    const QByteArray sysex = programsModel->programSysex(programId);
+    if (sysex.isEmpty()) {
+        QMessageBox::warning(this, title, tr("Cannot read the program %1.").arg(name));
+        return;
+    }
 
     const QDir defaultDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
-    const QString defaultPath = defaultDir.absoluteFilePath(name);
+    const QString defaultPath = defaultDir.absoluteFilePath(name + QStringLiteral(".lpd8"));
 
-    const QString path(QFileDialog::getSaveFileName(this, "Export LPD8 program", defaultPath));
+    const QString path =
+            QFileDialog::getSaveFileName(this, title, defaultPath, programFileFilter());
     if (path.isEmpty()) {
         return;
     }
 
-    writeProgramFile(sysex, path);
+    if (const auto written = writeProgramFile(sysex, path); !written) {
+        QMessageBox::warning(this, title, written.error());
+    }
 }
 
 int MainWindow::currentSelectedProjectId() const
