@@ -34,8 +34,7 @@ void TestUtils::test_readTextFile()
     f.close();
 
     QCOMPARE(readTextFile(f.fileName()), QString("0 127 256"));
-    QVERIFY_THROWS_EXCEPTION(std::runtime_error, 
-		             readTextFile("This path does not exist"));
+    QVERIFY_THROWS_EXCEPTION(std::runtime_error, readTextFile("This path does not exist"));
 }
 
 void TestUtils::test_sysexTextFile_data()
@@ -47,10 +46,11 @@ void TestUtils::test_sysexTextFile_data()
     QTest::addColumn<QString>("warningMsg");
 
     const char short_buf[] = {0x70, 0x60, 0x7F};
-    QTest::newRow("Short") << QByteArray(short_buf, 3) << 0 << char(0) << char(0) << "Reading from sysex file ended prematurely at position 4";
+    QTest::newRow("Short") << QByteArray(short_buf, 3) << 0 << char(0) << char(0)
+                           << "Reading from sysex file ended prematurely at position 4";
 
     QByteArray long_buf;
-    for (char c = 0 ; c < 100 ; ++c) {
+    for (char c = 0; c < 100; ++c) {
         long_buf.append(c);
     }
     QTest::newRow("Long") << long_buf << 66 << char(0) << char(65) << QString();
@@ -81,7 +81,7 @@ void TestUtils::test_sysexTextFile()
 
     if (readCount > 0) {
         QCOMPARE(read.at(0), readBegin);
-        QCOMPARE(read.at(readCount-1), readEnd);
+        QCOMPARE(read.at(readCount - 1), readEnd);
     }
 }
 

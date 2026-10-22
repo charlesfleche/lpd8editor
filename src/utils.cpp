@@ -8,7 +8,8 @@
 
 #include <QtDebug>
 
-QString readTextFile(const QString& path) {
+QString readTextFile(const QString &path)
+{
     QFile f(path);
     if (!f.open(QFile::ReadOnly | QFile::Text)) {
         QString msg("Failed to read file: ");
@@ -19,20 +20,24 @@ QString readTextFile(const QString& path) {
     return ts.readAll();
 }
 
-QDir dataDir() {
-    const auto& location = QStandardPaths::AppLocalDataLocation;
+QDir dataDir()
+{
+    const auto &location = QStandardPaths::AppLocalDataLocation;
     return QDir(QStandardPaths::writableLocation(location));
 }
 
-bool initFilesystem() {
+bool initFilesystem()
+{
     return dataDir().mkpath(".");
 }
 
-QString defaultDbPath() {
+QString defaultDbPath()
+{
     return dataDir().filePath("db.sqlite3");
 }
 
-char readAndValidateChar(QTextStream& in, char expected) {
+char readAndValidateChar(QTextStream &in, char expected)
+{
     if (in.atEnd()) {
         throw std::runtime_error("Trying to read from an ended text stream");
     }
@@ -45,7 +50,8 @@ char readAndValidateChar(QTextStream& in, char expected) {
     return static_cast<char>(ret);
 }
 
-char readAndValidateChar(QTextStream& in, char min, char max) {
+char readAndValidateChar(QTextStream &in, char min, char max)
+{
     if (in.atEnd()) {
         throw std::runtime_error("Trying to read from an ended text stream");
     }
@@ -58,7 +64,8 @@ char readAndValidateChar(QTextStream& in, char min, char max) {
     return static_cast<char>(ret);
 }
 
-char readAndValidateChar(QTextStream& in, const QList<char>& allowed) {
+char readAndValidateChar(QTextStream &in, const QList<char> &allowed)
+{
     if (in.atEnd()) {
         throw std::runtime_error("Trying to read from an ended text stream");
     }
@@ -71,7 +78,8 @@ char readAndValidateChar(QTextStream& in, const QList<char>& allowed) {
     return static_cast<char>(ret);
 }
 
-QByteArray fromSysexTextFile(const QString &path) {
+QByteArray fromSysexTextFile(const QString &path)
+{
     QByteArray ret;
 
     QFile data(path);
@@ -81,7 +89,7 @@ QByteArray fromSysexTextFile(const QString &path) {
     }
 
     QTextStream in(&data);
-    for (int i = 0 ; i < sysex::programRequestSize() ; ++i) {
+    for (int i = 0; i < sysex::programRequestSize(); ++i) {
         if (in.atEnd()) {
             qWarning() << "Reading from sysex file ended prematurely at position" << i;
             return QByteArray();
@@ -96,7 +104,8 @@ QByteArray fromSysexTextFile(const QString &path) {
     return ret;
 }
 
-void writeProgramFile(const QByteArray &sysex, const QString &path) {
+void writeProgramFile(const QByteArray &sysex, const QString &path)
+{
     QFile f(path);
     if (!f.open(QFile::WriteOnly | QFile::Truncate)) {
         qWarning() << "Failed to open" << path;
@@ -105,7 +114,7 @@ void writeProgramFile(const QByteArray &sysex, const QString &path) {
 
     QTextStream out(&f);
 
-    for (auto it = sysex.constBegin() ; it != sysex.constEnd() ; ++it) {
+    for (auto it = sysex.constBegin(); it != sysex.constEnd(); ++it) {
         out << static_cast<unsigned char>(*it) << " ";
     }
 }

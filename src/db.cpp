@@ -5,32 +5,38 @@
 
 #include <exception>
 
-#define GOTO_END_IF_FALSE(X) if (!X) goto end;
+#define GOTO_END_IF_FALSE(X)                                                                       \
+    if (!X)                                                                                        \
+        goto end;
 
-template <typename T>
-static bool error(const T& val) {
+template<typename T>
+static bool error(const T &val)
+{
     return val.lastError().isValid();
 }
 
-template <typename T>
-static QString errorText(const T& val) {
+template<typename T>
+static QString errorText(const T &val)
+{
     return errorText(val.lastError());
 }
 
-template <>
-QString errorText(const QSqlError& err) {
+template<>
+QString errorText(const QSqlError &err)
+{
     Q_ASSERT(err.isValid());
     return err.text().trimmed();
 }
 
-QList<int> programIds() {
+QList<int> programIds()
+{
     QList<int> ret;
 
     QSqlQuery q;
     GOTO_END_IF_FALSE(q.prepare("select programId from programs order by programId"));
     GOTO_END_IF_FALSE(q.exec());
 
-    while(q.next()) {
+    while (q.next()) {
         ret += q.value(0).toInt();
     }
 
@@ -41,7 +47,8 @@ end:
     return ret;
 }
 
-QString programName(int programId) {
+QString programName(int programId)
+{
     QString ret;
     QSqlQuery q;
     GOTO_END_IF_FALSE(q.prepare("select name from programs where programId = ?"));
@@ -60,7 +67,8 @@ end:
     return ret;
 }
 
-QByteArray programSysex(int programId) {
+QByteArray programSysex(int programId)
+{
     QByteArray ret;
 
     bool success = false;
@@ -84,14 +92,15 @@ QByteArray programSysex(int programId) {
 
     // pads
 
-    GOTO_END_IF_FALSE(q.prepare("select note, pc, cc, toggle from pads where programId = ? order by controlId"));
+    GOTO_END_IF_FALSE(q.prepare(
+            "select note, pc, cc, toggle from pads where programId = ? order by controlId"));
     q.addBindValue(programId);
     GOTO_END_IF_FALSE(q.exec());
 
     count = 0;
-    while(q.next()) {
+    while (q.next()) {
         const QSqlRecord r = q.record();
-        for (int i = 0 ; i < r.count() ; ++i) {
+        for (int i = 0; i < r.count(); ++i) {
             ret += r.value(i).value<char>();
         }
         ++count;
@@ -101,14 +110,15 @@ QByteArray programSysex(int programId) {
 
     // knobs
 
-    GOTO_END_IF_FALSE(q.prepare("select cc, low, high from knobs where programId = ? order by controlId"));
+    GOTO_END_IF_FALSE(
+            q.prepare("select cc, low, high from knobs where programId = ? order by controlId"));
     q.addBindValue(programId);
     GOTO_END_IF_FALSE(q.exec());
 
     count = 0;
-    while(q.next()) {
+    while (q.next()) {
         const QSqlRecord r = q.record();
-        for (int i = 0 ; i < r.count() ; ++i) {
+        for (int i = 0; i < r.count(); ++i) {
             ret += r.value(i).value<char>();
         }
         ++count;
@@ -132,11 +142,13 @@ end:
     return ret;
 }
 
-QString defaultProgramName(int programIds) {
+QString defaultProgramName(int programIds)
+{
     return QString("P%1").arg(programIds);
 }
 
-bool updateProgramFromSysex(int programId, const QByteArray &sysex) {
+bool updateProgramFromSysex(int programId, const QByteArray &sysex)
+{
     Q_ASSERT(!sysex.isNull() && !sysex.isEmpty());
 
     bool ret = false;
@@ -147,40 +159,57 @@ bool updateProgramFromSysex(int programId, const QByteArray &sysex) {
 
     // Header
 
-          GOTO_END_IF_FALSE((it != sysex.constEnd())); // Sysex Start
-    ++it; GOTO_END_IF_FALSE((it != sysex.constEnd())); // Manufacturer
-    ++it; GOTO_END_IF_FALSE((it != sysex.constEnd())); // Model byte 1
-    ++it; GOTO_END_IF_FALSE((it != sysex.constEnd())); // Model byte 2
-    ++it; GOTO_END_IF_FALSE((it != sysex.constEnd())); // Opcode set program: byte1
-    ++it; GOTO_END_IF_FALSE((it != sysex.constEnd())); // Opcode set program: byte2
-    ++it; GOTO_END_IF_FALSE((it != sysex.constEnd())); // Opcode set program: byte3
-    ++it; GOTO_END_IF_FALSE((it != sysex.constEnd())); // Program ID
+    GOTO_END_IF_FALSE((it != sysex.constEnd())); // Sysex Start
+    ++it;
+    GOTO_END_IF_FALSE((it != sysex.constEnd())); // Manufacturer
+    ++it;
+    GOTO_END_IF_FALSE((it != sysex.constEnd())); // Model byte 1
+    ++it;
+    GOTO_END_IF_FALSE((it != sysex.constEnd())); // Model byte 2
+    ++it;
+    GOTO_END_IF_FALSE((it != sysex.constEnd())); // Opcode set program: byte1
+    ++it;
+    GOTO_END_IF_FALSE((it != sysex.constEnd())); // Opcode set program: byte2
+    ++it;
+    GOTO_END_IF_FALSE((it != sysex.constEnd())); // Opcode set program: byte3
+    ++it;
+    GOTO_END_IF_FALSE((it != sysex.constEnd())); // Program ID
 
     // Program
 
     GOTO_END_IF_FALSE(q.prepare("update programs set channel = ? where programId = ?"));
-    q.addBindValue(*(++it)); GOTO_END_IF_FALSE((it != sysex.constEnd()));
+    q.addBindValue(*(++it));
+    GOTO_END_IF_FALSE((it != sysex.constEnd()));
     q.addBindValue(programId);
     GOTO_END_IF_FALSE(q.exec());
 
     // Pads
 
     for (int controlId = 1; controlId <= sysex::padsCount(); ++controlId) {
-        GOTO_END_IF_FALSE(q.prepare("update pads set note = ?, pc = ?, cc = ?, toggle = ? where programId = ? and controlId = ?"));
-        q.addBindValue(*(++it)); GOTO_END_IF_FALSE((it != sysex.constEnd()));
-        q.addBindValue(*(++it)); GOTO_END_IF_FALSE((it != sysex.constEnd()));
-        q.addBindValue(*(++it)); GOTO_END_IF_FALSE((it != sysex.constEnd()));
-        q.addBindValue(*(++it)); GOTO_END_IF_FALSE((it != sysex.constEnd()));
+        GOTO_END_IF_FALSE(q.prepare("update pads set note = ?, pc = ?, cc = ?, toggle = ? where "
+                                    "programId = ? and controlId = ?"));
+        q.addBindValue(*(++it));
+        GOTO_END_IF_FALSE((it != sysex.constEnd()));
+        q.addBindValue(*(++it));
+        GOTO_END_IF_FALSE((it != sysex.constEnd()));
+        q.addBindValue(*(++it));
+        GOTO_END_IF_FALSE((it != sysex.constEnd()));
+        q.addBindValue(*(++it));
+        GOTO_END_IF_FALSE((it != sysex.constEnd()));
         q.addBindValue(programId);
         q.addBindValue(controlId);
         GOTO_END_IF_FALSE(q.exec());
     }
 
     for (int controlId = 1; controlId <= sysex::knobsCount(); ++controlId) {
-        GOTO_END_IF_FALSE(q.prepare("update knobs set cc = ?, low = ?, high = ? where programId = ? and controlId = ?"));
-        q.addBindValue(*(++it)); GOTO_END_IF_FALSE((it != sysex.constEnd()));
-        q.addBindValue(*(++it)); GOTO_END_IF_FALSE((it != sysex.constEnd()));
-        q.addBindValue(*(++it)); GOTO_END_IF_FALSE((it != sysex.constEnd()));
+        GOTO_END_IF_FALSE(q.prepare("update knobs set cc = ?, low = ?, high = ? where programId = "
+                                    "? and controlId = ?"));
+        q.addBindValue(*(++it));
+        GOTO_END_IF_FALSE((it != sysex.constEnd()));
+        q.addBindValue(*(++it));
+        GOTO_END_IF_FALSE((it != sysex.constEnd()));
+        q.addBindValue(*(++it));
+        GOTO_END_IF_FALSE((it != sysex.constEnd()));
         q.addBindValue(programId);
         q.addBindValue(controlId);
         GOTO_END_IF_FALSE(q.exec());
@@ -189,12 +218,14 @@ bool updateProgramFromSysex(int programId, const QByteArray &sysex) {
     ret = true;
 end:
     if (!ret || error(q)) {
-        qWarning() << "Failed to update program from sysex:" << sysex << (error(q) ? errorText(q) : "");
+        qWarning() << "Failed to update program from sysex:" << sysex
+                   << (error(q) ? errorText(q) : "");
     }
     return ret;
 }
 
-int createProgram(const QString &name, const QByteArray &sysex, int programId) {
+int createProgram(const QString &name, const QByteArray &sysex, int programId)
+{
     QSqlDatabase::database().transaction();
 
     QSqlQuery q;
@@ -232,19 +263,22 @@ end:
         ret = -1;
     }
     if (!QSqlDatabase::database().commit()) {
-        qWarning() << "Failed to commit program creation transaction:" << errorText(QSqlDatabase::database());
+        qWarning() << "Failed to commit program creation transaction:"
+                   << errorText(QSqlDatabase::database());
         ret = -1;
     }
     return ret;
 }
 
-bool fromSysex(int programId, const QByteArray &sysex) {
+bool fromSysex(int programId, const QByteArray &sysex)
+{
     QSqlDatabase::database().transaction();
     updateProgramFromSysex(programId, sysex);
     return QSqlDatabase::database().commit();
 }
 
-bool deleteProgram(int programId) {
+bool deleteProgram(int programId)
+{
     QSqlQuery q;
     GOTO_END_IF_FALSE(q.prepare("delete from programs where programId = ?"));
     q.addBindValue(programId);
@@ -265,23 +299,36 @@ end:
     return true;
 }
 
-bool initialize() {
+bool initialize()
+{
     Q_INIT_RESOURCE(sql);
 
     QSqlQuery q;
-    if (!q.exec(readTextFile(":/create_table_programs.sql"))) return false;
-    if (!q.exec(readTextFile(":/create_table_pads.sql"))) return false;
-    if (!q.exec(readTextFile(":/create_table_knobs.sql"))) return false;
-    if (!q.exec(readTextFile(":/create_trigger_add_program.sql"))) return false;
-    if (!q.exec(readTextFile(":/create_trigger_delete_program.sql"))) return false;
+    if (!q.exec(readTextFile(":/create_table_programs.sql"))) {
+        return false;
+    }
+    if (!q.exec(readTextFile(":/create_table_pads.sql"))) {
+        return false;
+    }
+    if (!q.exec(readTextFile(":/create_table_knobs.sql"))) {
+        return false;
+    }
+    if (!q.exec(readTextFile(":/create_trigger_add_program.sql"))) {
+        return false;
+    }
+    if (!q.exec(readTextFile(":/create_trigger_delete_program.sql"))) {
+        return false;
+    }
     return true;
 }
 
-bool isInitialized(const QSqlDatabase& db) {
+bool isInitialized(const QSqlDatabase &db)
+{
     return db.tables().contains("programs");
 }
 
-QSqlError initDb(const QSqlDatabase &db) {
+QSqlError initDb(const QSqlDatabase &db)
+{
     QSqlDriver *driver = db.driver();
 
     Q_CHECK_PTR(driver);

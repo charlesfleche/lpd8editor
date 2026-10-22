@@ -59,7 +59,7 @@ void TestLpd8Sysex::test_type()
     sysex[4] = '\x63';
     sysex[5] = '\x00';
     sysex[6] = '\x3a';
-    sysex[sysex.size()-1] = '\xf7';
+    sysex[sysex.size() - 1] = '\xf7';
     QCOMPARE(type(sysex), Type::TypeProgram);
 }
 

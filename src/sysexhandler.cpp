@@ -3,28 +3,25 @@
 #include "iomidi.h"
 #include "lpd8_sysex.h"
 
-SysexHandler::SysexHandler(IOMidi *io) :
-    QObject(io),
-    m_io(io)
+SysexHandler::SysexHandler(IOMidi *io)
+    : QObject(io)
+    , m_io(io)
 {
     Q_CHECK_PTR(m_io);
 
-    connect(
-        m_io,
-        &IOMidi::eventReceived,
-        this,
-        &SysexHandler::handleMidiEvent
-    );
+    connect(m_io, &IOMidi::eventReceived, this, &SysexHandler::handleMidiEvent);
 }
 
-void SysexHandler::getProgram(int id) const {
+void SysexHandler::getProgram(int id) const
+{
     // XXX This check should be data driven, not hardcoded
     Q_ASSERT(id >= 1 && id <= 4);
 
     sendSysex(sysex::getProgram(id));
 }
 
-void SysexHandler::sendProgram(const QByteArray &sysex, int deviceProgramId) const {
+void SysexHandler::sendProgram(const QByteArray &sysex, int deviceProgramId) const
+{
     // XXX This check should be data driven, not hardcoded
     Q_ASSERT(deviceProgramId >= 1 && deviceProgramId <= 4);
     Q_CHECK_PTR(m_io);
@@ -34,16 +31,15 @@ void SysexHandler::sendProgram(const QByteArray &sysex, int deviceProgramId) con
     sendSysex(s);
 }
 
-void SysexHandler::handleMidiEvent(const snd_seq_event_t* ev) const {
+void SysexHandler::handleMidiEvent(const snd_seq_event_t *ev) const
+{
     Q_CHECK_PTR(ev);
 
     if (ev->type != SND_SEQ_EVENT_SYSEX) {
         return;
     }
 
-    QByteArray s(
-        static_cast<const char*>(ev->data.ext.ptr),
-        ev->data.ext.len);
+    QByteArray s(static_cast<const char *>(ev->data.ext.ptr), ev->data.ext.len);
 
     if (sysex::type(s) != sysex::TypeProgram) {
         return;
@@ -52,7 +48,8 @@ void SysexHandler::handleMidiEvent(const snd_seq_event_t* ev) const {
     emit programReceived(s);
 }
 
-void SysexHandler::sendSysex(const QByteArray &sysex) const {
+void SysexHandler::sendSysex(const QByteArray &sysex) const
+{
     Q_ASSERT(!sysex.isEmpty());
 
     QByteArray s(sysex);

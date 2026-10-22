@@ -4,25 +4,30 @@
 #include <QSpinBox>
 #include <QStyledItemDelegate>
 
-
 class MidiValueDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
 
 public:
-    MidiValueDelegate(QObject* parent = nullptr);
+    MidiValueDelegate(QObject *parent = nullptr);
 
-    void paint(QPainter*, const QStyleOptionViewItem&, const QModelIndex&) const override;
-    QWidget* createEditor(QWidget*, const QStyleOptionViewItem&, const QModelIndex&) const override;
-    void setEditorData(QWidget*, const QModelIndex&) const override;
-    void setModelData(QWidget*, QAbstractItemModel* , const QModelIndex&) const override;
-    void updateEditorGeometry(QWidget*, const QStyleOptionViewItem&, const QModelIndex&) const override;
+    void paint(QPainter *, const QStyleOptionViewItem &, const QModelIndex &) const override;
+    QWidget *
+    createEditor(QWidget *, const QStyleOptionViewItem &, const QModelIndex &) const override;
+    void setEditorData(QWidget *, const QModelIndex &) const override;
+    void setModelData(QWidget *, QAbstractItemModel *, const QModelIndex &) const override;
+    void updateEditorGeometry(QWidget *,
+                              const QStyleOptionViewItem &,
+                              const QModelIndex &) const override;
 
-    bool editorEvent(QEvent*, QAbstractItemModel*, const QStyleOptionViewItem&, const QModelIndex&) override;
+    bool editorEvent(QEvent *,
+                     QAbstractItemModel *,
+                     const QStyleOptionViewItem &,
+                     const QModelIndex &) override;
 };
 
-
-class LutSpinBox : public QSpinBox {
+class LutSpinBox : public QSpinBox
+{
     Q_OBJECT
 
 public:

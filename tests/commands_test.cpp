@@ -22,21 +22,24 @@ private slots:
 
 private:
     QSqlDatabase db;
-    ProgramsModel* pm;
+    ProgramsModel *pm;
 };
 
-void TestCommands::initTestCase() {
+void TestCommands::initTestCase()
+{
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName(":memory:");
 }
 
-void TestCommands::init() {
+void TestCommands::init()
+{
     db.open();
     initDb(db);
     pm = new ProgramsModel(nullptr, db);
 }
 
-void TestCommands::cleanup() {
+void TestCommands::cleanup()
+{
     delete pm;
     db.close();
 }

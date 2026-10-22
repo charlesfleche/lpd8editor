@@ -1,5 +1,5 @@
-#include "iomidi.h"
 #include "db.h"
+#include "iomidi.h"
 
 #include <QtTest>
 
@@ -16,19 +16,19 @@ private slots:
     void test_portId();
 
 private:
-    IOMidi* io;
+    IOMidi *io;
 };
 
-void TestIOMIdi::initTestCase() {
+void TestIOMIdi::initTestCase()
+{
     io = nullptr;
     try {
         io = new IOMidi(this);
-    }
-    catch (const std::exception&) {
-    }
+    } catch (const std::exception &) { }
 }
 
-void TestIOMIdi::init() {
+void TestIOMIdi::init()
+{
     if (!io) {
         QSKIP("No ALSA sequencer available (/dev/snd/seq)");
     }
@@ -36,7 +36,7 @@ void TestIOMIdi::init() {
 
 void TestIOMIdi::test_handle()
 {
-    snd_seq_t* seq = io->handle();
+    snd_seq_t *seq = io->handle();
     QVERIFY(seq);
 
     snd_seq_client_info_t *info;

@@ -1,5 +1,5 @@
-#include "mainwindow.h"
 #include "app_info.h"
+#include "mainwindow.h"
 
 #include <QApplication>
 #include <QDir>
@@ -26,8 +26,8 @@ int main(int argc, char *argv[])
     shareDir.cd(app.organizationName());
     shareDir.cd(app.applicationName());
     QStringList paths = {
-        app.applicationDirPath(),  // Useful for testing from the build folder
-        shareDir.path()            // Useful for installations in a non-standard location
+            app.applicationDirPath(), // Useful for testing from the build folder
+            shareDir.path() // Useful for installations in a non-standard location
     };
     paths += QStandardPaths::standardLocations(QStandardPaths::AppDataLocation);
 

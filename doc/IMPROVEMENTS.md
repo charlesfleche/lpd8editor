@@ -48,9 +48,9 @@ Decisions made before starting:
       with a commented suppressions file.
 - [x] 1.9 [`431ecdd`](https://github.com/charlesfleche/lpd8editor/commit/431ecdd57ba9d51246e32d36b772f7ee3a2135aa) Add `CMakePresets.json` with named, reproducible configurations: GCC
       or Clang, debug or release, plus sanitizers and valgrind.
-- [x] 1.10 Add `.editorconfig` and `.clang-format`, plus `format` and
+- [x] 1.10 [`a1c4ed2`](https://github.com/charlesfleche/lpd8editor/commit/a1c4ed2ecfe1c41ec046205cff398b59061c1e08) Add `.editorconfig` and `.clang-format`, plus `format` and
       `check-format` targets.
-- [ ] 1.11 Reformat the whole tree with clang-format, a mechanical commit only,
+- [x] 1.11 [`f458c11`](https://github.com/charlesfleche/lpd8editor/commit/f458c1178b423a46cc8e07bfe41a62dd75efd9f0) Reformat the whole tree with clang-format, a mechanical commit only,
       and list it in `.git-blame-ignore-revs`.
 - [ ] 1.12 Add `.clang-tidy` and an `LPD8EDITOR_CLANG_TIDY` option, and fix
       (or explicitly justify) the findings.

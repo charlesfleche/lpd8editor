@@ -5,10 +5,7 @@
 
 namespace sysex {
 
-enum Type {
-    TypeInvalid,
-    TypeProgram
-};
+enum Type { TypeInvalid, TypeProgram };
 
 int programRequestSize();
 int padsCount();
@@ -16,12 +13,12 @@ int knobsCount();
 
 void makeSetProgramRequest(QByteArray &sysex, int programId);
 
-Type type(const QByteArray&);
-void addProgramHeader(QByteArray&, int);
-void addFooter(QByteArray&);
+Type type(const QByteArray &);
+void addProgramHeader(QByteArray &, int);
+void addFooter(QByteArray &);
 QByteArray getProgram(int);
 
-char channel(const QByteArray&);
-}
+char channel(const QByteArray &);
+} // namespace sysex
 
 #endif // LPD8_SYSEX_H

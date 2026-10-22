@@ -34,7 +34,7 @@ private:
     int programModelColumn() const;
 
     Ui::MainWindow *ui;
-    ProgramsModel* programsModel;
+    ProgramsModel *programsModel;
 };
 
 #endif // MAINWINDOW_H

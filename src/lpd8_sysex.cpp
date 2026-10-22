@@ -16,31 +16,36 @@ static const int minimum_rep_sysex_size = 9;
 static const char sysex_program_req[] = {'\x63', '\x00', '\x01'};
 static const char sysex_program_rep[] = {'\x63', '\x00', '\x3a'};
 static const char sysex_program_rep_size = 66;
-//static const char sysex_program_rep_payload_offset = 7;
+// static const char sysex_program_rep_payload_offset = 7;
 
 static const char sysex_set_program_req[] = {'\x61', '\x00', '\x3a'};
 static const char sysex_set_program_req_size = 66;
 
-
-#define RETURN_IF_TYPE(type, b, code, size) if (is(b, code, size)) return type
+#define RETURN_IF_TYPE(type, b, code, size)                                                        \
+    if (is(b, code, size))                                                                         \
+    return type
 
 namespace sysex {
 
-int programRequestSize() {
+int programRequestSize()
+{
     return sysex_set_program_req_size;
 }
 
-int padsCount() {
+int padsCount()
+{
     return 8;
 }
 
-int knobsCount() {
+int knobsCount()
+{
     return 8;
 }
 
 // Caller handle bound exceptions
-bool is(const QByteArray& b, const char* code, int size) {
-    for (int i = 0 ; i < 3 ; ++i) {
+bool is(const QByteArray &b, const char *code, int size)
+{
+    for (int i = 0; i < 3; ++i) {
         if (b[opcode_offset + i] != code[i]) {
             return false;
         }
@@ -48,10 +53,9 @@ bool is(const QByteArray& b, const char* code, int size) {
     return b.size() == size;
 }
 
-Type type(const QByteArray& b) {
-    if (b.size() < minimum_rep_sysex_size
-        || b[0] != sysex_start
-        || b[b.size()-1] != sysex_end) {
+Type type(const QByteArray &b)
+{
+    if (b.size() < minimum_rep_sysex_size || b[0] != sysex_start || b[b.size() - 1] != sysex_end) {
         return TypeInvalid;
     }
 
@@ -60,18 +64,21 @@ Type type(const QByteArray& b) {
     return TypeInvalid;
 }
 
-void addHeader(QByteArray& b) {
+void addHeader(QByteArray &b)
+{
     b += sysex_start;
     b += sysex_manufacturer;
     b += sysex_model_byte_1;
     b += sysex_model_byte_2;
 }
 
-void addFooter(QByteArray& b) {
+void addFooter(QByteArray &b)
+{
     b += sysex_end;
 }
 
-void addProgramHeader(QByteArray& b, int programId) {
+void addProgramHeader(QByteArray &b, int programId)
+{
     addHeader(b);
     b += sysex_program_req[0];
     b += sysex_program_req[1];
@@ -79,7 +86,8 @@ void addProgramHeader(QByteArray& b, int programId) {
     b += static_cast<char>(programId);
 }
 
-QByteArray getProgram(int programId) {
+QByteArray getProgram(int programId)
+{
     QByteArray ret;
     addHeader(ret);
     ret += sysex_program_req[0];
@@ -90,7 +98,8 @@ QByteArray getProgram(int programId) {
     return ret;
 }
 
-void makeSetProgramRequest(QByteArray &sysex, int programId) {
+void makeSetProgramRequest(QByteArray &sysex, int programId)
+{
     Q_ASSERT(sysex.size() == sysex_set_program_req_size);
     Q_ASSERT(programId >= 1 && programId <= 4);
 
@@ -100,8 +109,9 @@ void makeSetProgramRequest(QByteArray &sysex, int programId) {
     sysex[program_offset] = static_cast<char>(programId);
 }
 
-char channel(const QByteArray &sysex) {
+char channel(const QByteArray &sysex)
+{
     return sysex[channel_offset];
 }
 
-}
+} // namespace sysex

@@ -1,8 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include "db.h"
 #include "commands.h"
+#include "db.h"
 #include "iomidi.h"
 #include "midiconnectionsmodel.h"
 #include "midivaluedelegate.h"
@@ -14,11 +14,11 @@
 #include <QComboBox>
 #include <QDataWidgetMapper>
 #include <QFileDialog>
-#include <QPushButton>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QSettings>
-#include <QStandardPaths>
 #include <QStandardItemModel>
+#include <QStandardPaths>
 #include <QUndoStack>
 
 #include <QtDebug>
@@ -26,10 +26,10 @@
 static const QString SETTINGS_KEY_DEFAULT_NAME = "default/name";
 static const QString SETTINGS_KEY_DEFAULT_SYSEX = "default/sysex";
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow),
-    programsModel(nullptr)
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
+    , programsModel(nullptr)
 {
     Q_INIT_RESOURCE(sql);
 
@@ -43,7 +43,8 @@ MainWindow::MainWindow(QWidget *parent) :
     db.setDatabaseName(defaultDbPath());
 
     if (!db.open()) {
-        throw std::runtime_error(QString("Failed to open db %1").arg(defaultDbPath()).toStdString());
+        throw std::runtime_error(
+                QString("Failed to open db %1").arg(defaultDbPath()).toStdString());
     }
 
     if (initDb(db).isValid()) {
@@ -57,13 +58,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Undo
 
-    QUndoStack* stack = undoStack();
+    QUndoStack *stack = undoStack();
     Q_CHECK_PTR(stack);
 
-    QAction* undoAction = stack->createUndoAction(this, tr("Undo"));
+    QAction *undoAction = stack->createUndoAction(this, tr("Undo"));
     undoAction->setShortcuts(QKeySequence::Undo);
 
-    QAction* redoAction = stack->createRedoAction(this, tr("Redo"));
+    QAction *redoAction = stack->createRedoAction(this, tr("Redo"));
     redoAction->setShortcuts(QKeySequence::Redo);
 
     ui->menuEdit->insertAction(ui->actionNewProgram, redoAction);
@@ -72,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Client selection combo box
 
-    QComboBox* clientComboBox = new QComboBox(this);
+    QComboBox *clientComboBox = new QComboBox(this);
     clientComboBox->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     ui->toolBar->addWidget(clientComboBox);
 
@@ -91,7 +92,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->padsView->setModel(programsModel);
     ui->padsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
-    QHeaderView* headerView = new QHeaderView(Qt::Horizontal, this);
+    QHeaderView *headerView = new QHeaderView(Qt::Horizontal, this);
     headerView->setModel(programsModel->padsHeaderModel());
     ui->padsView->setHorizontalHeader(headerView);
 
@@ -116,30 +117,26 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(sel,
             &QItemSelectionModel::selectionChanged,
             this,
-            &MainWindow::refreshUiAccordingToSelection
-    );
+            &MainWindow::refreshUiAccordingToSelection);
     connect(sel,
             &QItemSelectionModel::currentRowChanged,
             mapper,
             &QDataWidgetMapper::setCurrentModelIndex);
 
-    connect(sel,
-            &QItemSelectionModel::currentRowChanged,
-            [=, this](const QModelIndex &current) {
-                Q_CHECK_PTR(programsModel);
+    connect(sel, &QItemSelectionModel::currentRowChanged, [=, this](const QModelIndex &current) {
+        Q_CHECK_PTR(programsModel);
 
-                ui->padsView->setRootIndex(programsModel->padsParentIndex(current));
-                ui->knobsView->setRootIndex(programsModel->knobsParentIndex(current));
-            }
-    );
+        ui->padsView->setRootIndex(programsModel->padsParentIndex(current));
+        ui->knobsView->setRootIndex(programsModel->knobsParentIndex(current));
+    });
 
     connect(programsModel,
             &QAbstractItemModel::modelReset,
             this,
-            &MainWindow::refreshUiAccordingToSelection
-    );
+            &MainWindow::refreshUiAccordingToSelection);
 
-    ProgramIdSelectionRestorer *restorer = new ProgramIdSelectionRestorer(ui->programsView->selectionModel(), this);
+    ProgramIdSelectionRestorer *restorer =
+            new ProgramIdSelectionRestorer(ui->programsView->selectionModel(), this);
     connect(programsModel,
             &ProgramsModel::modelAboutToBeReset,
             restorer,
@@ -151,11 +148,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Enable MIDI send / receive action when connected
 
-    IOMidi* io = nullptr;
+    IOMidi *io = nullptr;
     try {
         io = new IOMidi(this);
-    }
-    catch (const std::runtime_error& e) {
+    } catch (const std::runtime_error &e) {
         qWarning() << "Disabling MIDI: " << e.what();
         return;
     }
@@ -178,107 +174,78 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Do not use QOverload for compatibility with older Qt,
     // as in Linux Mint 18.3
-    connect(
-        clientComboBox,
-        static_cast<void (QComboBox::*)(int)>(&QComboBox::activated),
-        [=](int row) {
-            connectionsModel->connectPort(connectionsModel->index(row));
-        }
-    );
+    connect(clientComboBox,
+            static_cast<void (QComboBox::*)(int)>(&QComboBox::activated),
+            [=](int row) { connectionsModel->connectPort(connectionsModel->index(row)); });
 
     // MIDI actions
 
-    QList<QAction *> midiSendActions = {
-        ui->actionGetProgram1,
-        ui->actionGetProgram2,
-        ui->actionGetProgram3,
-        ui->actionGetProgram4
-    };
+    QList<QAction *> midiSendActions = {ui->actionGetProgram1,
+                                        ui->actionGetProgram2,
+                                        ui->actionGetProgram3,
+                                        ui->actionGetProgram4};
 
-    QList<QAction *> midiReceiveActions {
-        ui->actionSendToProgram1,
-        ui->actionSendToProgram2,
-        ui->actionSendToProgram3,
-        ui->actionSendToProgram4,
+    QList<QAction *> midiReceiveActions{
+            ui->actionSendToProgram1,
+            ui->actionSendToProgram2,
+            ui->actionSendToProgram3,
+            ui->actionSendToProgram4,
     };
 
     QList<QAction *> midiActions = midiSendActions + midiReceiveActions;
 
-    auto midiActionsSetEnabled = [=, this](){
-        for (auto it = midiActions.begin() ; it != midiActions.end() ; ++it) {
-            QAction* a = *it;
+    auto midiActionsSetEnabled = [=, this]() {
+        for (auto it = midiActions.begin(); it != midiActions.end(); ++it) {
+            QAction *a = *it;
             Q_CHECK_PTR(a);
 
-            a->setEnabled(connectionsModel->connected() &&
-                          ui->programsView->selectionModel()->currentIndex().row() != -1);
+            a->setEnabled(connectionsModel->connected()
+                          && ui->programsView->selectionModel()->currentIndex().row() != -1);
         }
     };
 
     midiActionsSetEnabled();
 
-    connect(
-        connectionsModel,
-        &MidiConnectionsModel::connectedChanged,
-        midiActionsSetEnabled
-    );
+    connect(connectionsModel, &MidiConnectionsModel::connectedChanged, midiActionsSetEnabled);
 
-    connect(
-        ui->programsView->selectionModel(),
-        &QItemSelectionModel::currentChanged,
-        midiActionsSetEnabled
-    );
+    connect(ui->programsView->selectionModel(),
+            &QItemSelectionModel::currentChanged,
+            midiActionsSetEnabled);
 
-    connect(
-        programsModel,
-        &ProgramsModel::modelReset,
-        midiActionsSetEnabled
-    );
+    connect(programsModel, &ProgramsModel::modelReset, midiActionsSetEnabled);
 
     // Sysex
 
     auto sysexHandler = new SysexHandler(io);
 
-    connect(sysexHandler,
-            &SysexHandler::programReceived,
-            [=, this](const QByteArray& sysex) {
-                Q_CHECK_PTR(ui->programsView->selectionModel());
-                Q_CHECK_PTR(programsModel);
-                Q_CHECK_PTR(undoStack());
+    connect(sysexHandler, &SysexHandler::programReceived, [=, this](const QByteArray &sysex) {
+        Q_CHECK_PTR(ui->programsView->selectionModel());
+        Q_CHECK_PTR(programsModel);
+        Q_CHECK_PTR(undoStack());
 
-                const int programId = currentSelectedProjectId();
-                if (programId == -1) {
-                    Q_UNIMPLEMENTED();
-                } else {
-                    UpdateProgramFromSysexCommand* cmd = new UpdateProgramFromSysexCommand(
-                        programsModel,
-                        programId,
-                        sysex
-                    );
-                    undoStack()->push(cmd);
-                }
-            });
+        const int programId = currentSelectedProjectId();
+        if (programId == -1) {
+            Q_UNIMPLEMENTED();
+        } else {
+            UpdateProgramFromSysexCommand *cmd =
+                    new UpdateProgramFromSysexCommand(programsModel, programId, sysex);
+            undoStack()->push(cmd);
+        }
+    });
 
-    for (int i = 0 ; i < midiSendActions.count() ; ++i) {
-        connect(
-            midiSendActions[i],
-            &QAction::triggered,
-            [=]() {
-                Q_CHECK_PTR(sysexHandler);
+    for (int i = 0; i < midiSendActions.count(); ++i) {
+        connect(midiSendActions[i], &QAction::triggered, [=]() {
+            Q_CHECK_PTR(sysexHandler);
 
-                sysexHandler->getProgram(i+1);
-            }
-        );
+            sysexHandler->getProgram(i + 1);
+        });
     }
 
-    for (int i = 0 ; i < midiReceiveActions.count() ; ++i) {
-        connect(
-            midiReceiveActions[i],
-            &QAction::triggered,
-            [=, this]() {
-                const QByteArray sysex = programsModel->programSysex(currentSelectedProjectId());
-                sysexHandler->sendProgram(sysex, i+1);
-            }
-        );
+    for (int i = 0; i < midiReceiveActions.count(); ++i) {
+        connect(midiReceiveActions[i], &QAction::triggered, [=, this]() {
+            const QByteArray sysex = programsModel->programSysex(currentSelectedProjectId());
+            sysexHandler->sendProgram(sysex, i + 1);
+        });
     }
 }
 
@@ -292,7 +259,8 @@ int MainWindow::programModelColumn() const
     return 1;
 }
 
-QString defaultSysex() {
+QString defaultSysex()
+{
     return readTextFile(":/default-sysex.sql");
 }
 
@@ -301,11 +269,10 @@ void MainWindow::on_actionNewProgram_triggered()
     Q_CHECK_PTR(programsModel);
     Q_CHECK_PTR(undoStack());
 
-    QUndoCommand* cmd = new CreateProgramCommand(
-        programsModel,
-        QSettings().value(SETTINGS_KEY_DEFAULT_NAME).toString(),
-        QSettings().value(SETTINGS_KEY_DEFAULT_SYSEX).toByteArray()
-    );
+    QUndoCommand *cmd =
+            new CreateProgramCommand(programsModel,
+                                     QSettings().value(SETTINGS_KEY_DEFAULT_NAME).toString(),
+                                     QSettings().value(SETTINGS_KEY_DEFAULT_SYSEX).toByteArray());
     undoStack()->push(cmd);
 }
 
@@ -314,14 +281,11 @@ void MainWindow::on_actionDeleteProgram_triggered()
     Q_CHECK_PTR(programsModel);
     Q_CHECK_PTR(undoStack());
 
-    QItemSelectionModel* selection_model = ui->programsView->selectionModel();
+    QItemSelectionModel *selection_model = ui->programsView->selectionModel();
     Q_CHECK_PTR(selection_model);
     Q_ASSERT(selection_model->currentIndex().row() > -1);
 
-    QUndoCommand *cmd = new DeleteProgramCommand(
-        programsModel,
-        selectedProgramId(selection_model)
-    );
+    QUndoCommand *cmd = new DeleteProgramCommand(programsModel, selectedProgramId(selection_model));
     undoStack()->push(cmd);
 }
 
@@ -337,7 +301,7 @@ void MainWindow::refreshUiAccordingToSelection()
 
     ui->actionDeleteProgram->setEnabled(sel->hasSelection());
 
-    QWidget* w = sel->currentIndex().row() != -1 ? ui->pageEditor : ui->pageDefault;
+    QWidget *w = sel->currentIndex().row() != -1 ? ui->pageEditor : ui->pageDefault;
     ui->stackedWidget->setCurrentWidget(w);
 }
 
@@ -346,11 +310,10 @@ void MainWindow::on_actionImportProgram_triggered()
     Q_CHECK_PTR(programsModel);
     Q_CHECK_PTR(undoStack());
 
-    const QString path(
-                QFileDialog::getOpenFileName(
-                    this,
-                    "Import LPD8 program",
-                    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)));
+    const QString path(QFileDialog::getOpenFileName(
+            this,
+            "Import LPD8 program",
+            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)));
     if (path.isEmpty()) {
         return;
     }
@@ -362,11 +325,7 @@ void MainWindow::on_actionImportProgram_triggered()
 
     const QString name = QDir(path).dirName();
 
-    QUndoCommand* cmd = new CreateProgramCommand(
-        programsModel,
-        name,
-        sysex
-    );
+    QUndoCommand *cmd = new CreateProgramCommand(programsModel, name, sysex);
     undoStack()->push(cmd);
 }
 
@@ -382,11 +341,7 @@ void MainWindow::on_actionExportProgram_triggered()
     const QDir defaultDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
     const QString defaultPath = defaultDir.absoluteFilePath(name);
 
-    const QString path(
-                QFileDialog::getSaveFileName(
-                    this,
-                    "Export LPD8 program",
-                    defaultPath));
+    const QString path(QFileDialog::getSaveFileName(this, "Export LPD8 program", defaultPath));
     if (path.isEmpty()) {
         return;
     }
@@ -394,22 +349,23 @@ void MainWindow::on_actionExportProgram_triggered()
     writeProgramFile(sysex, path);
 }
 
-int MainWindow::currentSelectedProjectId() const {
+int MainWindow::currentSelectedProjectId() const
+{
     Q_CHECK_PTR(ui->programsView->selectionModel());
 
     return selectedProgramId(ui->programsView->selectionModel());
 }
 
-void MainWindow::on_actionAbout_triggered() {
+void MainWindow::on_actionAbout_triggered()
+{
     QMessageBox::about(
-        this,
-        QString("%1 %2").arg(tr("About", "About dialog title")).arg(qApp->applicationName()),
-        QString("<h1>%1</h1><h2>%2</h2><a href=\"%3\">%4</a><p>%5</p><p>%6</p>")
-            .arg(qApp->applicationName())
-            .arg(qApp->applicationVersion())
-            .arg(qApp->property("applicationLink").toString())
-            .arg(qApp->property("applicationLink").toString())
-            .arg(qApp->property("applicationLicense").toString())
-            .arg(qApp->property("applicationCopyright").toString())
-    );
+            this,
+            QString("%1 %2").arg(tr("About", "About dialog title")).arg(qApp->applicationName()),
+            QString("<h1>%1</h1><h2>%2</h2><a href=\"%3\">%4</a><p>%5</p><p>%6</p>")
+                    .arg(qApp->applicationName())
+                    .arg(qApp->applicationVersion())
+                    .arg(qApp->property("applicationLink").toString())
+                    .arg(qApp->property("applicationLink").toString())
+                    .arg(qApp->property("applicationLicense").toString())
+                    .arg(qApp->property("applicationCopyright").toString()));
 }

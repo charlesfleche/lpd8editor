@@ -25,34 +25,40 @@ private:
     QSqlDatabase db;
 };
 
-void TestDB::initTestCase() {
+void TestDB::initTestCase()
+{
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName(":memory:");
 }
 
-void TestDB::init() {
+void TestDB::init()
+{
     db.open();
     initDb(db);
 }
 
-void TestDB::cleanup() {
+void TestDB::cleanup()
+{
     db.close();
 }
 
-void TestDB::test_idsSequence() {
+void TestDB::test_idsSequence()
+{
     QCOMPARE(createProgram(), 1);
     QCOMPARE(createProgram(), 2);
     QVERIFY(deleteProgram(2));
     QCOMPARE(createProgram(), 3);
 }
 
-void TestDB::test_fromSysex() {
+void TestDB::test_fromSysex()
+{
     const int id = createProgram();
     QVERIFY(fromSysex(id, allzero_sysex));
     QCOMPARE(programSysex(id), allzero_sysex);
 }
 
-void TestDB::test_createProgram_data() {
+void TestDB::test_createProgram_data()
+{
     QTest::addColumn<QString>("name");
     QTest::addColumn<QByteArray>("sysex");
     QTest::addColumn<int>("id");
@@ -64,48 +70,21 @@ void TestDB::test_createProgram_data() {
     QTest::addColumn<bool>("expectProgramWarning");
     QTest::addColumn<bool>("expectSysexWarning");
 
-    QTest::newRow("All default")
-            << QString()
-            << QByteArray()
-            << -1
-            << "P1"
-            << default_sysex
-            << 1
-            << false
-            << false;
+    QTest::newRow("All default") << QString() << QByteArray() << -1 << "P1" << default_sysex << 1
+                                 << false << false;
 
-    QTest::newRow("All specified")
-            << "New program"
-            << allzero_sysex
-            << 10
-            << "New program"
-            << allzero_sysex
-            << 10
-            << false
-            << false;
+    QTest::newRow("All specified") << "New program" << allzero_sysex << 10 << "New program"
+                                   << allzero_sysex << 10 << false << false;
 
-    QTest::newRow("Short sysex")
-            << QString()
-            << invalid_sysex_short
-            << -1
-            << ""
-            << QByteArray()
-            << -1
-            << true
-            << true;
+    QTest::newRow("Short sysex") << QString() << invalid_sysex_short << -1 << "" << QByteArray()
+                                 << -1 << true << true;
 
     QTest::newRow("Out of bound value in sysex")
-            << QString()
-            << invalid_sysex_channel
-            << -1
-            << ""
-            << QByteArray()
-            << -1
-            << true
-            << true;
+            << QString() << invalid_sysex_channel << -1 << "" << QByteArray() << -1 << true << true;
 }
 
-void TestDB::test_createProgram() {
+void TestDB::test_createProgram()
+{
     QFETCH(QString, name);
     QFETCH(QByteArray, sysex);
     QFETCH(int, id);

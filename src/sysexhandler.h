@@ -11,7 +11,7 @@ class SysexHandler : public QObject
 {
     Q_OBJECT
 public:
-    explicit SysexHandler(IOMidi* io);
+    explicit SysexHandler(IOMidi *io);
 
     void getProgram(int deviceProgramId) const;
     void sendProgram(const QByteArray &sysex, int deviceProgramId) const;
@@ -20,8 +20,7 @@ signals:
     void programReceived(QByteArray) const;
 
 public slots:
-    void handleMidiEvent(const snd_seq_event_t* ev) const;
-
+    void handleMidiEvent(const snd_seq_event_t *ev) const;
 
 private:
     void sendSysex(const QByteArray &sysex) const;

@@ -11,13 +11,17 @@ class QItemSelectionModel;
 class QModelIndex;
 class QUndoStack;
 
-QUndoStack* undoStack();
+QUndoStack *undoStack();
 
-int selectedProgramId(QItemSelectionModel* model);
+int selectedProgramId(QItemSelectionModel *model);
 
-class CreateProgramCommand : public QUndoCommand {
+class CreateProgramCommand : public QUndoCommand
+{
 public:
-    CreateProgramCommand(ProgramsModel* model, const QString&, const QByteArray&, QUndoCommand* parent = nullptr);
+    CreateProgramCommand(ProgramsModel *model,
+                         const QString &,
+                         const QByteArray &,
+                         QUndoCommand *parent = nullptr);
 
     void undo() override;
     void redo() override;
@@ -29,9 +33,10 @@ private:
     int m_program_id;
 };
 
-class DeleteProgramCommand : public QUndoCommand {
+class DeleteProgramCommand : public QUndoCommand
+{
 public:
-    DeleteProgramCommand(ProgramsModel* model, int programId, QUndoCommand* parent = nullptr);
+    DeleteProgramCommand(ProgramsModel *model, int programId, QUndoCommand *parent = nullptr);
 
     void undo() override;
     void redo() override;
@@ -43,16 +48,15 @@ private:
     QByteArray m_sysex;
 };
 
-class UpdateParameterCommand : public QUndoCommand {
+class UpdateParameterCommand : public QUndoCommand
+{
 public:
-    UpdateParameterCommand(
-        QAbstractItemModel* model,
-        int row,
-        int column,
-        const QVariant& value,
-        int role,
-        QUndoCommand *parent = nullptr
-    );
+    UpdateParameterCommand(QAbstractItemModel *model,
+                           int row,
+                           int column,
+                           const QVariant &value,
+                           int role,
+                           QUndoCommand *parent = nullptr);
 
     void undo() override;
     void redo() override;
@@ -60,20 +64,20 @@ public:
 private:
     void setDataAndKeepPrevious();
 
-    QAbstractItemModel* m_model;
+    QAbstractItemModel *m_model;
     const int m_row;
     const int m_column;
     QVariant m_value;
     const int m_role;
 };
 
-class UpdateProgramFromSysexCommand : public QUndoCommand {
+class UpdateProgramFromSysexCommand : public QUndoCommand
+{
 public:
-    UpdateProgramFromSysexCommand(
-        ProgramsModel* model,
-        int programId,
-        const QByteArray& sysex,
-        QUndoCommand *parent = nullptr);
+    UpdateProgramFromSysexCommand(ProgramsModel *model,
+                                  int programId,
+                                  const QByteArray &sysex,
+                                  QUndoCommand *parent = nullptr);
 
     void undo() override;
     void redo() override;

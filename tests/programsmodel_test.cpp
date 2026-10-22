@@ -22,26 +22,30 @@ private slots:
 
 private:
     QSqlDatabase db;
-    ProgramsModel* pm;
+    ProgramsModel *pm;
 };
 
-void TestProgramsModel::initTestCase() {
+void TestProgramsModel::initTestCase()
+{
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName(":memory:");
 }
 
-void TestProgramsModel::init() {
+void TestProgramsModel::init()
+{
     QVERIFY(db.open());
     initDb(db);
     pm = new ProgramsModel(this, db);
 }
 
-void TestProgramsModel::cleanup() {
+void TestProgramsModel::cleanup()
+{
     pm->deleteLater();
     db.close();
 }
 
-void TestProgramsModel::test_data() {
+void TestProgramsModel::test_data()
+{
     QTest::addColumn<int>("id");
     QTest::addColumn<QString>("name");
     QTest::addColumn<QByteArray>("sysex");
@@ -49,7 +53,8 @@ void TestProgramsModel::test_data() {
     QTest::newRow("Force all") << 3 << "MyName" << allzero_sysex;
 }
 
-void TestProgramsModel::test() {
+void TestProgramsModel::test()
+{
     QFETCH(int, id);
     QFETCH(QString, name);
     QFETCH(QByteArray, sysex);
