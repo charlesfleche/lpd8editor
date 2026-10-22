@@ -4,6 +4,7 @@
 
 #include <QApplication>
 #include <QItemSelectionModel>
+#include <utility>
 
 #if (QT_VERSION < QT_VERSION_CHECK(5, 9, 0))
 void setObsolete(bool) { }
@@ -13,7 +14,7 @@ static const QString undo_stack_object_name = "undo_stack";
 
 QUndoStack *setupUndoStack(QObject *parent)
 {
-    QUndoStack *stack = new QUndoStack(parent);
+    auto *stack = new QUndoStack(parent);
     stack->setObjectName(undo_stack_object_name);
     return stack;
 }
@@ -22,8 +23,7 @@ QUndoStack *undoStack()
 {
     Q_CHECK_PTR(qApp);
 
-    QUndoStack *stack =
-            qApp->findChild<QUndoStack *>(undo_stack_object_name, Qt::FindDirectChildrenOnly);
+    auto *stack = qApp->findChild<QUndoStack *>(undo_stack_object_name, Qt::FindDirectChildrenOnly);
     if (stack == nullptr) {
         stack = setupUndoStack(qApp);
     }
@@ -32,14 +32,13 @@ QUndoStack *undoStack()
 }
 
 CreateProgramCommand::CreateProgramCommand(ProgramsModel *model,
-                                           const QString &name,
-                                           const QByteArray &sysex,
+                                           QString name,
+                                           QByteArray sysex,
                                            QUndoCommand *parent)
     : QUndoCommand(parent)
     , m_model(model)
-    , m_name(name)
-    , m_sysex(sysex)
-    , m_program_id(-1)
+    , m_name(std::move(name))
+    , m_sysex(std::move(sysex))
 {
     Q_CHECK_PTR(m_model);
 
@@ -93,14 +92,14 @@ void DeleteProgramCommand::undo()
 UpdateParameterCommand::UpdateParameterCommand(QAbstractItemModel *model,
                                                int row,
                                                int column,
-                                               const QVariant &value,
+                                               QVariant value,
                                                int role,
                                                QUndoCommand *parent)
     : QUndoCommand(parent)
     , m_model(model)
     , m_row(row)
     , m_column(column)
-    , m_value(value)
+    , m_value(std::move(value))
     , m_role(role)
 {
     Q_CHECK_PTR(m_model);
@@ -128,12 +127,12 @@ void UpdateParameterCommand::setDataAndKeepPrevious()
 
 UpdateProgramFromSysexCommand::UpdateProgramFromSysexCommand(ProgramsModel *model,
                                                              int programId,
-                                                             const QByteArray &sysex,
+                                                             QByteArray sysex,
                                                              QUndoCommand *parent)
     : QUndoCommand(parent)
     , m_model(model)
     , m_program_id(programId)
-    , m_sysex(sysex)
+    , m_sysex(std::move(sysex))
 {
     Q_CHECK_PTR(m_model);
 }

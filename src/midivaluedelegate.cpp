@@ -42,7 +42,7 @@ void MidiValueDelegate::paint(QPainter *painter,
         buttonOption.state |=
                 index.data(Qt::EditRole).toInt() == 0 ? QStyle::State_Off : QStyle::State_On;
         buttonOption.text = index.data().toString();
-        QApplication *app = qobject_cast<QApplication *>(qGuiApp);
+        auto *app = qobject_cast<QApplication *>(qGuiApp);
         Q_CHECK_PTR(app);
         app->style()->drawControl(QStyle::CE_PushButton, &buttonOption, painter);
         return;
@@ -65,7 +65,7 @@ QWidget *MidiValueDelegate::createEditor(QWidget *parent,
 void MidiValueDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const
 {
     if (isSpinbox(index)) {
-        LutSpinBox *sb = qobject_cast<LutSpinBox *>(editor);
+        auto *sb = qobject_cast<LutSpinBox *>(editor);
         Q_CHECK_PTR(sb);
 
         sb->setLut(lut(index));
@@ -81,7 +81,7 @@ void MidiValueDelegate::setModelData(QWidget *editor,
                                      const QModelIndex &index) const
 {
     if (isSpinbox(index)) {
-        LutSpinBox *sb = qobject_cast<LutSpinBox *>(editor);
+        auto *sb = qobject_cast<LutSpinBox *>(editor);
         Q_CHECK_PTR(sb);
 
         Q_CHECK_PTR(model);

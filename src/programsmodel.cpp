@@ -36,11 +36,6 @@ QStandardItemModel *m_knobs_header_model;
 
 ProgramsModel::ProgramsModel(QObject *parent, QSqlDatabase db)
     : QAbstractItemModel(parent)
-    , m_groups(nullptr)
-    , m_pads(nullptr)
-    , m_knobs(nullptr)
-    , m_programs(nullptr)
-    , m_empty(nullptr)
 {
     // LUTs
 
@@ -113,8 +108,7 @@ void ProgramsModel::select()
 #else
     const QSet<int> ids(QSet<int>(idsList.begin(), idsList.end()));
 #endif
-    for (auto it = ids.begin(); it != ids.end(); ++it) {
-        const int id = *it;
+    for (int id : ids) {
         if (!m_groups_proxies.contains(id)) {
             addFilters(id);
         }
@@ -126,8 +120,7 @@ void ProgramsModel::select()
 #else
     const QSet<int> toDeleteIds(QSet<int>(proxyIdsList.begin(), proxyIdsList.end()).subtract(ids));
 #endif
-    for (auto it = toDeleteIds.begin(); it != toDeleteIds.end(); ++it) {
-        const int id = *it;
+    for (int id : toDeleteIds) {
         removeFilters(id);
     }
 
@@ -139,8 +132,7 @@ void ProgramsModel::select()
     Q_ASSERT(m_pads_proxies.count() == ids.count());
     Q_ASSERT(m_knobs_proxies.count() == ids.count());
 
-    for (auto it = ids.begin(); it != ids.end(); ++it) {
-        const int id = *it;
+    for (int id : ids) {
         Q_ASSERT(m_groups_proxies.contains(id));
         Q_ASSERT(m_pads_proxies.contains(id));
         Q_ASSERT(m_knobs_proxies.contains(id));
@@ -264,8 +256,8 @@ Qt::ItemFlags ProgramsModel::flags(const QModelIndex &index) const
 
     // QSqlTableModel are Qt::ItemNeverHasChildren by default
 
-    const QSortFilterProxyModel *mp = qobject_cast<const QSortFilterProxyModel *>(m);
-    QSortFilterProxyModel *cmp = const_cast<QSortFilterProxyModel *>(mp);
+    const auto *mp = qobject_cast<const QSortFilterProxyModel *>(m);
+    auto *cmp = const_cast<QSortFilterProxyModel *>(mp);
     const bool indexIsInLastChildTables =
             m_pads_proxies.key(cmp) > 0 || m_knobs_proxies.key(cmp) > 0;
     if (!indexIsInLastChildTables) {
@@ -304,9 +296,8 @@ QModelIndex ProgramsModel::parent(const QModelIndex &child) const
     const QAbstractItemModel *m = model(child);
     Q_CHECK_PTR(m);
 
-    const QSortFilterProxyModel *const_program_proxy =
-            qobject_cast<const QSortFilterProxyModel *>(m);
-    QSortFilterProxyModel *program_proxy = const_cast<QSortFilterProxyModel *>(const_program_proxy);
+    const auto *const_program_proxy = qobject_cast<const QSortFilterProxyModel *>(m);
+    auto *program_proxy = const_cast<QSortFilterProxyModel *>(const_program_proxy);
 
     // Child is a knob ? Return knob row of matching group model
 
@@ -337,7 +328,7 @@ QModelIndex ProgramsModel::parent(const QModelIndex &child) const
     // Child a program ? Return the root (invalid) index
 
     Q_ASSERT(m == m_programs);
-    return QModelIndex();
+    return {};
 }
 
 QAbstractItemModel *ProgramsModel::model(const QModelIndex &index)
@@ -361,8 +352,8 @@ void ProgramsModel::addFilters(int programId)
 
     // Groups
 
-    QStandardItem *programIdItem = new QStandardItem(QString::number(programId));
-    QStandardItem *nameItem = new QStandardItem(pads_group_name);
+    auto *programIdItem = new QStandardItem(QString::number(programId));
+    auto *nameItem = new QStandardItem(pads_group_name);
     programIdItem->setEditable(false);
     nameItem->setEditable(false);
     m_groups->appendRow({programIdItem, nameItem});
@@ -373,7 +364,7 @@ void ProgramsModel::addFilters(int programId)
     nameItem->setEditable(false);
     m_groups->appendRow({programIdItem, nameItem});
 
-    QSortFilterProxyModel *proxy = new QSortFilterProxyModel(this);
+    auto *proxy = new QSortFilterProxyModel(this);
     proxy->setSourceModel(m_groups);
     proxy->setFilterKeyColumn(program_id_column_index);
     proxy->setFilterRegularExpression(regex);
@@ -534,7 +525,7 @@ QModelIndex ProgramsModel::programIndex(int programId) const
         }
     }
 
-    return QModelIndex();
+    return {};
 }
 
 int ProgramsModel::createProgram(const QString &programName, const QByteArray &sysex, int programId)

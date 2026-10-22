@@ -22,8 +22,7 @@ QString readTextFile(const QString &path)
 
 QDir dataDir()
 {
-    const auto &location = QStandardPaths::AppLocalDataLocation;
-    return QDir(QStandardPaths::writableLocation(location));
+    return {QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)};
 }
 
 bool initFilesystem()
@@ -85,14 +84,14 @@ QByteArray fromSysexTextFile(const QString &path)
     QFile data(path);
     if (!data.open(QFile::ReadOnly)) {
         qWarning() << "Cannot open sysex file" << path;
-        return QByteArray();
+        return {};
     }
 
     QTextStream in(&data);
     for (int i = 0; i < sysex::programRequestSize(); ++i) {
         if (in.atEnd()) {
             qWarning() << "Reading from sysex file ended prematurely at position" << i;
-            return QByteArray();
+            return {};
         }
 
         int c = 0;
@@ -114,7 +113,7 @@ void writeProgramFile(const QByteArray &sysex, const QString &path)
 
     QTextStream out(&f);
 
-    for (auto it = sysex.constBegin(); it != sysex.constEnd(); ++it) {
-        out << static_cast<unsigned char>(*it) << " ";
+    for (const char byte : sysex) {
+        out << static_cast<unsigned char>(byte) << " ";
     }
 }

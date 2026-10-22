@@ -10,7 +10,7 @@ class IOMidi : public QObject
     Q_OBJECT
 public:
     explicit IOMidi(QObject *parent = nullptr);
-    virtual ~IOMidi();
+    ~IOMidi() override;
 
     snd_seq_t *handle() const;
     unsigned char clientId() const;
@@ -24,9 +24,9 @@ signals:
 private:
     void readEvents() const;
 
-    snd_seq_t *m_seq_handle;
-    unsigned char m_seq_port;
-    struct pollfd *m_pfds;
+    snd_seq_t *m_seq_handle{nullptr};
+    unsigned char m_seq_port{0}; // only read after the constructor has set it
+    struct pollfd *m_pfds{nullptr};
 };
 
 #endif // IOMIDI_H

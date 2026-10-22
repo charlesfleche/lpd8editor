@@ -62,11 +62,11 @@ private:
     QHash<int, QSortFilterProxyModel *> m_pads_proxies;
     QHash<int, QSortFilterProxyModel *> m_knobs_proxies;
 
-    QStandardItemModel *m_groups;
-    QSqlTableModel *m_pads;
-    QSqlTableModel *m_knobs;
-    QSqlTableModel *m_programs;
-    QStandardItemModel *m_empty;
+    QStandardItemModel *m_groups{nullptr};
+    QSqlTableModel *m_pads{nullptr};
+    QSqlTableModel *m_knobs{nullptr};
+    QSqlTableModel *m_programs{nullptr};
+    QStandardItemModel *m_empty{nullptr};
 
     QStringList m_lut_default;
     QStringList m_lut_note;

@@ -46,9 +46,11 @@ if (RUN_CLANG_TIDY_EXECUTABLE)
         COMMAND ${RUN_CLANG_TIDY_EXECUTABLE}
             -p ${CMAKE_BINARY_DIR}
             -quiet
-            # Our sources only. The files moc and uic generate in *_autogen/
-            # are not ours to fix.
-            "^(?!.*_autogen).*/(src|tests)/[^/]*\\.cpp$"
+            # Our sources only: files directly in <source dir>/src or /tests.
+            # Anchoring on the source dir excludes what the build generates
+            # (moc, uic and rcc output), even when the build folder is inside
+            # the source tree (build/<preset>/src/qrc_sql.cpp).
+            "^${CMAKE_SOURCE_DIR}/(src|tests)/[^/]*\\.cpp$"
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Running clang-tidy on the sources"
         VERBATIM

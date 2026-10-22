@@ -133,11 +133,11 @@ QByteArray programSysex(int programId)
 end:
     if (!success) {
         qWarning() << "Failed to generate sysex for program" << programId;
-        return QByteArray();
+        return {};
     }
     if (error(q)) {
         qWarning() << errorText(q);
-        return QByteArray();
+        return {};
     }
     return ret;
 }
@@ -155,7 +155,7 @@ bool updateProgramFromSysex(int programId, const QByteArray &sysex)
 
     QSqlQuery q;
 
-    auto it = sysex.constBegin();
+    const auto *it = sysex.constBegin();
 
     // Header
 

@@ -29,7 +29,6 @@ static const QString SETTINGS_KEY_DEFAULT_SYSEX = "default/sysex";
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , programsModel(nullptr)
 {
     Q_INIT_RESOURCE(sql);
 
@@ -73,7 +72,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Client selection combo box
 
-    QComboBox *clientComboBox = new QComboBox(this);
+    auto *clientComboBox = new QComboBox(this);
     clientComboBox->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     ui->toolBar->addWidget(clientComboBox);
 
@@ -83,7 +82,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->programsView->setModel(programsModel);
     ui->programsView->setModelColumn(programModelColumn());
 
-    QDataWidgetMapper *mapper = new QDataWidgetMapper(this);
+    auto *mapper = new QDataWidgetMapper(this);
     mapper->setModel(programsModel);
     mapper->setItemDelegate(new MidiValueDelegate(this));
     mapper->addMapping(ui->channelSpinBox, 2); // XXX
@@ -92,7 +91,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->padsView->setModel(programsModel);
     ui->padsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
-    QHeaderView *headerView = new QHeaderView(Qt::Horizontal, this);
+    auto *headerView = new QHeaderView(Qt::Horizontal, this);
     headerView->setModel(programsModel->padsHeaderModel());
     ui->padsView->setHorizontalHeader(headerView);
 
@@ -135,8 +134,7 @@ MainWindow::MainWindow(QWidget *parent)
             this,
             &MainWindow::refreshUiAccordingToSelection);
 
-    ProgramIdSelectionRestorer *restorer =
-            new ProgramIdSelectionRestorer(ui->programsView->selectionModel(), this);
+    auto *restorer = new ProgramIdSelectionRestorer(ui->programsView->selectionModel(), this);
     connect(programsModel,
             &ProgramsModel::modelAboutToBeReset,
             restorer,
@@ -158,7 +156,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // MIDI connections
 
-    auto connectionsModel = new MidiConnectionsModel(io);
+    auto *connectionsModel = new MidiConnectionsModel(io);
 
     clientComboBox->setModel(connectionsModel);
     Q_ASSERT(clientComboBox->count() > 0);
@@ -195,8 +193,7 @@ MainWindow::MainWindow(QWidget *parent)
     QList<QAction *> midiActions = midiSendActions + midiReceiveActions;
 
     auto midiActionsSetEnabled = [=, this]() {
-        for (auto it = midiActions.begin(); it != midiActions.end(); ++it) {
-            QAction *a = *it;
+        for (QAction *a : midiActions) {
             Q_CHECK_PTR(a);
 
             a->setEnabled(connectionsModel->connected()
@@ -216,7 +213,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Sysex
 
-    auto sysexHandler = new SysexHandler(io);
+    auto *sysexHandler = new SysexHandler(io);
 
     connect(sysexHandler, &SysexHandler::programReceived, [=, this](const QByteArray &sysex) {
         Q_CHECK_PTR(ui->programsView->selectionModel());
@@ -227,8 +224,7 @@ MainWindow::MainWindow(QWidget *parent)
         if (programId == -1) {
             Q_UNIMPLEMENTED();
         } else {
-            UpdateProgramFromSysexCommand *cmd =
-                    new UpdateProgramFromSysexCommand(programsModel, programId, sysex);
+            auto *cmd = new UpdateProgramFromSysexCommand(programsModel, programId, sysex);
             undoStack()->push(cmd);
         }
     });

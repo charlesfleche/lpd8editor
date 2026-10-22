@@ -18,10 +18,7 @@ int selectedProgramId(QItemSelectionModel *model);
 class CreateProgramCommand : public QUndoCommand
 {
 public:
-    CreateProgramCommand(ProgramsModel *model,
-                         const QString &,
-                         const QByteArray &,
-                         QUndoCommand *parent = nullptr);
+    CreateProgramCommand(ProgramsModel *model, QString, QByteArray, QUndoCommand *parent = nullptr);
 
     void undo() override;
     void redo() override;
@@ -30,7 +27,7 @@ private:
     ProgramsModel *m_model;
     const QString m_name;
     const QByteArray m_sysex;
-    int m_program_id;
+    int m_program_id{-1};
 };
 
 class DeleteProgramCommand : public QUndoCommand
@@ -54,7 +51,7 @@ public:
     UpdateParameterCommand(QAbstractItemModel *model,
                            int row,
                            int column,
-                           const QVariant &value,
+                           QVariant value,
                            int role,
                            QUndoCommand *parent = nullptr);
 
@@ -76,7 +73,7 @@ class UpdateProgramFromSysexCommand : public QUndoCommand
 public:
     UpdateProgramFromSysexCommand(ProgramsModel *model,
                                   int programId,
-                                  const QByteArray &sysex,
+                                  QByteArray sysex,
                                   QUndoCommand *parent = nullptr);
 
     void undo() override;

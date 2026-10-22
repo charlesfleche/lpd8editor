@@ -56,9 +56,10 @@ CheckOptions:
   # count as branches in every test function.
   readability-function-cognitive-complexity.IgnoreMacros: true
 
-# Report warnings in our own headers. Headers in the build tree (uic and
-# moc output) sit deeper (..._autogen/include/) and are not matched.
+# Report warnings in our own headers only. The build folder can be inside
+# the source tree (build/<preset>/src/app_info.h), so it is excluded.
 HeaderFilterRegex: '.*/(src|tests)/[^/]*\.h$'
+ExcludeHeaderFilterRegex: '.*/build/.*'
 
 # Fixes (-fix) are formatted with .clang-format.
 FormatStyle: file

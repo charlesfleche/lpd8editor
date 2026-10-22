@@ -52,10 +52,10 @@ Decisions made before starting:
       `check-format` targets.
 - [x] 1.11 [`04af0e5`](https://github.com/charlesfleche/lpd8editor/commit/04af0e556a7eddc4a498d3bf2d409006fbf42727) Reformat the whole tree with clang-format, a mechanical commit only,
       and list it in `.git-blame-ignore-revs`.
-- [x] 1.12a Add `.clang-tidy`, an `LPD8EDITOR_CLANG_TIDY` option, and a
+- [x] 1.12a [`a7f67c0`](https://github.com/charlesfleche/lpd8editor/commit/a7f67c018ad6a7b0e5cfbb1f47a58a232ed71e43) Add `.clang-tidy`, an `LPD8EDITOR_CLANG_TIDY` option, and a
       `clang-tidy` target. This commit only makes the findings visible
       (about 300).
-- [ ] 1.12b Apply clang-tidy's automatic modernization fixes (`override`,
+- [x] 1.12b Apply clang-tidy's automatic modernization fixes (`override`,
       `auto`, `return {}`, default member initializers, range-for...).
 - [ ] 1.12c Give file-local functions and constants internal linkage.
 - [ ] 1.12d Make const what never changes, and initialize every variable.

@@ -7,10 +7,6 @@
 
 IOMidi::IOMidi(QObject *parent)
     : QObject(parent)
-    , m_seq_handle(nullptr)
-    , m_seq_port(0)
-    , // only read after the constructor has set it
-    m_pfds(nullptr)
 {
     qDebug() << "Opening MIDI sequencer";
 
@@ -28,7 +24,7 @@ IOMidi::IOMidi(QObject *parent)
 
     for (int i = 0; i < npfdf; ++i) {
         qDebug() << "Enabling MIDI poll descriptor" << i;
-        QSocketNotifier *n = new QSocketNotifier(m_pfds[i].fd, QSocketNotifier::Read, this);
+        auto *n = new QSocketNotifier(m_pfds[i].fd, QSocketNotifier::Read, this);
         connect(qApp, &QApplication::aboutToQuit, [=]() {
             qDebug() << "Disabling MIDI poll descriptor" << i;
             n->setEnabled(false);

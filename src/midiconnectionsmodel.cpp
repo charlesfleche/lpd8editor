@@ -70,7 +70,7 @@ QVariant MidiConnectionsModel::data(const QModelIndex &index, int role) const
     if (role == Qt::DisplayRole) {
         return portName(index);
     }
-    return QVariant();
+    return {};
 }
 
 QModelIndex MidiConnectionsModel::connectedPort() const
@@ -86,12 +86,12 @@ QModelIndex MidiConnectionsModel::connectedPort() const
         // Partially connected, done externally
         case Direction::From:
         case Direction::To:
-            return QModelIndex();
+            return {};
 
         // If a second addr is connected both ways, done externally
         case Direction::BothWays:
             if (ret.row() != 0) {
-                return QModelIndex();
+                return {};
             }
             ret = index(r);
             break;
