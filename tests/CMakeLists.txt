@@ -4,8 +4,10 @@ function(_add_test _name)
         ${_target}.cpp
     )
     target_link_libraries(${_target}
-        Qt::Test
-        ${CMAKE_PROJECT_NAME}-lib
+        PRIVATE
+            Qt::Test
+            ${CMAKE_PROJECT_NAME}-lib
+            lpd8editor_warnings
     )
     add_test(
         NAME ${_target}

@@ -37,10 +37,11 @@ Decisions made before starting:
       LinguistTools is no longer required. *Why:* tarball builds failed without
       git, and translations were removed.
 - [x] 1.4 [`96eb864`](https://github.com/charlesfleche/lpd8editor/commit/96eb8646ab3e154833b581f61efb0f60ad0111db) Move the tests to `tests/`. A pure rename, so it is easy to review.
-- [x] 1.5 Build tests only when `BUILD_TESTING` is on, and run them headless
+- [x] 1.5 [`6478283`](https://github.com/charlesfleche/lpd8editor/commit/6478283031774ef1e1d59985221771d31ac81728) Build tests only when `BUILD_TESTING` is on, and run them headless
       (`QT_QPA_PLATFORM=offscreen`).
-- [ ] 1.6 Add one shared compiler-warnings target for GCC and Clang, with an
-      `LPD8EDITOR_WERROR` option, and fix the new warnings.
+- [x] 1.6a Add one shared compiler-warnings target for GCC and Clang, with an
+      `LPD8EDITOR_WERROR` option. This commit only makes the warnings visible.
+- [ ] 1.6b Fix the about 50 warnings it shows, so `-Werror` builds pass.
 - [ ] 1.7 Add an `LPD8EDITOR_SANITIZERS` option for AddressSanitizer and
       UndefinedBehaviorSanitizer.
 - [ ] 1.8 Run the test suite under valgrind memcheck with `ctest -T memcheck`,
