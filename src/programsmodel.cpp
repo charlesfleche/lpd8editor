@@ -380,9 +380,9 @@ void ProgramsModel::addFilters(int programId)
 
     connect(proxy,
             &QSortFilterProxyModel::dataChanged,
-            [=, this](const QModelIndex &topLeft,
-                      const QModelIndex &bottomRight,
-                      const QVector<int> &roles) {
+            [this, programId](const QModelIndex &topLeft,
+                              const QModelIndex &bottomRight,
+                              const QVector<int> &roles) {
                 const QModelIndex programIndex = this->programIndex(programId);
                 const QModelIndex parent = this->padsParentIndex(programIndex);
                 const QModelIndex tl = index(topLeft.row(), topLeft.column(), parent);
@@ -400,9 +400,9 @@ void ProgramsModel::addFilters(int programId)
 
     connect(proxy,
             &QSortFilterProxyModel::dataChanged,
-            [=, this](const QModelIndex &topLeft,
-                      const QModelIndex &bottomRight,
-                      const QVector<int> &roles) {
+            [this, programId](const QModelIndex &topLeft,
+                              const QModelIndex &bottomRight,
+                              const QVector<int> &roles) {
                 const QModelIndex programIndex = this->programIndex(programId);
                 const QModelIndex parent = this->knobsParentIndex(programIndex);
                 const QModelIndex tl = index(topLeft.row(), topLeft.column(), parent);

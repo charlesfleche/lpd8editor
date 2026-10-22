@@ -58,8 +58,8 @@ Decisions made before starting:
 - [x] 1.12b [`7116c5e`](https://github.com/charlesfleche/lpd8editor/commit/7116c5ebc9ed80eddd4f6d5afd25b7924e28bca3) Apply clang-tidy's automatic modernization fixes (`override`,
       `auto`, `return {}`, default member initializers, range-for...).
 - [x] 1.12c [`0803157`](https://github.com/charlesfleche/lpd8editor/commit/0803157a2599cc90eb8e43bee777515ae810fea5) Give file-local functions and constants internal linkage.
-- [x] 1.12d Make const what never changes, and initialize every variable.
-- [ ] 1.12e Spell out lambda captures instead of `[=]`.
+- [x] 1.12d [`8502bfa`](https://github.com/charlesfleche/lpd8editor/commit/8502bfa8e46893af7f1944e348650e7be265fbc7) Make const what never changes, and initialize every variable.
+- [x] 1.12e Spell out lambda captures instead of `[=]`.
 - [ ] 1.12f Name parameters, the same way in declarations and definitions.
 - [ ] 1.12g Smaller readability and bugprone fixes, and `Q_DISABLE_COPY_MOVE`.
 - [ ] 1.12h Use `std::array` for the SysEx byte tables.

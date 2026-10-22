@@ -25,7 +25,7 @@ IOMidi::IOMidi(QObject *parent)
     for (int i = 0; i < npfdf; ++i) {
         qDebug() << "Enabling MIDI poll descriptor" << i;
         auto *n = new QSocketNotifier(m_pfds[i].fd, QSocketNotifier::Read, this);
-        connect(qApp, &QApplication::aboutToQuit, [=]() {
+        connect(qApp, &QApplication::aboutToQuit, [i, n]() {
             qDebug() << "Disabling MIDI poll descriptor" << i;
             n->setEnabled(false);
         });
