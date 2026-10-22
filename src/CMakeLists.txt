@@ -17,6 +17,8 @@ add_library(${_lib}
     create_trigger_delete_program.sql
     db.cpp
     db.h
+    deviceprofile.cpp
+    deviceprofile.h
     enums.h
     iomidi.cpp
     iomidi.h
@@ -29,6 +31,8 @@ add_library(${_lib}
     midiconnectionsmodel.h
     midivaluedelegate.cpp
     midivaluedelegate.h
+    program.cpp
+    program.h
     programsmodel.cpp
     programsmodel.h
     sql.qrc

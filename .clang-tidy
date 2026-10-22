@@ -55,6 +55,10 @@ CheckOptions:
   # QtTest macros (QCOMPARE, QVERIFY) expand to if/return, which would
   # count as branches in every test function.
   readability-function-cognitive-complexity.IgnoreMacros: true
+  # A struct whose members are all public is an aggregate of independent
+  # values (Pad, Program), which the C++ Core Guidelines recommend (C.2). The
+  # check still reports classes that mix public and private data.
+  misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: true
 
 # Report warnings in our own headers only. The build folder can be inside
 # the source tree (build/<preset>/src/app_info.h), so it is excluded.

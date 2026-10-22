@@ -52,4 +52,4 @@ The code targets C++23 (`target_compile_features(... cxx_std_23)` on the library
 
 ## Conventions and work in progress
 
-Coding conventions are in `CONTRIBUTING.md` (C++23, Qt idioms, naming, errors, tests, commits). `doc/IMPROVEMENTS.md` is the ongoing improvement checklist: one commit per item, each commit ticks its item and links the previous item to its commit. Some code described above (the SQLite storage, `ProgramsModel`'s tree of proxies, `IOMidi`) is scheduled to be replaced there.
+Coding conventions are in `CONTRIBUTING.md` (C++23, Qt idioms, naming, errors, tests, commits). `doc/ARCHITECTURE.md` describes the target design of the ongoing rework. `doc/IMPROVEMENTS.md` is the improvement checklist: one commit per item, each commit ticks its item and links the previous item to its commit. Some code described above (the SQLite storage, `ProgramsModel`'s tree of proxies, `IOMidi`) is scheduled to be replaced there.

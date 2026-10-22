@@ -79,6 +79,10 @@ Decisions made before starting:
 
 ## Phase 2: CI/CD (committed now, tested together later)
 
+**None of these workflows has run on GitHub yet.** Here `[x]` means that the
+workflow is committed and was checked locally (the YAML parses, and its build,
+test and packaging steps pass on trixie), not that it works on GitHub.
+
 - [x] 2.1 [`6eef68d`](https://github.com/charlesfleche/lpd8editor/commit/6eef68dee2d4cc91ea9320b5ed984eaf34cfc454) Test workflow: a {trixie container, ubuntu-26.04} × {gcc, clang}
       matrix, runs on pull requests, least-privilege `permissions`, actions
       pinned to a commit SHA, and `concurrency` to cancel superseded runs.
@@ -121,15 +125,20 @@ Decisions made before starting:
       fatal errors instead of `std::terminate`.
 - [x] 3.15 [`41cc82d`](https://github.com/charlesfleche/lpd8editor/commit/41cc82dc843fde8f6c9df109f5d108ca88905d8b) Import and export: show errors to the user, add file filters, use
       `QFileInfo` for names, and wrap user-visible strings in `tr()`.
-- [x] 3.16 [`230e729`](https://github.com/charlesfleche/lpd8editor/commit/230e72976efd8893218e2eaba90a306336f70930) Qt idioms: hold `Ui::MainWindow` by value, get the delegate's style
+- [x] 3.16 [`230e729`](https://github.com/charlesfleche/lpd8editor/commit/230e72976efd8893218e2eaba90a306336f70930) Qt idioms: hold `Ui::MainWindow` in a `std::unique_ptr`, get the delegate's style
       from its widget, drop the noisy `Q_CHECK_PTR` calls, and use the
       multi-argument `QString::arg`.
-- [x] 3.17 Replace magic column numbers with named constants.
+- [x] 3.17 [`25df6fe`](https://github.com/charlesfleche/lpd8editor/commit/25df6fe25769da49bbd8afeb4fd314a409253568) Replace magic column numbers with named constants.
 
 ## Phase 4: architecture
 
-- [ ] 4.1 Domain value types: `Program`, `Pad`, `Knob`, and a `DeviceProfile`
-      (control counts, device slots, default values).
+The target design and the order of the steps are described in
+`doc/ARCHITECTURE.md`. Read it before these commits.
+
+- [x] 4.1 [`b498b68`](https://github.com/charlesfleche/lpd8editor/commit/b498b6827176b5d93384bd161f1eb0adf6f3ccd0) Domain value types: `Program`, `Pad`, `Knob`, and a `DeviceProfile`
+      (device slots and factory program; the control counts are fixed by the
+      `Program` type). Its test compares only part of the factory program
+      with the old SQL trigger: 4.2 compares all of it, byte for byte.
 - [ ] 4.2 Pure SysEx codec: `decode` and `encode` with `std::expected` and
       round-trip tests. It replaces the parsing spread across
       `lpd8_sysex.cpp` and `db.cpp`.
