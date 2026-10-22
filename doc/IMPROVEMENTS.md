@@ -50,10 +50,24 @@ Decisions made before starting:
       or Clang, debug or release, plus sanitizers and valgrind.
 - [x] 1.10 [`a1c4ed2`](https://github.com/charlesfleche/lpd8editor/commit/a1c4ed2ecfe1c41ec046205cff398b59061c1e08) Add `.editorconfig` and `.clang-format`, plus `format` and
       `check-format` targets.
-- [x] 1.11 [`f458c11`](https://github.com/charlesfleche/lpd8editor/commit/f458c1178b423a46cc8e07bfe41a62dd75efd9f0) Reformat the whole tree with clang-format, a mechanical commit only,
+- [x] 1.11 [`04af0e5`](https://github.com/charlesfleche/lpd8editor/commit/04af0e556a7eddc4a498d3bf2d409006fbf42727) Reformat the whole tree with clang-format, a mechanical commit only,
       and list it in `.git-blame-ignore-revs`.
-- [ ] 1.12 Add `.clang-tidy` and an `LPD8EDITOR_CLANG_TIDY` option, and fix
-      (or explicitly justify) the findings.
+- [x] 1.12a Add `.clang-tidy`, an `LPD8EDITOR_CLANG_TIDY` option, and a
+      `clang-tidy` target. This commit only makes the findings visible
+      (about 300).
+- [ ] 1.12b Apply clang-tidy's automatic modernization fixes (`override`,
+      `auto`, `return {}`, default member initializers, range-for...).
+- [ ] 1.12c Give file-local functions and constants internal linkage.
+- [ ] 1.12d Make const what never changes, and initialize every variable.
+- [ ] 1.12e Spell out lambda captures instead of `[=]`.
+- [ ] 1.12f Name parameters, the same way in declarations and definitions.
+- [ ] 1.12g Smaller readability and bugprone fixes, and `Q_DISABLE_COPY_MOVE`.
+- [ ] 1.12h Use `std::array` for the SysEx byte tables.
+
+      Findings deliberately left for later items, which rewrite that code:
+      `goto` and macros in `db.cpp` (4.7), the macro in `lpd8_sysex.cpp`
+      (4.2), `const_cast` in `ProgramsModel` (4.5), pointer arithmetic in
+      `IOMidi` (3.5), and mutable globals (3.1).
 - [ ] 1.13 Add a cppcheck configuration and a `cppcheck` target.
 - [ ] 1.14 Write the coding conventions in `CONTRIBUTING.md` and update
       `CLAUDE.md` to match.

@@ -1,0 +1,65 @@
+# clang-tidy configuration. Needs clang-tidy 19 or later (Debian trixie).
+#
+# Run it on the whole tree:  cmake --build --preset clang-debug --target clang-tidy
+# Or during the build:       cmake --preset clang-debug -DLPD8EDITOR_CLANG_TIDY=ON
+#
+# Start from whole families of checks, then turn off the ones that don't
+# fit, each with the reason. Each check is documented at
+# https://clang.llvm.org/extra/clang-tidy/checks/list.html
+---
+Checks:
+  - bugprone-*
+  - clang-analyzer-*
+  - concurrency-*
+  - cppcoreguidelines-*
+  - misc-*
+  - modernize-*
+  - performance-*
+  - portability-*
+  - readability-*
+
+  # Conflict with Qt idioms
+  # 'new QFoo(parent)' hands ownership to the parent QObject, which this
+  # check reads as a leak.
+  - -cppcoreguidelines-owning-memory
+  # Qt needs 'public slots:' and 'signals:' sections, which this check
+  # reports as redundant access specifiers.
+  - -readability-redundant-access-specifiers
+  # Reports slots (on_action..._triggered) and test functions, which must
+  # stay members so Qt can find them.
+  - -readability-convert-member-functions-to-static
+  # Doesn't understand Qt's forwarding headers (<QString> vs qstring.h), so
+  # its advice is wrong.
+  - -misc-include-cleaner
+
+  # Taste, or too noisy to be useful here
+  # 'auto f() -> int' everywhere is a style choice, not an improvement.
+  - -modernize-use-trailing-return-type
+  # Reports every getter. [[nodiscard]] is added by hand where ignoring a
+  # result is a bug (error returns).
+  - -modernize-use-nodiscard
+  # 'i', 'it' and 'q' are idiomatic.
+  - -readability-identifier-length
+  # MIDI is full of 127s and 0x7f, which are clearer than named constants.
+  - -readability-magic-numbers
+  - -cppcoreguidelines-avoid-magic-numbers
+  # Making enums one byte smaller is not worth the noise.
+  - -performance-enum-size
+  # Reports any function with two parameters of the same type.
+  - -bugprone-easily-swappable-parameters
+
+CheckOptions:
+  # 'if (pointer)' is idiomatic C++ and Qt. Integers still need an explicit
+  # comparison ('flags & X' becomes '(flags & X) != 0').
+  readability-implicit-bool-conversion.AllowPointerConditions: true
+  # QtTest macros (QCOMPARE, QVERIFY) expand to if/return, which would
+  # count as branches in every test function.
+  readability-function-cognitive-complexity.IgnoreMacros: true
+
+# Report warnings in our own headers. Headers in the build tree (uic and
+# moc output) sit deeper (..._autogen/include/) and are not matched.
+HeaderFilterRegex: '.*/(src|tests)/[^/]*\.h$'
+
+# Fixes (-fix) are formatted with .clang-format.
+FormatStyle: file
+...

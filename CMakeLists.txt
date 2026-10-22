@@ -75,6 +75,7 @@ include(GNUInstallDirs)
 include(cmake/CompilerWarnings.cmake)
 include(cmake/Sanitizers.cmake)
 include(cmake/Format.cmake)
+include(cmake/ClangTidy.cmake)
 
 find_package(ALSA REQUIRED)
 # Qt 6.8 is the version in Debian trixie, the oldest target we build and test.
