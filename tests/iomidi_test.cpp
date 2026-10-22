@@ -57,7 +57,12 @@ void TestIOMIdi::test_clientId()
 
 void TestIOMIdi::test_portId()
 {
-    QVERIFY(io->clientId() > 0);
+    // The port must exist on our client, with the name IOMidi gives it.
+    snd_seq_port_info_t *info = nullptr;
+    snd_seq_port_info_alloca(&info);
+    QCOMPARE(snd_seq_get_port_info(io->handle(), io->portId(), info), 0);
+    QCOMPARE(QString::fromUtf8(snd_seq_port_info_get_name(info)),
+             QCoreApplication::applicationName());
 }
 
 QTEST_GUILESS_MAIN(TestIOMIdi)

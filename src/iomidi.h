@@ -5,6 +5,8 @@
 
 #include <alsa/asoundlib.h>
 
+#include <memory>
+
 class IOMidi : public QObject
 {
     Q_OBJECT
@@ -26,9 +28,17 @@ signals:
 private:
     void readEvents() const;
 
-    snd_seq_t *m_seq_handle{nullptr};
+    // Closes the sequencer handle. As a unique_ptr deleter, it runs when the
+    // IOMidi is destroyed, and also when the constructor throws after the
+    // handle was opened: members that are already constructed are destroyed
+    // then, while the destructor of a partly constructed object never runs.
+    struct SequencerCloser
+    {
+        void operator()(snd_seq_t *seq) const;
+    };
+
+    std::unique_ptr<snd_seq_t, SequencerCloser> m_seq;
     unsigned char m_seq_port{0}; // only read after the constructor has set it
-    struct pollfd *m_pfds{nullptr};
 };
 
 #endif // IOMIDI_H

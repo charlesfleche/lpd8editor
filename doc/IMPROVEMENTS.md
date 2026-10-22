@@ -96,10 +96,10 @@ Decisions made before starting:
 - [x] 3.2 [`fcc1d51`](https://github.com/charlesfleche/lpd8editor/commit/fcc1d5145c50d21169da377bbe36eba2d90e86d5) Remove the Qt 5 compatibility code (`QT_VERSION` branches,
       `static_cast` signal overloads, the `setObsolete` shim) and use `nullptr`.
 - [x] 3.3 [`28fddb7`](https://github.com/charlesfleche/lpd8editor/commit/28fddb752865718f4d6afce7d206798f1f9572f0) `MidiConnectionsModel`: fix the off-by-one `dataChanged` range.
-- [x] 3.4 `IOMidi`: use `QCoreApplication`, because the downcasts to
+- [x] 3.4 [`ba36d2a`](https://github.com/charlesfleche/lpd8editor/commit/ba36d2a541b747441252aba8093cebaaddd3e34e) `IOMidi`: use `QCoreApplication`, because the downcasts to
       `QApplication`/`QGuiApplication` are undefined behaviour without a GUI
       app (UBSan reports them).
-- [ ] 3.5 `IOMidi`: no dangling `alloca` member, check the result of
+- [x] 3.5 `IOMidi`: no dangling `alloca` member, check the result of
       `snd_seq_event_input`, and use RAII so a throwing constructor doesn't
       leak the sequencer handle.
 - [ ] 3.6 Give every lambda `connect` a context object.
