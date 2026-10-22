@@ -46,6 +46,8 @@ if (RUN_CLANG_TIDY_EXECUTABLE)
         COMMAND ${RUN_CLANG_TIDY_EXECUTABLE}
             -p ${CMAKE_BINARY_DIR}
             -quiet
+            # Any finding fails the target (and CI), as with cppcheck.
+            -warnings-as-errors=*
             # Our sources only: files directly in <source dir>/src or /tests.
             # Anchoring on the source dir excludes what the build generates
             # (moc, uic and rcc output), even when the build folder is inside

@@ -79,10 +79,10 @@ Decisions made before starting:
 
 ## Phase 2: CI/CD (committed now, tested together later)
 
-- [x] 2.1 Test workflow: a {trixie container, ubuntu-26.04} × {gcc, clang}
+- [x] 2.1 [`6eef68d`](https://github.com/charlesfleche/lpd8editor/commit/6eef68dee2d4cc91ea9320b5ed984eaf34cfc454) Test workflow: a {trixie container, ubuntu-26.04} × {gcc, clang}
       matrix, runs on pull requests, least-privilege `permissions`, actions
       pinned to a commit SHA, and `concurrency` to cancel superseded runs.
-- [ ] 2.2 Quality workflow with jobs for clang-format, clang-tidy, cppcheck,
+- [x] 2.2 Quality workflow with jobs for clang-format, clang-tidy, cppcheck,
       ASan/UBSan, and valgrind.
 - [ ] 2.3 Release workflow: packages for both targets, a `SHA256SUMS` file,
       least privilege, and pinned actions.

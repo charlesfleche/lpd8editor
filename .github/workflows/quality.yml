@@ -1,0 +1,126 @@
+name: Quality
+
+# Static analysis, formatting and runtime checks. Each check is its own job,
+# so a failure says which one broke.
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # clang-format, clang-tidy and cppcheck give different results from one
+  # release to the next. Running them in the trixie container pins their
+  # versions (clang 19, cppcheck 2.17), so results don't change under us.
+
+  format:
+    name: clang-format
+    runs-on: ubuntu-26.04
+    container: debian:trixie
+    steps:
+      - name: Install git
+        run: apt-get update && apt-get install --yes --no-install-recommends ca-certificates git
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install dependencies
+        run: tools/ci/install-dependencies.sh clang-format
+      - name: Check formatting
+        run: |
+          cmake --preset clang-debug
+          cmake --build --preset clang-debug --target check-format
+
+  clang-tidy:
+    name: clang-tidy
+    runs-on: ubuntu-26.04
+    container: debian:trixie
+    steps:
+      - name: Install git
+        run: apt-get update && apt-get install --yes --no-install-recommends ca-certificates git
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install dependencies
+        run: tools/ci/install-dependencies.sh clang-tidy
+      - name: Configure and build
+        # clang-tidy needs the headers that uic and moc generate during the
+        # build (ui_mainwindow.h...), so build first.
+        run: |
+          cmake --preset clang-debug
+          cmake --build --preset clang-debug
+      - name: Run clang-tidy
+        run: cmake --build --preset clang-debug --target clang-tidy
+
+  cppcheck:
+    name: cppcheck
+    runs-on: ubuntu-26.04
+    container: debian:trixie
+    steps:
+      - name: Install git
+        run: apt-get update && apt-get install --yes --no-install-recommends ca-certificates git
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install dependencies
+        run: tools/ci/install-dependencies.sh cppcheck
+      - name: Configure and build
+        run: |
+          cmake --preset gcc-debug
+          cmake --build --preset gcc-debug
+      - name: Run cppcheck
+        run: cmake --build --preset gcc-debug --target cppcheck
+
+  sanitizers:
+    name: Sanitizers / ${{ matrix.compiler }}
+    # The newest runner image has the newest compilers, whose sanitizers
+    # find the most.
+    runs-on: ubuntu-26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install dependencies
+        run: tools/ci/install-dependencies.sh
+      - name: Reduce address space randomization
+        # ASan reserves fixed regions of the address space. Recent Ubuntu
+        # kernels randomize mmap addresses with 32 bits of entropy, which
+        # can make ASan crash at startup ('DEADLYSIGNAL'). 28 bits is the
+        # usual value, and still random.
+        run: sudo sysctl vm.mmap_rnd_bits=28
+      - name: Build and test with ASan and UBSan
+        run: |
+          cmake --preset ${{ matrix.compiler }}-asan -DLPD8EDITOR_WERROR=ON
+          cmake --build --preset ${{ matrix.compiler }}-asan
+          ctest --preset ${{ matrix.compiler }}-asan
+
+  valgrind:
+    name: Valgrind memcheck
+    runs-on: ubuntu-26.04
+    container: debian:trixie
+    steps:
+      - name: Install git
+        run: apt-get update && apt-get install --yes --no-install-recommends ca-certificates git
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install dependencies
+        run: tools/ci/install-dependencies.sh valgrind
+      - name: Build
+        run: |
+          cmake --preset valgrind
+          cmake --build --preset valgrind
+      - name: Run the tests under valgrind
+        run: ctest --test-dir build/valgrind -T memcheck --output-on-failure
+      - name: Keep the valgrind logs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: valgrind-logs
+          path: build/valgrind/Testing/Temporary/MemoryChecker.*.log
