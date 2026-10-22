@@ -1,12 +1,11 @@
 #ifndef COMMANDS_H
 #define COMMANDS_H
 
+#include "programsmodel.h"
+
 #include <QUndoCommand>
 #include <QVariant>
 
-class ProgramsModel;
-
-class QAbstractItemModel;
 class QItemSelectionModel;
 class QModelIndex;
 class QUndoStack;
@@ -51,11 +50,9 @@ private:
 class UpdateParameterCommand : public QUndoCommand
 {
 public:
-    UpdateParameterCommand(QAbstractItemModel *model,
-                           int row,
-                           int column,
+    UpdateParameterCommand(ProgramsModel *model,
+                           ParameterLocation location,
                            QVariant value,
-                           int role,
                            QUndoCommand *parent = nullptr);
 
     void undo() override;
@@ -64,11 +61,13 @@ public:
 private:
     void setDataAndKeepPrevious();
 
-    QAbstractItemModel *m_model;
-    const int m_row;
-    const int m_column;
+    // The model lives as long as the window, and the undo stack with it.
+    // What the command must *not* hold is anything the model rebuilds, such
+    // as its internal sub-models: m_location is resolved again at each
+    // undo and redo.
+    ProgramsModel *m_model;
+    const ParameterLocation m_location;
     QVariant m_value;
-    const int m_role;
 };
 
 class UpdateProgramFromSysexCommand : public QUndoCommand

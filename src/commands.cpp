@@ -90,18 +90,14 @@ void DeleteProgramCommand::undo()
     setObsolete(m_program_id == -1);
 }
 
-UpdateParameterCommand::UpdateParameterCommand(QAbstractItemModel *model,
-                                               int row,
-                                               int column,
+UpdateParameterCommand::UpdateParameterCommand(ProgramsModel *model,
+                                               ParameterLocation location,
                                                QVariant value,
-                                               int role,
                                                QUndoCommand *parent)
     : QUndoCommand(parent)
     , m_model(model)
-    , m_row(row)
-    , m_column(column)
+    , m_location(location)
     , m_value(std::move(value))
-    , m_role(role)
 {
     Q_CHECK_PTR(m_model);
 }
@@ -120,10 +116,18 @@ void UpdateParameterCommand::setDataAndKeepPrevious()
 {
     Q_CHECK_PTR(m_model);
 
+    const QModelIndex index = m_model->parameterIndex(m_location);
+    if (!index.isValid()) {
+        // The value no longer exists: nothing to undo or redo.
+        setObsolete(true);
+        return;
+    }
     const QVariant newValue = m_value;
-    const QModelIndex index = m_model->index(m_row, m_column);
-    m_value = index.data(m_role);
-    m_model->setData(index, newValue, m_role);
+    m_value = index.data(Qt::EditRole);
+    if (!m_model->writeParameter(index, newValue)) {
+        m_value = newValue;
+        setObsolete(true);
+    }
 }
 
 UpdateProgramFromSysexCommand::UpdateProgramFromSysexCommand(ProgramsModel *model,

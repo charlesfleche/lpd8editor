@@ -113,9 +113,9 @@ Decisions made before starting:
       in the tests.
 - [x] 3.11 [`dd04921`](https://github.com/charlesfleche/lpd8editor/commit/dd04921bfbeccad2bb65e1809353e626418316f5) `ProgramsModel::setData`: reject invalid values, skip changes that
       change nothing, and honour the role.
-- [x] 3.12 SysEx validation: check the manufacturer and model bytes, and
+- [x] 3.12 [`d14dbc5`](https://github.com/charlesfleche/lpd8editor/commit/d14dbc51bcbcb2523b0f08b044830abf1439b60c) SysEx validation: check the manufacturer and model bytes, and
       validate imported files before they reach storage.
-- [ ] 3.13 Undo commands store identities, not model pointers. This fixes the
+- [x] 3.13 Undo commands store identities, not model pointers. This fixes the
       heap-use-after-free seen with ASan; add a regression test.
 - [ ] 3.14 Startup: no exceptions escaping `MainWindow`, and a message box on
       fatal errors instead of `std::terminate`.

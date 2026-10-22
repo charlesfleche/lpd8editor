@@ -2,7 +2,7 @@
 #include "db.h"
 #include "programsmodel.h"
 
-#include <QStandardItemModel>
+#include <QUndoStack>
 
 #include <QtTest>
 
@@ -19,6 +19,7 @@ private slots:
     void test_DeleteProgramCommand();
     void test_UpdateParameterCommand();
     void test_UpdateProgramFromSysexCommand();
+    void test_undoEditAfterProgramWasDeletedAndRestored();
 
 private:
     QSqlDatabase db;
@@ -78,17 +79,18 @@ void TestCommands::test_DeleteProgramCommand()
 
 void TestCommands::test_UpdateParameterCommand()
 {
-    const QString initial("initial");
-    const QString updated("updated");
+    const int id = pm->createProgram(QStringLiteral("initial"));
+    const int nameColumn = 1; // programId, name, channel
+    const ParameterLocation name{.programId = id,
+                                 .group = ParameterLocation::Group::Program,
+                                 .controlId = 0,
+                                 .column = nameColumn};
 
-    QStandardItemModel m;
-    m.appendRow(new QStandardItem(initial));
-
-    UpdateParameterCommand cmd(&m, 0, 0, updated, Qt::DisplayRole);
+    UpdateParameterCommand cmd(pm, name, QStringLiteral("updated"));
     cmd.redo();
-    QCOMPARE(m.data(m.index(0, 0)).toString(), updated);
+    QCOMPARE(pm->parameterIndex(name).data().toString(), QStringLiteral("updated"));
     cmd.undo();
-    QCOMPARE(m.data(m.index(0, 0)).toString(), initial);
+    QCOMPARE(pm->parameterIndex(name).data().toString(), QStringLiteral("initial"));
 }
 
 void TestCommands::test_UpdateProgramFromSysexCommand()
@@ -103,6 +105,31 @@ void TestCommands::test_UpdateProgramFromSysexCommand()
     QCOMPARE(programSysex(id), updated);
     cmd.undo();
     QCOMPARE(programSysex(id), initial);
+}
+
+void TestCommands::test_undoEditAfterProgramWasDeletedAndRestored()
+{
+    // Edit a pad, delete its program, then undo both. Undoing the deletion
+    // recreates the program with new internal models, and the edit's undo
+    // must still find the pad. This used to be a heap-use-after-free: the
+    // edit's command kept a pointer to a model deleted with the program.
+    const int id = pm->createProgram();
+    const QModelIndex pads = pm->padsParentIndex(pm->programIndex(id));
+    const int noteColumn = 2; // programId, controlId, note, ...
+    QVERIFY(pm->setData(pm->index(0, noteColumn, pads), 60, Qt::EditRole));
+
+    QUndoStack *stack = undoStack();
+    stack->push(new DeleteProgramCommand(pm, id));
+    // Run the deferred deletions (deleteLater()), as the event loop would
+    // between two user actions.
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+
+    stack->undo(); // restores the program, with the note at 60
+    const QModelIndex restoredPads = pm->padsParentIndex(pm->programIndex(id));
+    QCOMPARE(pm->index(0, noteColumn, restoredPads).data(Qt::EditRole).toInt(), 60);
+
+    stack->undo(); // undoes the edit
+    QCOMPARE(pm->index(0, noteColumn, restoredPads).data(Qt::EditRole).toInt(), 36);
 }
 
 QTEST_GUILESS_MAIN(TestCommands)

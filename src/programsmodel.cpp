@@ -31,6 +31,7 @@ static const QString toggle_label = "Toggle";
 static const int control_type_pad = 0;
 static const int control_type_knob = 1;
 static const int program_id_column_index = 0;
+static const int control_id_column_index = 1;
 
 ProgramsModel::ProgramsModel(QObject *parent, const QSqlDatabase &db)
     : QAbstractItemModel(parent)
@@ -254,8 +255,11 @@ bool ProgramsModel::setData(const QModelIndex &index, const QVariant &value, int
     QAbstractItemModel *m = model(index);
     Q_CHECK_PTR(m);
 
-    QUndoCommand *cmd = new UpdateParameterCommand(m, index.row(), index.column(), value, role);
-    undoStack()->push(cmd);
+    const std::optional<ParameterLocation> location = parameterLocation(index);
+    if (!location) {
+        return false;
+    }
+    undoStack()->push(new UpdateParameterCommand(this, *location, value));
     return true;
 }
 
@@ -553,6 +557,94 @@ QModelIndex ProgramsModel::programIndex(int programId) const
     }
 
     return {};
+}
+
+namespace {
+
+// The program id of the proxy 'model' in 'proxies', or -1.
+int programIdOf(const QHash<int, QSortFilterProxyModel *> &proxies, const QAbstractItemModel *model)
+{
+    for (auto it = proxies.cbegin(); it != proxies.cend(); ++it) {
+        if (it.value() == model) {
+            return it.key();
+        }
+    }
+    return -1;
+}
+
+} // namespace
+
+std::optional<ParameterLocation> ProgramsModel::parameterLocation(const QModelIndex &index) const
+{
+    if (!index.isValid()) {
+        return std::nullopt;
+    }
+    const QAbstractItemModel *m = model(index);
+
+    if (m == m_programs) {
+        const int programId =
+                m->index(index.row(), program_id_column_index).data(Qt::EditRole).toInt();
+        return ParameterLocation{.programId = programId,
+                                 .group = ParameterLocation::Group::Program,
+                                 .controlId = 0,
+                                 .column = index.column()};
+    }
+
+    const auto group = [&]() -> std::optional<ParameterLocation::Group> {
+        if (programIdOf(m_pads_proxies, m) != -1) {
+            return ParameterLocation::Group::Pads;
+        }
+        if (programIdOf(m_knobs_proxies, m) != -1) {
+            return ParameterLocation::Group::Knobs;
+        }
+        return std::nullopt; // the 'pads' and 'knobs' group rows are not parameters
+    }();
+    if (!group) {
+        return std::nullopt;
+    }
+    const auto &proxies =
+            *group == ParameterLocation::Group::Pads ? m_pads_proxies : m_knobs_proxies;
+    const int controlId = m->index(index.row(), control_id_column_index).data(Qt::EditRole).toInt();
+    return ParameterLocation{.programId = programIdOf(proxies, m),
+                             .group = *group,
+                             .controlId = controlId,
+                             .column = index.column()};
+}
+
+QModelIndex ProgramsModel::parameterIndex(const ParameterLocation &location) const
+{
+    const QModelIndex program = programIndex(location.programId);
+    if (!program.isValid()) {
+        return {};
+    }
+
+    switch (location.group) {
+    case ParameterLocation::Group::Program:
+        return index(program.row(), location.column);
+    case ParameterLocation::Group::Pads:
+    case ParameterLocation::Group::Knobs: {
+        const QModelIndex group = location.group == ParameterLocation::Group::Pads
+                ? padsParentIndex(program)
+                : knobsParentIndex(program);
+        for (int row = 0; row < rowCount(group); ++row) {
+            const QModelIndex controlId = index(row, control_id_column_index, group);
+            if (controlId.data(Qt::EditRole).toInt() == location.controlId) {
+                return index(row, location.column, group);
+            }
+        }
+        return {};
+    }
+    }
+    return {};
+}
+
+bool ProgramsModel::writeParameter(const QModelIndex &index, const QVariant &value)
+{
+    QAbstractItemModel *m = model(index);
+    if (m == nullptr) {
+        return false;
+    }
+    return m->setData(m->index(index.row(), index.column()), value, Qt::EditRole);
 }
 
 int ProgramsModel::createProgram(const QString &programName, const QByteArray &sysex, int programId)

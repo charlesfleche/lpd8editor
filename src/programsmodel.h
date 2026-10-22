@@ -4,11 +4,27 @@
 #include <QRegularExpression>
 #include <QSqlTableModel>
 
+#include <optional>
+
 class QAbstractItemModel;
 class QItemSelectionModel;
 class QSortFilterProxyModel;
 class QSqlTableModel;
 class QStandardItemModel;
+
+// Where an editable value lives, in terms that stay valid when the model
+// rebuilds its internal structure (for example after a program is deleted
+// and then restored by undo): which program, which group of controls, which
+// control, which field. Undo commands store this instead of model pointers.
+struct ParameterLocation
+{
+    enum class Group { Program, Pads, Knobs };
+
+    int programId{-1};
+    Group group{Group::Program};
+    int controlId{0}; // pads and knobs only, 1-8
+    int column{-1};
+};
 
 class ProgramsModel : public QAbstractItemModel
 {
@@ -34,6 +50,12 @@ public:
     QAbstractItemModel *knobsHeaderModel() const;
 
     QModelIndex programIndex(int programId) const;
+
+    std::optional<ParameterLocation> parameterLocation(const QModelIndex &index) const;
+    QModelIndex parameterIndex(const ParameterLocation &location) const;
+    // Writes a value directly, without the undo stack. For the undo
+    // commands, which are already on the stack.
+    bool writeParameter(const QModelIndex &index, const QVariant &value);
     QString programName(int programId) const;
     QByteArray programSysex(int programId) const;
 
