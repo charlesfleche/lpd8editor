@@ -10,7 +10,9 @@
 void setObsolete(bool) { }
 #endif
 
-static const QString undo_stack_object_name = "undo_stack";
+namespace {
+
+const QString undo_stack_object_name = "undo_stack";
 
 QUndoStack *setupUndoStack(QObject *parent)
 {
@@ -18,6 +20,8 @@ QUndoStack *setupUndoStack(QObject *parent)
     stack->setObjectName(undo_stack_object_name);
     return stack;
 }
+
+} // namespace
 
 QUndoStack *undoStack()
 {

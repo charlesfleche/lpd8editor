@@ -20,10 +20,14 @@ QString readTextFile(const QString &path)
     return ts.readAll();
 }
 
+namespace {
+
 QDir dataDir()
 {
     return {QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)};
 }
+
+} // namespace
 
 bool initFilesystem()
 {

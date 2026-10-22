@@ -4,7 +4,12 @@
 
 #include <QtDebug>
 
-bool operator==(const snd_seq_addr_t &lhs, const snd_seq_addr_t &rhs)
+// 'static' rather than an anonymous namespace: QList::indexOf() finds this
+// operator through argument-dependent lookup, which only searches the
+// namespace of snd_seq_addr_t (the global one). A function in an anonymous
+// namespace is not found that way, and the build fails.
+// NOLINTNEXTLINE(misc-use-anonymous-namespace)
+static bool operator==(const snd_seq_addr_t &lhs, const snd_seq_addr_t &rhs)
 {
     return lhs.client == rhs.client && lhs.port == rhs.port;
 }

@@ -4,6 +4,8 @@
 
 #include <QApplication>
 
+namespace {
+
 bool hasLut(const QModelIndex &index)
 {
     return index.data(MidiDataRole::MidiValues).isValid();
@@ -25,6 +27,8 @@ bool isSpinbox(const QModelIndex &index)
 {
     return hasLut(index) && lut(index).size() > 2;
 }
+
+} // namespace
 
 MidiValueDelegate::MidiValueDelegate(QObject *parent)
     : QStyledItemDelegate(parent)

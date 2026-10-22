@@ -42,6 +42,8 @@ int knobsCount()
     return 8;
 }
 
+namespace {
+
 // Caller handle bound exceptions
 bool is(const QByteArray &b, const char *code, int size)
 {
@@ -52,6 +54,8 @@ bool is(const QByteArray &b, const char *code, int size)
     }
     return b.size() == size;
 }
+
+} // namespace
 
 Type type(const QByteArray &b)
 {
@@ -64,6 +68,8 @@ Type type(const QByteArray &b)
     return TypeInvalid;
 }
 
+namespace {
+
 void addHeader(QByteArray &b)
 {
     b += sysex_start;
@@ -71,6 +77,8 @@ void addHeader(QByteArray &b)
     b += sysex_model_byte_1;
     b += sysex_model_byte_2;
 }
+
+} // namespace
 
 void addFooter(QByteArray &b)
 {

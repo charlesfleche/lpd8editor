@@ -55,9 +55,9 @@ Decisions made before starting:
 - [x] 1.12a [`a7f67c0`](https://github.com/charlesfleche/lpd8editor/commit/a7f67c018ad6a7b0e5cfbb1f47a58a232ed71e43) Add `.clang-tidy`, an `LPD8EDITOR_CLANG_TIDY` option, and a
       `clang-tidy` target. This commit only makes the findings visible
       (about 300).
-- [x] 1.12b Apply clang-tidy's automatic modernization fixes (`override`,
+- [x] 1.12b [`7116c5e`](https://github.com/charlesfleche/lpd8editor/commit/7116c5ebc9ed80eddd4f6d5afd25b7924e28bca3) Apply clang-tidy's automatic modernization fixes (`override`,
       `auto`, `return {}`, default member initializers, range-for...).
-- [ ] 1.12c Give file-local functions and constants internal linkage.
+- [x] 1.12c Give file-local functions and constants internal linkage.
 - [ ] 1.12d Make const what never changes, and initialize every variable.
 - [ ] 1.12e Spell out lambda captures instead of `[=]`.
 - [ ] 1.12f Name parameters, the same way in declarations and definitions.
@@ -67,7 +67,7 @@ Decisions made before starting:
       Findings deliberately left for later items, which rewrite that code:
       `goto` and macros in `db.cpp` (4.7), the macro in `lpd8_sysex.cpp`
       (4.2), `const_cast` in `ProgramsModel` (4.5), pointer arithmetic in
-      `IOMidi` (3.5), and mutable globals (3.1).
+      `IOMidi` (3.5), and dead code and mutable globals (3.1).
 - [ ] 1.13 Add a cppcheck configuration and a `cppcheck` target.
 - [ ] 1.14 Write the coding conventions in `CONTRIBUTING.md` and update
       `CLAUDE.md` to match.
