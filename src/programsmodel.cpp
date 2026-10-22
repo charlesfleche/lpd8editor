@@ -228,8 +228,27 @@ QVariant ProgramsModel::data(const QModelIndex &index, int role) const
 
 bool ProgramsModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    if (!index.isValid()) {
+    // Only edits are accepted: the other roles (display text, value lists)
+    // are computed from the stored value.
+    if (!index.isValid() || role != Qt::EditRole || (flags(index) & Qt::ItemIsEditable) == 0) {
         return false;
+    }
+
+    // A value with a lookup table must be one of its entries: 0-127 for
+    // MIDI values, 0-15 for channels, 0-1 for toggles. Rejecting it here
+    // keeps it out of the undo stack, and tells the caller.
+    if (hasLut(index)) {
+        bool isInt = false;
+        const int v = value.toInt(&isInt);
+        if (!isInt || v < 0 || v >= lut(index).size()) {
+            return false;
+        }
+    }
+
+    // Leaving an editor without changing anything is not an edit, and must
+    // not add an undo step that does nothing.
+    if (index.data(Qt::EditRole) == value) {
+        return true;
     }
 
     QAbstractItemModel *m = model(index);

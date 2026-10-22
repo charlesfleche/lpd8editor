@@ -108,10 +108,10 @@ Decisions made before starting:
 - [x] 3.8 [`64e1f24`](https://github.com/charlesfleche/lpd8editor/commit/64e1f24898f3d0d59117fba9b6532a274ccf01d8) `updateProgramFromSysex`: check bounds *before* dereferencing.
 - [x] 3.9 [`9917b18`](https://github.com/charlesfleche/lpd8editor/commit/9917b185e368137d25b609c9c5c5f9897182e558) `initDb`: report query errors and create the schema inside one
       transaction.
-- [x] 3.10 `ProgramsModel`: respect the `QAbstractItemModel` contract for
+- [x] 3.10 [`5f4409b`](https://github.com/charlesfleche/lpd8editor/commit/5f4409b0afed1aa5ad4b97df092814a7fb310b1b) `ProgramsModel`: respect the `QAbstractItemModel` contract for
       invalid indexes and `hasIndex`, checked by `QAbstractItemModelTester`
       in the tests.
-- [ ] 3.11 `ProgramsModel::setData`: reject invalid values, skip changes that
+- [x] 3.11 `ProgramsModel::setData`: reject invalid values, skip changes that
       change nothing, and honour the role.
 - [ ] 3.12 SysEx validation: check the manufacturer and model bytes, and
       validate imported files before they reach storage.

@@ -1,11 +1,13 @@
 #include "programsmodel.h"
 
+#include "commands.h"
 #include "db.h"
 
 #include "test_sysex.h"
 
 #include <QAbstractItemModelTester>
 #include <QSqlDatabase>
+#include <QUndoStack>
 
 #include <QtTest>
 
@@ -22,6 +24,9 @@ private slots:
     void test();
 
     void test_modelContract();
+
+    void test_setData_data();
+    void test_setData();
 
 private:
     QSqlDatabase db;
@@ -91,6 +96,43 @@ void TestProgramsModel::test_modelContract()
     const int id = pm->createProgram(QStringLiteral("Third"));
     QVERIFY(pm->updateProgramFromSysex(id, allzero_sysex));
     QVERIFY(pm->deleteProgram(id));
+}
+
+void TestProgramsModel::test_setData_data()
+{
+    QTest::addColumn<QVariant>("value");
+    QTest::addColumn<int>("role");
+    QTest::addColumn<bool>("accepted");
+    QTest::addColumn<bool>("undoable");
+
+    // The default note of pad 1 is 36 (C1).
+    QTest::newRow("New value") << QVariant(60) << int(Qt::EditRole) << true << true;
+    QTest::newRow("Same value") << QVariant(36) << int(Qt::EditRole) << true << false;
+    QTest::newRow("Above the MIDI range") << QVariant(128) << int(Qt::EditRole) << false << false;
+    QTest::newRow("Negative") << QVariant(-1) << int(Qt::EditRole) << false << false;
+    QTest::newRow("Not a number") << QVariant("C1") << int(Qt::EditRole) << false << false;
+    QTest::newRow("Display role") << QVariant(60) << int(Qt::DisplayRole) << false << false;
+}
+
+void TestProgramsModel::test_setData()
+{
+    // NOLINTBEGIN(misc-const-correctness): QFETCH declares the variables
+    QFETCH(QVariant, value);
+    QFETCH(int, role);
+    QFETCH(bool, accepted);
+    QFETCH(bool, undoable);
+    // NOLINTEND(misc-const-correctness)
+
+    const int id = pm->createProgram();
+    const QModelIndex pads = pm->padsParentIndex(pm->programIndex(id));
+    const int noteColumn = 2; // programId, controlId, note, ...
+    const QModelIndex note = pm->index(0, noteColumn, pads);
+    QCOMPARE(note.data(Qt::EditRole).toInt(), 36);
+
+    const int undoCount = undoStack()->count();
+    QCOMPARE(pm->setData(note, value, role), accepted);
+    QCOMPARE(undoStack()->count(), undoCount + (undoable ? 1 : 0));
+    QCOMPARE(note.data(Qt::EditRole), accepted ? value : QVariant(36));
 }
 
 QTEST_GUILESS_MAIN(TestProgramsModel)
