@@ -81,6 +81,7 @@ find_package(Qt6 6.8 REQUIRED COMPONENTS Sql Svg Widgets)
 
 # CTest defines the BUILD_TESTING option (ON by default). Packagers can
 # configure with -DBUILD_TESTING=OFF to skip building the tests.
+include(cmake/Memcheck.cmake)
 include(CTest)
 
 add_subdirectory(src)

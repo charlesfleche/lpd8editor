@@ -42,9 +42,9 @@ Decisions made before starting:
 - [x] 1.6a [`a1785a0`](https://github.com/charlesfleche/lpd8editor/commit/a1785a0ca958814d4d9441441c618d506182e338) Add one shared compiler-warnings target for GCC and Clang, with an
       `LPD8EDITOR_WERROR` option. This commit only makes the warnings visible.
 - [x] 1.6b [`a9ef1d0`](https://github.com/charlesfleche/lpd8editor/commit/a9ef1d0fbffddac7c8f804b32205d5d60768e451) Fix the about 50 warnings it shows, so `-Werror` builds pass.
-- [x] 1.7 Add an `LPD8EDITOR_SANITIZERS` option for AddressSanitizer and
+- [x] 1.7 [`2f63718`](https://github.com/charlesfleche/lpd8editor/commit/2f637187bdb468b9222bde7c8c8fa362c8e2b20d) Add an `LPD8EDITOR_SANITIZERS` option for AddressSanitizer and
       UndefinedBehaviorSanitizer.
-- [ ] 1.8 Run the test suite under valgrind memcheck with `ctest -T memcheck`,
+- [x] 1.8 Run the test suite under valgrind memcheck with `ctest -T memcheck`,
       with a commented suppressions file.
 - [ ] 1.9 Add `CMakePresets.json` with named, reproducible configurations: GCC
       or Clang, debug or release, plus sanitizers and valgrind.

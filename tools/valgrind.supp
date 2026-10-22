@@ -1,0 +1,8 @@
+# Valgrind suppressions, used by 'ctest -T memcheck' (see cmake/Memcheck.cmake).
+#
+# Add an entry only for an error that is *not* in lpd8editor code, for
+# example inside Qt, fontconfig or the graphics driver, and say why.
+# valgrind prints ready-made entries (--gen-suppressions=all) in
+# Testing/Temporary/MemoryChecker.<n>.log.
+#
+# The file is empty for now: the test suite runs clean on Debian trixie.
