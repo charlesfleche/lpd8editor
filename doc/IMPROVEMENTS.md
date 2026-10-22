@@ -119,9 +119,9 @@ Decisions made before starting:
       heap-use-after-free seen with ASan; add a regression test.
 - [x] 3.14 [`a9c7f9d`](https://github.com/charlesfleche/lpd8editor/commit/a9c7f9da113f88841180d0b09da8417ad04f19c4) Startup: no exceptions escaping `MainWindow`, and a message box on
       fatal errors instead of `std::terminate`.
-- [x] 3.15 Import and export: show errors to the user, add file filters, use
+- [x] 3.15 [`41cc82d`](https://github.com/charlesfleche/lpd8editor/commit/41cc82dc843fde8f6c9df109f5d108ca88905d8b) Import and export: show errors to the user, add file filters, use
       `QFileInfo` for names, and wrap user-visible strings in `tr()`.
-- [ ] 3.16 Qt idioms: hold `Ui::MainWindow` by value, get the delegate's style
+- [x] 3.16 Qt idioms: hold `Ui::MainWindow` by value, get the delegate's style
       from its widget, drop the noisy `Q_CHECK_PTR` calls, and use the
       multi-argument `QString::arg`.
 - [ ] 3.17 Replace magic column numbers with named constants.

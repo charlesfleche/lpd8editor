@@ -18,7 +18,7 @@ MidiConnectionsModel::MidiConnectionsModel(IOMidi *io)
     : QAbstractListModel(io)
     , m_io(io)
 {
-    Q_CHECK_PTR(m_io);
+    Q_ASSERT(m_io);
 
     connect(m_io, &IOMidi::eventReceived, this, &MidiConnectionsModel::handleMidiEvent);
 
@@ -52,7 +52,7 @@ MidiConnectionsModel::MidiConnectionsModel(IOMidi *io)
             }
 
             const snd_seq_addr_t *addr = snd_seq_port_info_get_addr(pinfo);
-            Q_CHECK_PTR(addr);
+            Q_ASSERT(addr);
 
             addAddress(addr);
         }
@@ -147,8 +147,6 @@ void MidiConnectionsModel::connectPort(const QModelIndex &idx)
 
 void MidiConnectionsModel::disconnectAllPorts() const
 {
-    Q_CHECK_PTR(m_io);
-
     snd_seq_query_subscribe_t *subs = nullptr;
     snd_seq_query_subscribe_alloca(&subs);
     const snd_seq_addr_t ownaddr = {m_io->clientId(), m_io->portId()};
@@ -186,8 +184,6 @@ void MidiConnectionsModel::disconnectAllPorts() const
 
 void MidiConnectionsModel::connectPort(const snd_seq_addr_t &addr)
 {
-    Q_CHECK_PTR(m_io);
-
     if (snd_seq_connect_from(m_io->handle(), m_io->portId(), addr.client, addr.port) < 0) {
         qWarning() << "Cannot connect from";
     }
@@ -199,8 +195,7 @@ void MidiConnectionsModel::connectPort(const snd_seq_addr_t &addr)
 
 void MidiConnectionsModel::handleMidiEvent(const snd_seq_event_t *ev)
 {
-    Q_CHECK_PTR(m_io);
-    Q_CHECK_PTR(ev);
+    Q_ASSERT(ev);
 
     const snd_seq_addr_t ownaddr = {m_io->clientId(), m_io->portId()};
 
@@ -233,7 +228,7 @@ void MidiConnectionsModel::handleMidiEvent(const snd_seq_event_t *ev)
 
 void MidiConnectionsModel::addAddressIfAccepted(const snd_seq_addr_t *addr)
 {
-    Q_CHECK_PTR(addr);
+    Q_ASSERT(addr);
 
     if (acceptAddress(addr)) {
         addAddress(addr);
@@ -242,7 +237,7 @@ void MidiConnectionsModel::addAddressIfAccepted(const snd_seq_addr_t *addr)
 
 void MidiConnectionsModel::removeAddressIfAccepted(const snd_seq_addr_t *addr)
 {
-    Q_CHECK_PTR(addr);
+    Q_ASSERT(addr);
 
     const int r = static_cast<int>(m_addrs.indexOf(*addr));
     if (r >= 0) {
@@ -254,7 +249,7 @@ void MidiConnectionsModel::removeAddressIfAccepted(const snd_seq_addr_t *addr)
 
 void MidiConnectionsModel::notifyDataChangedForAddress(const snd_seq_addr_t *addr)
 {
-    Q_CHECK_PTR(addr);
+    Q_ASSERT(addr);
 
     const int r = static_cast<int>(m_addrs.indexOf(*addr));
     if (r >= 0) {
@@ -265,7 +260,7 @@ void MidiConnectionsModel::notifyDataChangedForAddress(const snd_seq_addr_t *add
 
 void MidiConnectionsModel::addAddress(const snd_seq_addr_t *addr)
 {
-    Q_CHECK_PTR(addr);
+    Q_ASSERT(addr);
     Q_ASSERT(!m_addrs.contains(*addr));
 
     const int row = static_cast<int>(m_addrs.count());
@@ -276,7 +271,7 @@ void MidiConnectionsModel::addAddress(const snd_seq_addr_t *addr)
 
 bool MidiConnectionsModel::acceptAddress(const snd_seq_addr_t *addr) const
 {
-    Q_CHECK_PTR(addr);
+    Q_ASSERT(addr);
 
     snd_seq_client_info_t *cinfo = nullptr;
     snd_seq_client_info_alloca(&cinfo);
@@ -293,8 +288,7 @@ bool MidiConnectionsModel::acceptAddress(const snd_seq_addr_t *addr) const
 
 bool MidiConnectionsModel::acceptClient(const snd_seq_client_info_t *info) const
 {
-    Q_CHECK_PTR(m_io);
-    Q_CHECK_PTR(info);
+    Q_ASSERT(info);
 
     const int id = snd_seq_client_info_get_client(info);
     return id != m_io->clientId() && id != SND_SEQ_CLIENT_SYSTEM;
@@ -302,7 +296,7 @@ bool MidiConnectionsModel::acceptClient(const snd_seq_client_info_t *info) const
 
 bool MidiConnectionsModel::acceptPort(const snd_seq_port_info_t *info) const
 {
-    Q_CHECK_PTR(info);
+    Q_ASSERT(info);
 
     const unsigned int caps = snd_seq_port_info_get_capability(info);
     return (caps & SND_SEQ_PORT_CAP_NO_EXPORT) == 0 && (caps & SND_SEQ_PORT_CAP_READ) != 0
@@ -325,7 +319,6 @@ QString MidiConnectionsModel::portName(const QModelIndex &index) const
 MidiConnectionsModel::Directions
 MidiConnectionsModel::portConnection(const QModelIndex &index) const
 {
-    Q_CHECK_PTR(m_io);
     Q_ASSERT(index.isValid());
 
     return portConnection(m_addrs[index.row()]);
@@ -334,8 +327,6 @@ MidiConnectionsModel::portConnection(const QModelIndex &index) const
 MidiConnectionsModel::Directions
 MidiConnectionsModel::portConnection(const snd_seq_addr_t &addr) const
 {
-    Q_CHECK_PTR(m_io);
-
     MidiConnectionsModel::Directions ret = Direction::Disconnected;
 
     const snd_seq_addr_t ownaddr = {m_io->clientId(), m_io->portId()};

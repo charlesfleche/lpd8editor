@@ -7,7 +7,7 @@ SysexHandler::SysexHandler(IOMidi *io)
     : QObject(io)
     , m_io(io)
 {
-    Q_CHECK_PTR(m_io);
+    Q_ASSERT(m_io);
 
     connect(m_io, &IOMidi::eventReceived, this, &SysexHandler::handleMidiEvent);
 }
@@ -24,7 +24,6 @@ void SysexHandler::sendProgram(const QByteArray &sysex, int deviceProgramId) con
 {
     // XXX This check should be data driven, not hardcoded
     Q_ASSERT(deviceProgramId >= 1 && deviceProgramId <= 4);
-    Q_CHECK_PTR(m_io);
 
     QByteArray s(sysex);
     sysex::makeSetProgramRequest(s, deviceProgramId);
@@ -33,7 +32,7 @@ void SysexHandler::sendProgram(const QByteArray &sysex, int deviceProgramId) con
 
 void SysexHandler::handleMidiEvent(const snd_seq_event_t *ev) const
 {
-    Q_CHECK_PTR(ev);
+    Q_ASSERT(ev);
 
     if (ev->type != SND_SEQ_EVENT_SYSEX) {
         return;

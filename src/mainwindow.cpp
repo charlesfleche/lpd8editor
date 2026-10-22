@@ -31,16 +31,14 @@ static const QString SETTINGS_KEY_DEFAULT_SYSEX = "default/sysex";
 MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , programsModel(new ProgramsModel(this, db))
 {
-    programsModel = new ProgramsModel(this, db);
-
     ui->setupUi(this);
     setStatusBar(nullptr);
 
     // Undo
 
     QUndoStack *stack = undoStack();
-    Q_CHECK_PTR(stack);
 
     QAction *undoAction = stack->createUndoAction(this, tr("Undo"));
     undoAction->setShortcuts(QKeySequence::Undo);
@@ -94,7 +92,6 @@ MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
     // Refresh action delete program
 
     QItemSelectionModel *sel = ui->programsView->selectionModel();
-    Q_CHECK_PTR(sel);
     connect(sel,
             &QItemSelectionModel::selectionChanged,
             this,
@@ -105,8 +102,6 @@ MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
             &QDataWidgetMapper::setCurrentModelIndex);
 
     connect(sel, &QItemSelectionModel::currentRowChanged, this, [this](const QModelIndex &current) {
-        Q_CHECK_PTR(programsModel);
-
         ui->padsView->setRootIndex(programsModel->padsParentIndex(current));
         ui->knobsView->setRootIndex(programsModel->knobsParentIndex(current));
     });
@@ -131,6 +126,7 @@ MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
     IOMidi *io = nullptr;
     try {
         io = new IOMidi(this);
+        midi = io;
     } catch (const std::runtime_error &e) {
         qWarning() << "Disabling MIDI: " << e.what();
         return;
@@ -159,27 +155,27 @@ MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
 
     // MIDI actions
 
-    QList<QAction *> midiSendActions = {ui->actionGetProgram1,
-                                        ui->actionGetProgram2,
-                                        ui->actionGetProgram3,
-                                        ui->actionGetProgram4};
+    // 'Get program N' asks the device for its program N, 'Send to program N'
+    // writes the selected program into the device's slot N.
+    QList<QAction *> getProgramActions = {ui->actionGetProgram1,
+                                          ui->actionGetProgram2,
+                                          ui->actionGetProgram3,
+                                          ui->actionGetProgram4};
 
-    QList<QAction *> midiReceiveActions{
+    QList<QAction *> sendProgramActions{
             ui->actionSendToProgram1,
             ui->actionSendToProgram2,
             ui->actionSendToProgram3,
             ui->actionSendToProgram4,
     };
 
-    const QList<QAction *> midiActions = midiSendActions + midiReceiveActions;
+    const QList<QAction *> midiActions = getProgramActions + sendProgramActions;
 
     // Connected below with connectionsModel as the context: it is the
     // shortest-lived object the lambda uses (a child of 'io'), so the
     // connections end when it is destroyed.
     auto midiActionsSetEnabled = [this, midiActions, connectionsModel]() {
         for (QAction *a : midiActions) {
-            Q_CHECK_PTR(a);
-
             a->setEnabled(connectionsModel->connected()
                           && ui->programsView->selectionModel()->currentIndex().row() != -1);
         }
@@ -204,10 +200,6 @@ MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
     auto *sysexHandler = new SysexHandler(io);
 
     connect(sysexHandler, &SysexHandler::programReceived, this, [this](const QByteArray &sysex) {
-        Q_CHECK_PTR(ui->programsView->selectionModel());
-        Q_CHECK_PTR(programsModel);
-        Q_CHECK_PTR(undoStack());
-
         const int programId = currentSelectedProjectId();
         if (programId == -1) {
             Q_UNIMPLEMENTED();
@@ -217,16 +209,14 @@ MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
         }
     });
 
-    for (int i = 0; i < midiSendActions.count(); ++i) {
-        connect(midiSendActions[i], &QAction::triggered, sysexHandler, [sysexHandler, i]() {
-            Q_CHECK_PTR(sysexHandler);
-
+    for (int i = 0; i < getProgramActions.count(); ++i) {
+        connect(getProgramActions[i], &QAction::triggered, sysexHandler, [sysexHandler, i]() {
             sysexHandler->getProgram(i + 1);
         });
     }
 
-    for (int i = 0; i < midiReceiveActions.count(); ++i) {
-        connect(midiReceiveActions[i],
+    for (int i = 0; i < sendProgramActions.count(); ++i) {
+        connect(sendProgramActions[i],
                 &QAction::triggered,
                 sysexHandler,
                 [this, sysexHandler, i]() {
@@ -239,7 +229,25 @@ MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+    // Teardown order. After this body, 'ui' is destroyed, and only then do
+    // the base class destructors delete the children. Signals that children
+    // emit while being deleted would still reach this window's slots and
+    // lambdas, which use 'ui'. So, while 'ui' still exists, remove every
+    // object outside the window's widgets that connects into them:
+    //
+    // - the MIDI objects (lambdas using 'ui' and programsModel)
+    // - the selection model's connections to this window (the
+    //   currentRowChanged lambda, refreshUiAccordingToSelection)
+    // - the programs model (modelReset -> refreshUiAccordingToSelection,
+    //   and the lambdas above)
+    //
+    // tests/mainwindow_test.cpp makes signals fire during the teardown to
+    // check this.
+    delete midi;
+    midi = nullptr;
+    ui->programsView->selectionModel()->disconnect(this);
+    delete programsModel;
+    programsModel = nullptr;
 }
 
 int MainWindow::programModelColumn() const
@@ -249,23 +257,23 @@ int MainWindow::programModelColumn() const
 
 void MainWindow::on_actionNewProgram_triggered()
 {
-    Q_CHECK_PTR(programsModel);
-    Q_CHECK_PTR(undoStack());
-
-    QUndoCommand *cmd =
-            new CreateProgramCommand(programsModel,
-                                     QSettings().value(SETTINGS_KEY_DEFAULT_NAME).toString(),
-                                     QSettings().value(SETTINGS_KEY_DEFAULT_SYSEX).toByteArray());
-    undoStack()->push(cmd);
+    const QSettings settings;
+    // An optional template for new programs. If it is not an LPD8 program,
+    // creating the program would fail without a word to the user, so it is
+    // ignored and the factory program is used.
+    QByteArray sysex = settings.value(SETTINGS_KEY_DEFAULT_SYSEX).toByteArray();
+    if (!sysex.isNull() && !sysex::isProgram(sysex)) {
+        qWarning() << "Ignoring the setting" << SETTINGS_KEY_DEFAULT_SYSEX
+                   << ": it is not an LPD8 program";
+        sysex = QByteArray();
+    }
+    undoStack()->push(new CreateProgramCommand(
+            programsModel, settings.value(SETTINGS_KEY_DEFAULT_NAME).toString(), sysex));
 }
 
 void MainWindow::on_actionDeleteProgram_triggered()
 {
-    Q_CHECK_PTR(programsModel);
-    Q_CHECK_PTR(undoStack());
-
     QItemSelectionModel *selection_model = ui->programsView->selectionModel();
-    Q_CHECK_PTR(selection_model);
     Q_ASSERT(selection_model->currentIndex().row() > -1);
 
     QUndoCommand *cmd = new DeleteProgramCommand(programsModel, selectedProgramId(selection_model));
@@ -280,7 +288,6 @@ void MainWindow::on_actionQuit_triggered()
 void MainWindow::refreshUiAccordingToSelection()
 {
     QItemSelectionModel *sel = ui->programsView->selectionModel();
-    Q_CHECK_PTR(sel);
 
     ui->actionDeleteProgram->setEnabled(sel->hasSelection());
     ui->actionExportProgram->setEnabled(sel->hasSelection());
@@ -297,8 +304,6 @@ QString MainWindow::programFileFilter() const
 
 void MainWindow::on_actionImportProgram_triggered()
 {
-    Q_CHECK_PTR(programsModel);
-
     const QString title = tr("Import LPD8 program");
     const QString path = QFileDialog::getOpenFileName(
             this,
@@ -356,21 +361,24 @@ void MainWindow::on_actionExportProgram_triggered()
 
 int MainWindow::currentSelectedProjectId() const
 {
-    Q_CHECK_PTR(ui->programsView->selectionModel());
-
     return selectedProgramId(ui->programsView->selectionModel());
 }
 
 void MainWindow::on_actionAbout_triggered()
 {
+    // One multi-argument arg() call: chained .arg().arg() calls each scan the
+    // whole string again, so a '%1' inside a substituted value would be
+    // replaced by the next call. The values go into rich text, so they are
+    // HTML-escaped.
+    const QString name = QApplication::applicationName().toHtmlEscaped();
+    const QString link = qApp->property("applicationLink").toString().toHtmlEscaped();
     QMessageBox::about(
             this,
-            QString("%1 %2").arg(tr("About", "About dialog title")).arg(qApp->applicationName()),
-            QString("<h1>%1</h1><h2>%2</h2><a href=\"%3\">%4</a><p>%5</p><p>%6</p>")
-                    .arg(qApp->applicationName())
-                    .arg(qApp->applicationVersion())
-                    .arg(qApp->property("applicationLink").toString())
-                    .arg(qApp->property("applicationLink").toString())
-                    .arg(qApp->property("applicationLicense").toString())
-                    .arg(qApp->property("applicationCopyright").toString()));
+            tr("About %1").arg(QApplication::applicationName()),
+            QStringLiteral("<h1>%1</h1><h2>%2</h2><a href=\"%3\">%3</a><p>%4</p><p>%5</p>")
+                    .arg(name,
+                         QApplication::applicationVersion().toHtmlEscaped(),
+                         link,
+                         qApp->property("applicationLicense").toString().toHtmlEscaped(),
+                         qApp->property("applicationCopyright").toString().toHtmlEscaped()));
 }

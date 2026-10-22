@@ -125,7 +125,7 @@ void IOMidi::readEvents() const
 
 int IOMidi::sendEvent(snd_seq_event_t *ev) const
 {
-    Q_CHECK_PTR(ev);
+    Q_ASSERT(ev);
 
     snd_seq_ev_set_source(ev, m_seq_port);
     const int ret = snd_seq_event_output_direct(handle(), ev);

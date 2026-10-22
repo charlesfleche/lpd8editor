@@ -419,7 +419,7 @@ QSqlError initDb(const QSqlDatabase &db)
 
     QSqlDriver *driver = db.driver();
 
-    Q_CHECK_PTR(driver);
+    Q_ASSERT(driver);
     Q_ASSERT(driver->hasFeature(QSqlDriver::Transactions));
     Q_ASSERT(driver->hasFeature(QSqlDriver::Unicode));
     Q_ASSERT(driver->hasFeature(QSqlDriver::PreparedQueries));

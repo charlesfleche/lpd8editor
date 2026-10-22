@@ -22,13 +22,12 @@ QUndoStack *setupUndoStack(QObject *parent)
 QUndoStack *undoStack()
 {
     QCoreApplication *app = QCoreApplication::instance();
-    Q_CHECK_PTR(app);
+    Q_ASSERT(app);
 
     auto *stack = app->findChild<QUndoStack *>(undo_stack_object_name, Qt::FindDirectChildrenOnly);
     if (stack == nullptr) {
         stack = setupUndoStack(app);
     }
-    Q_CHECK_PTR(stack);
     return stack;
 }
 
@@ -41,23 +40,19 @@ CreateProgramCommand::CreateProgramCommand(ProgramsModel *model,
     , m_name(std::move(name))
     , m_sysex(std::move(sysex))
 {
-    Q_CHECK_PTR(m_model);
+    Q_ASSERT(m_model);
 
     setText("Create program");
 }
 
 void CreateProgramCommand::redo()
 {
-    Q_CHECK_PTR(m_model);
-
     m_program_id = m_model->createProgram(m_name, m_sysex, m_program_id);
     setObsolete(m_program_id == -1);
 }
 
 void CreateProgramCommand::undo()
 {
-    Q_CHECK_PTR(m_model);
-
     setObsolete(!m_model->deleteProgram(m_program_id));
 }
 
@@ -68,15 +63,13 @@ DeleteProgramCommand::DeleteProgramCommand(ProgramsModel *model,
     , m_model(model)
     , m_program_id(programId)
 {
-    Q_CHECK_PTR(m_model);
+    Q_ASSERT(m_model);
 
     setText("Delete program");
 }
 
 void DeleteProgramCommand::redo()
 {
-    Q_CHECK_PTR(m_model);
-
     m_name = m_model->programName(m_program_id);
     m_sysex = m_model->programSysex(m_program_id);
     setObsolete(!m_model->deleteProgram(m_program_id));
@@ -84,8 +77,6 @@ void DeleteProgramCommand::redo()
 
 void DeleteProgramCommand::undo()
 {
-    Q_CHECK_PTR(m_model);
-
     m_program_id = m_model->createProgram(m_name, m_sysex, m_program_id);
     setObsolete(m_program_id == -1);
 }
@@ -99,7 +90,7 @@ UpdateParameterCommand::UpdateParameterCommand(ProgramsModel *model,
     , m_location(location)
     , m_value(std::move(value))
 {
-    Q_CHECK_PTR(m_model);
+    Q_ASSERT(m_model);
 }
 
 void UpdateParameterCommand::undo()
@@ -114,8 +105,6 @@ void UpdateParameterCommand::redo()
 
 void UpdateParameterCommand::setDataAndKeepPrevious()
 {
-    Q_CHECK_PTR(m_model);
-
     const QModelIndex index = m_model->parameterIndex(m_location);
     if (!index.isValid()) {
         // The value no longer exists: nothing to undo or redo.
@@ -139,27 +128,21 @@ UpdateProgramFromSysexCommand::UpdateProgramFromSysexCommand(ProgramsModel *mode
     , m_program_id(programId)
     , m_sysex(std::move(sysex))
 {
-    Q_CHECK_PTR(m_model);
+    Q_ASSERT(m_model);
 }
 
 void UpdateProgramFromSysexCommand::redo()
 {
-    Q_CHECK_PTR(m_model);
-
     setObsolete(!setSysexAndKeepPrevious());
 }
 
 void UpdateProgramFromSysexCommand::undo()
 {
-    Q_CHECK_PTR(m_model);
-
     setObsolete(!setSysexAndKeepPrevious());
 }
 
 bool UpdateProgramFromSysexCommand::setSysexAndKeepPrevious()
 {
-    Q_CHECK_PTR(m_model);
-
     const QByteArray new_sysex = m_sysex;
     m_sysex = m_model->programSysex(m_program_id);
     return m_model->updateProgramFromSysex(m_program_id, new_sysex);

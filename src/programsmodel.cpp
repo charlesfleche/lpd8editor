@@ -46,7 +46,8 @@ ProgramsModel::ProgramsModel(QObject *parent, const QSqlDatabase &db)
 
         const QString &note = notes[i % notes.count()];
         const int octave = (i / static_cast<int>(notes.count())) - 2;
-        m_lut_note << QString("%1: %2%3").arg(i).arg(note).arg(octave);
+        m_lut_note << QStringLiteral("%1: %2%3")
+                              .arg(QString::number(i), note, QString::number(octave));
     }
 
     for (int i = 0; i <= 15; ++i) {
@@ -97,10 +98,6 @@ ProgramsModel::ProgramsModel(QObject *parent, const QSqlDatabase &db)
 
 void ProgramsModel::select()
 {
-    Q_CHECK_PTR(m_programs);
-    Q_CHECK_PTR(m_pads);
-    Q_CHECK_PTR(m_knobs);
-
     const auto idsList = programIds();
     const QSet<int> ids(idsList.begin(), idsList.end());
     for (const int id : ids) {
@@ -186,11 +183,6 @@ const QAbstractItemModel *ProgramsModel::modelFromParent(const QModelIndex &pare
 
 int ProgramsModel::columnCount(const QModelIndex & /*parent*/) const
 {
-    Q_CHECK_PTR(m_programs);
-    Q_CHECK_PTR(m_groups);
-    Q_CHECK_PTR(m_pads);
-    Q_CHECK_PTR(m_knobs);
-
     return std::max({m_programs->columnCount(),
                      m_groups->columnCount(),
                      m_pads->columnCount(),
@@ -200,7 +192,7 @@ int ProgramsModel::columnCount(const QModelIndex & /*parent*/) const
 int ProgramsModel::rowCount(const QModelIndex &parent) const
 {
     const QAbstractItemModel *m = modelFromParent(parent);
-    Q_CHECK_PTR(m);
+    Q_ASSERT(m);
 
     return m->rowCount();
 }
@@ -211,7 +203,7 @@ QVariant ProgramsModel::data(const QModelIndex &index, int role) const
         return {};
     }
     const QAbstractItemModel *m = model(index);
-    Q_CHECK_PTR(m);
+    Q_ASSERT(m);
 
     if (hasLut(index)) {
         switch (role) {
@@ -253,7 +245,7 @@ bool ProgramsModel::setData(const QModelIndex &index, const QVariant &value, int
     }
 
     QAbstractItemModel *m = model(index);
-    Q_CHECK_PTR(m);
+    Q_ASSERT(m);
 
     const std::optional<ParameterLocation> location = parameterLocation(index);
     if (!location) {
@@ -271,7 +263,7 @@ Qt::ItemFlags ProgramsModel::flags(const QModelIndex &index) const
     }
 
     const QAbstractItemModel *m = model(index);
-    Q_CHECK_PTR(m);
+    Q_ASSERT(m);
 
     Qt::ItemFlags flags = m->flags(m->index(index.row(), index.column()));
 
@@ -312,7 +304,7 @@ QModelIndex ProgramsModel::index(int row, int column, const QModelIndex &parent)
         return {};
     }
     const QAbstractItemModel *m = modelFromParent(parent);
-    Q_CHECK_PTR(m);
+    Q_ASSERT(m);
 
     return createIndex(row, column, const_cast<QAbstractItemModel *>(m));
 }
@@ -323,7 +315,7 @@ QModelIndex ProgramsModel::parent(const QModelIndex &child) const
         return {};
     }
     const QAbstractItemModel *m = model(child);
-    Q_CHECK_PTR(m);
+    Q_ASSERT(m);
 
     const auto *const_program_proxy = qobject_cast<const QSortFilterProxyModel *>(m);
     auto *program_proxy = const_cast<QSortFilterProxyModel *>(const_program_proxy);
@@ -372,7 +364,6 @@ const QAbstractItemModel *ProgramsModel::model(const QModelIndex &index) const
 
 void ProgramsModel::addFilters(int programId)
 {
-    Q_CHECK_PTR(m_groups);
     Q_ASSERT(!m_groups_proxies.contains(programId));
 
     // Regexes
@@ -444,7 +435,6 @@ void ProgramsModel::addFilters(int programId)
 
 void ProgramsModel::removeFilters(int programId)
 {
-    Q_CHECK_PTR(m_groups);
     Q_ASSERT(m_groups_proxies.contains(programId));
 
     const QString findItemsText(QString::number(programId));
@@ -455,8 +445,6 @@ void ProgramsModel::removeFilters(int programId)
 
     QList<QStandardItem *> items = m_groups->findItems(findItemsText);
     Q_ASSERT(items.count() == 2);
-    Q_CHECK_PTR(items[0]);
-    Q_CHECK_PTR(items[1]);
     Q_ASSERT((items[1]->row() - items[0]->row()) == 1); // The two indices are contiguous
     m_groups->removeRows(items[0]->row(), static_cast<int>(items.count()));
 
@@ -472,7 +460,7 @@ void ProgramsModel::removeFilters(int programId)
 bool ProgramsModel::hasLut(const QModelIndex &index) const
 {
     const QAbstractItemModel *m = model(index);
-    Q_CHECK_PTR(m);
+    Q_ASSERT(m);
 
     const QString name = m->headerData(index.column(), Qt::Horizontal).toString();
     return m_luts.contains(name);
@@ -483,7 +471,7 @@ QStringList ProgramsModel::lut(const QModelIndex &index) const
     Q_ASSERT(hasLut(index));
 
     const QAbstractItemModel *m = model(index);
-    Q_CHECK_PTR(m);
+    Q_ASSERT(m);
 
     const QString name = m->headerData(index.column(), Qt::Horizontal).toString();
     return m_luts[name];
@@ -493,7 +481,6 @@ QModelIndex ProgramsModel::padsParentIndex(const QModelIndex &programIndex) cons
 {
     Q_ASSERT(programIndex.isValid());
 
-    Q_CHECK_PTR(m_programs);
     Q_ASSERT(model(programIndex) == m_programs);
 
     const QModelIndex program = index(programIndex.row(), program_id_column_index);
@@ -501,7 +488,7 @@ QModelIndex ProgramsModel::padsParentIndex(const QModelIndex &programIndex) cons
 
 #ifndef QT_NO_DEBUG
     const QAbstractItemModel *m = model(pads);
-    Q_CHECK_PTR(m);
+    Q_ASSERT(m);
     const int programId = pads.data().toInt();
     Q_ASSERT(m_pads_proxies.contains(programId));
     Q_ASSERT(m == m_groups_proxies[programId]);
@@ -514,7 +501,6 @@ QModelIndex ProgramsModel::knobsParentIndex(const QModelIndex &programIndex) con
 {
     Q_ASSERT(programIndex.isValid());
 
-    Q_CHECK_PTR(m_programs);
     Q_ASSERT(model(programIndex) == m_programs);
 
     const QModelIndex program = index(programIndex.row(), program_id_column_index);
@@ -522,7 +508,7 @@ QModelIndex ProgramsModel::knobsParentIndex(const QModelIndex &programIndex) con
 
 #ifndef QT_NO_DEBUG
     const QAbstractItemModel *m = model(knobs);
-    Q_CHECK_PTR(m);
+    Q_ASSERT(m);
     const int programId = knobs.data().toInt();
     Q_ASSERT(m_knobs_proxies.contains(programId));
     Q_ASSERT(m == m_groups_proxies[programId]);
@@ -686,10 +672,10 @@ bool ProgramsModel::updateProgramFromSysex(int programId, const QByteArray &syse
 
 int selectedProgramId(QItemSelectionModel *model)
 {
-    Q_CHECK_PTR(model);
+    Q_ASSERT(model);
 
     const QAbstractItemModel *m = model->model();
-    Q_CHECK_PTR(m);
+    Q_ASSERT(m);
 
     const QModelIndex curSelIdx = model->currentIndex();
     const QModelIndex curProjIdx = m->index(curSelIdx.row(), 0);
@@ -700,24 +686,20 @@ ProgramIdSelectionRestorer::ProgramIdSelectionRestorer(QItemSelectionModel *mode
     : QObject(parent)
     , m_model(model)
 {
-    Q_CHECK_PTR(m_model);
+    Q_ASSERT(m_model);
 
     store();
 }
 
 void ProgramIdSelectionRestorer::store()
 {
-    Q_CHECK_PTR(m_model);
-
     m_program_id = selectedProgramId();
 }
 
 void ProgramIdSelectionRestorer::restore()
 {
-    Q_CHECK_PTR(m_model);
-
     const ProgramsModel *m = qobject_cast<ProgramsModel *>(m_model->model());
-    Q_CHECK_PTR(m);
+    Q_ASSERT(m);
 
     if (m->programIndex(m_program_id).isValid()) {
         selectProgramId(m_program_id);
@@ -726,17 +708,13 @@ void ProgramIdSelectionRestorer::restore()
 
 int ProgramIdSelectionRestorer::selectedProgramId() const
 {
-    Q_CHECK_PTR(m_model);
-
     return ::selectedProgramId(m_model);
 }
 
 void ProgramIdSelectionRestorer::selectProgramId(int programId)
 {
-    Q_CHECK_PTR(m_model);
-
     const ProgramsModel *m = qobject_cast<ProgramsModel *>(m_model->model());
-    Q_CHECK_PTR(m);
+    Q_ASSERT(m);
 
     const QModelIndex programIdx = m->programIndex(programId);
     Q_ASSERT(programIdx.isValid());

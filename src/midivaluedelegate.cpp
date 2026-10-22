@@ -46,7 +46,11 @@ void MidiValueDelegate::paint(QPainter *painter,
         buttonOption.state |=
                 index.data(Qt::EditRole).toInt() == 0 ? QStyle::State_Off : QStyle::State_On;
         buttonOption.text = index.data().toString();
-        QApplication::style()->drawControl(QStyle::CE_PushButton, &buttonOption, painter);
+        // The view's own style (it may differ from the application's, for
+        // example with a style sheet), passed to drawControl() as well.
+        const QWidget *widget = option.widget;
+        QStyle *style = widget != nullptr ? widget->style() : QApplication::style();
+        style->drawControl(QStyle::CE_PushButton, &buttonOption, painter, widget);
         return;
     }
 
@@ -68,7 +72,7 @@ void MidiValueDelegate::setEditorData(QWidget *editor, const QModelIndex &index)
 {
     if (isSpinbox(index)) {
         auto *sb = qobject_cast<LutSpinBox *>(editor);
-        Q_CHECK_PTR(sb);
+        Q_ASSERT(sb);
 
         sb->setLut(lut(index));
         sb->setValue(index.data(Qt::EditRole).toInt());
@@ -84,9 +88,9 @@ void MidiValueDelegate::setModelData(QWidget *editor,
 {
     if (isSpinbox(index)) {
         auto *sb = qobject_cast<LutSpinBox *>(editor);
-        Q_CHECK_PTR(sb);
+        Q_ASSERT(sb);
 
-        Q_CHECK_PTR(model);
+        Q_ASSERT(model);
         model->setData(index, sb->value(), Qt::EditRole);
         return;
     }
@@ -98,7 +102,7 @@ void MidiValueDelegate::updateEditorGeometry(QWidget *editor,
                                              const QStyleOptionViewItem &option,
                                              const QModelIndex & /*index*/) const
 {
-    Q_CHECK_PTR(editor);
+    Q_ASSERT(editor);
 
     editor->setGeometry(option.rect);
 }
@@ -108,8 +112,8 @@ bool MidiValueDelegate::editorEvent(QEvent *event,
                                     const QStyleOptionViewItem &option,
                                     const QModelIndex &index)
 {
-    Q_CHECK_PTR(event);
-    Q_CHECK_PTR(model);
+    Q_ASSERT(event);
+    Q_ASSERT(model);
 
     const bool toggleClicked = isToggle(index)
             && (event->type() == QEvent::MouseButtonPress
