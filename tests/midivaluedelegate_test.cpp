@@ -33,8 +33,11 @@ void TestMidiValueDelegate::test_textFromValue_data()
 
 void TestMidiValueDelegate::test_textFromValue()
 {
+    // QFETCH declares the variable itself, so it cannot be made const.
+    // NOLINTBEGIN(misc-const-correctness)
     QFETCH(int, value);
     QFETCH(QString, text);
+    // NOLINTEND(misc-const-correctness)
 
     QCOMPARE(lutValueFromText(lut, text), value);
     if (lutValueFromText(lut, text) >= 0) {

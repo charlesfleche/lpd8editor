@@ -16,7 +16,7 @@ private slots:
     void test_portId();
 
 private:
-    IOMidi *io;
+    IOMidi *io{};
 };
 
 void TestIOMIdi::initTestCase()
@@ -39,7 +39,7 @@ void TestIOMIdi::test_handle()
     snd_seq_t *seq = io->handle();
     QVERIFY(seq);
 
-    snd_seq_client_info_t *info;
+    snd_seq_client_info_t *info = nullptr;
     snd_seq_client_info_alloca(&info);
     QCOMPARE(snd_seq_get_client_info(seq, info), 0);
     QVERIFY(!QString(snd_seq_client_info_get_name(info)).isNull());

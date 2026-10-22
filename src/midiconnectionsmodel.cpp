@@ -32,10 +32,10 @@ MidiConnectionsModel::MidiConnectionsModel(IOMidi *io)
 
     // Loop from already connected clients and ports to populate the addresses list
 
-    snd_seq_client_info_t *cinfo;
+    snd_seq_client_info_t *cinfo = nullptr;
     snd_seq_client_info_alloca(&cinfo);
 
-    snd_seq_port_info_t *pinfo;
+    snd_seq_port_info_t *pinfo = nullptr;
     snd_seq_port_info_alloca(&pinfo);
 
     snd_seq_client_info_set_client(cinfo, -1);
@@ -137,7 +137,7 @@ void MidiConnectionsModel::disconnectAllPorts() const
 {
     Q_CHECK_PTR(m_io);
 
-    snd_seq_query_subscribe_t *subs;
+    snd_seq_query_subscribe_t *subs = nullptr;
     snd_seq_query_subscribe_alloca(&subs);
     const snd_seq_addr_t ownaddr = {m_io->clientId(), m_io->portId()};
     snd_seq_query_subscribe_set_root(subs, &ownaddr);
@@ -266,14 +266,14 @@ bool MidiConnectionsModel::acceptAddress(const snd_seq_addr_t *addr) const
 {
     Q_CHECK_PTR(addr);
 
-    snd_seq_client_info_t *cinfo;
+    snd_seq_client_info_t *cinfo = nullptr;
     snd_seq_client_info_alloca(&cinfo);
     if (snd_seq_get_any_client_info(m_io->handle(), addr->client, cinfo) < 0
         || !acceptClient(cinfo)) {
         return false;
     }
 
-    snd_seq_port_info_t *pinfo;
+    snd_seq_port_info_t *pinfo = nullptr;
     snd_seq_port_info_alloca(&pinfo);
     return snd_seq_get_any_port_info(m_io->handle(), addr->client, addr->port, pinfo) == 0
             && acceptPort(pinfo);
@@ -302,7 +302,7 @@ QString MidiConnectionsModel::portName(const QModelIndex &index) const
     Q_ASSERT(index.isValid());
 
     const snd_seq_addr_t &addr = m_addrs[index.row()];
-    snd_seq_port_info_t *info;
+    snd_seq_port_info_t *info = nullptr;
     snd_seq_port_info_alloca(&info);
     const int res = snd_seq_get_any_port_info(m_io->handle(), addr.client, addr.port, info);
     Q_UNUSED(res);
@@ -328,7 +328,7 @@ MidiConnectionsModel::portConnection(const snd_seq_addr_t &addr) const
 
     const snd_seq_addr_t ownaddr = {m_io->clientId(), m_io->portId()};
 
-    snd_seq_port_subscribe_t *subs;
+    snd_seq_port_subscribe_t *subs = nullptr;
     snd_seq_port_subscribe_alloca(&subs);
 
     snd_seq_port_subscribe_set_sender(subs, &ownaddr);

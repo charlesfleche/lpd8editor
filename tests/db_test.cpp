@@ -85,6 +85,8 @@ void TestDB::test_createProgram_data()
 
 void TestDB::test_createProgram()
 {
+    // QFETCH declares the variable itself, so it cannot be made const.
+    // NOLINTBEGIN(misc-const-correctness)
     QFETCH(QString, name);
     QFETCH(QByteArray, sysex);
     QFETCH(int, id);
@@ -93,6 +95,7 @@ void TestDB::test_createProgram()
     QFETCH(int, resId);
     QFETCH(bool, expectProgramWarning);
     QFETCH(bool, expectSysexWarning);
+    // NOLINTEND(misc-const-correctness)
 
     if (expectProgramWarning) {
         QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".*"));

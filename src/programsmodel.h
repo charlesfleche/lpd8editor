@@ -91,7 +91,7 @@ private:
     void selectProgramId(int programId);
 
     QItemSelectionModel *m_model;
-    int m_program_id;
+    int m_program_id{-1}; // -1: no program, as everywhere else
 };
 
 #endif // PROGRAMSMODEL_H

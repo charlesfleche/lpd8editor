@@ -123,7 +123,7 @@ void UpdateParameterCommand::setDataAndKeepPrevious()
 {
     Q_CHECK_PTR(m_model);
 
-    QVariant newValue = m_value;
+    const QVariant newValue = m_value;
     const QModelIndex index = m_model->index(m_row, m_column);
     m_value = index.data(m_role);
     m_model->setData(index, newValue, m_role);

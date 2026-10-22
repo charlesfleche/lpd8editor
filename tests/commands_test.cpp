@@ -22,7 +22,7 @@ private slots:
 
 private:
     QSqlDatabase db;
-    ProgramsModel *pm;
+    ProgramsModel *pm{};
 };
 
 void TestCommands::initTestCase()

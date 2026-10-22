@@ -22,7 +22,7 @@ private slots:
 
 private:
     QSqlDatabase db;
-    ProgramsModel *pm;
+    ProgramsModel *pm{};
 };
 
 void TestProgramsModel::initTestCase()
@@ -55,9 +55,12 @@ void TestProgramsModel::test_data()
 
 void TestProgramsModel::test()
 {
+    // QFETCH declares the variable itself, so it cannot be made const.
+    // NOLINTBEGIN(misc-const-correctness)
     QFETCH(int, id);
     QFETCH(QString, name);
     QFETCH(QByteArray, sysex);
+    // NOLINTEND(misc-const-correctness)
 
     QCOMPARE(pm->rowCount(), 0);
 

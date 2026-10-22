@@ -65,11 +65,14 @@ void TestUtils::test_sysexTextFile()
     const QString p = f.fileName();
     f.close();
 
+    // QFETCH declares the variable itself, so it cannot be made const.
+    // NOLINTBEGIN(misc-const-correctness)
     QFETCH(QByteArray, bytes);
     QFETCH(int, readCount);
     QFETCH(char, readBegin);
     QFETCH(char, readEnd);
     QFETCH(QString, warningMsg);
+    // NOLINTEND(misc-const-correctness)
 
     writeProgramFile(bytes, p);
 

@@ -108,7 +108,7 @@ void ProgramsModel::select()
 #else
     const QSet<int> ids(QSet<int>(idsList.begin(), idsList.end()));
 #endif
-    for (int id : ids) {
+    for (const int id : ids) {
         if (!m_groups_proxies.contains(id)) {
             addFilters(id);
         }
@@ -120,7 +120,7 @@ void ProgramsModel::select()
 #else
     const QSet<int> toDeleteIds(QSet<int>(proxyIdsList.begin(), proxyIdsList.end()).subtract(ids));
 #endif
-    for (int id : toDeleteIds) {
+    for (const int id : toDeleteIds) {
         removeFilters(id);
     }
 
@@ -132,7 +132,7 @@ void ProgramsModel::select()
     Q_ASSERT(m_pads_proxies.count() == ids.count());
     Q_ASSERT(m_knobs_proxies.count() == ids.count());
 
-    for (int id : ids) {
+    for (const int id : ids) {
         Q_ASSERT(m_groups_proxies.contains(id));
         Q_ASSERT(m_pads_proxies.contains(id));
         Q_ASSERT(m_knobs_proxies.contains(id));

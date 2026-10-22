@@ -16,10 +16,10 @@ IOMidi::IOMidi(QObject *parent)
 
     // Poll
 
-    int npfd = snd_seq_poll_descriptors_count(m_seq_handle, POLLIN);
+    const int npfd = snd_seq_poll_descriptors_count(m_seq_handle, POLLIN);
     m_pfds =
             static_cast<struct pollfd *>(alloca(static_cast<size_t>(npfd) * sizeof(struct pollfd)));
-    int npfdf =
+    const int npfdf =
             snd_seq_poll_descriptors(m_seq_handle, m_pfds, static_cast<unsigned int>(npfd), POLLIN);
 
     for (int i = 0; i < npfdf; ++i) {
@@ -88,7 +88,7 @@ unsigned char IOMidi::portId() const
 void IOMidi::readEvents() const
 {
     while (snd_seq_event_input_pending(m_seq_handle, 1) > 0) {
-        snd_seq_event_t *ev;
+        snd_seq_event_t *ev = nullptr;
         snd_seq_event_input(m_seq_handle, &ev);
         emit eventReceived(ev);
     }

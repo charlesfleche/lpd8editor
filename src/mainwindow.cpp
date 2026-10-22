@@ -190,7 +190,7 @@ MainWindow::MainWindow(QWidget *parent)
             ui->actionSendToProgram4,
     };
 
-    QList<QAction *> midiActions = midiSendActions + midiReceiveActions;
+    const QList<QAction *> midiActions = midiSendActions + midiReceiveActions;
 
     auto midiActionsSetEnabled = [=, this]() {
         for (QAction *a : midiActions) {

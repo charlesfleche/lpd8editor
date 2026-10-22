@@ -39,7 +39,7 @@ void SysexHandler::handleMidiEvent(const snd_seq_event_t *ev) const
         return;
     }
 
-    QByteArray s(static_cast<const char *>(ev->data.ext.ptr), ev->data.ext.len);
+    const QByteArray s(static_cast<const char *>(ev->data.ext.ptr), ev->data.ext.len);
 
     if (sysex::type(s) != sysex::TypeProgram) {
         return;
