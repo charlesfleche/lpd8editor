@@ -84,9 +84,9 @@ Decisions made before starting:
       pinned to a commit SHA, and `concurrency` to cancel superseded runs.
 - [x] 2.2 [`87f3725`](https://github.com/charlesfleche/lpd8editor/commit/87f3725f49a21fa366c8181f8edf57712109f98b) Quality workflow with jobs for clang-format, clang-tidy, cppcheck,
       ASan/UBSan, and valgrind.
-- [x] 2.3 Release workflow: packages for both targets, a `SHA256SUMS` file,
+- [x] 2.3 [`7c5e4a2`](https://github.com/charlesfleche/lpd8editor/commit/7c5e4a2965be6ce44b79a8a632de9e87eceae010) Release workflow: packages for both targets, a `SHA256SUMS` file,
       least privilege, and pinned actions.
-- [ ] 2.4 Dependabot keeps the pinned action SHAs up to date.
+- [x] 2.4 Dependabot keeps the pinned action SHAs up to date.
 
 ## Phase 3: small, self-contained fixes (smallest first)
 

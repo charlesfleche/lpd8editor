@@ -93,10 +93,13 @@ if (BUILD_TESTING)
     add_subdirectory(tests)
 endif()
 
+# Lists the CI files, so IDEs show them in the project tree.
 add_custom_target(github
   SOURCES
-    .github/workflows/test.yml
+    .github/dependabot.yml
+    .github/workflows/quality.yml
     .github/workflows/release.yml
+    .github/workflows/test.yml
 )
 
 set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR}/packages)

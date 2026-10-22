@@ -3,11 +3,16 @@ name: Quality
 # Static analysis, formatting and runtime checks. Each check is its own job,
 # so a failure says which one broke.
 
+# A push to master, and every pull request. Not every branch push: a branch
+# with a pull request would otherwise run everything twice (once for the
+# push, once for the pull request, in different concurrency groups). Other
+# branches can be tested by hand from the Actions tab (workflow_dispatch).
 on:
   push:
     branches:
-      - '**'
+      - master
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read

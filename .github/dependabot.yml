@@ -1,0 +1,14 @@
+# Dependabot opens pull requests when the GitHub Actions used by the
+# workflows have new releases. It understands the 'uses: owner/repo@<sha> #
+# vX.Y.Z' pins and updates the SHA and the version comment together.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    # One pull request for all action updates, instead of one per action.
+    groups:
+      github-actions:
+        patterns:
+          - '*'
