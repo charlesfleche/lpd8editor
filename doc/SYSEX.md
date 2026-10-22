@@ -141,7 +141,7 @@ None
 ### Example
 
 ```
-Request:  F0 47 7F 75 62 00 01 01 F7 
+Request:  F0 47 7F 75 62 00 01 01 F7
 Response: None
 ```
 
@@ -178,3 +178,23 @@ Response: None
 Request:  F0 7E 00 06 01 F7
 Response: F0 7E 00 06 02 47 75 00 19 00 00 00 66 7F 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 F7
 ```
+
+## Storage format (lpd8editor)
+
+This is not an LPD8 message, but how lpd8editor has always stored and exported
+programs: the 66-byte layout of a program, with the *get program* opcode
+`63 00 01` and slot `01` in bytes 04-07:
+
+```
+00   : F0
+01   : 47
+02-03: 7F 75
+04-07: 63 00 01 01 Stored program (lpd8editor's own convention)
+08-64: channel, pads and knobs, as in "Response" above
+65   : F7
+```
+
+Exported files contain these 66 bytes as decimal numbers separated by spaces.
+The device never sends this opcode in a 66-byte message, so lpd8editor accepts
+it only when reading its own files. Before sending a program, it rewrites
+bytes 04-07 as a *Send program* request (`61 00 3A 0X`).

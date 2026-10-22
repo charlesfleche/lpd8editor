@@ -6,3 +6,9 @@
 
 # Reformat the sources with clang-format
 04af0e556a7eddc4a498d3bf2d409006fbf42727
+
+# Document the storage format, and fix the fixtures' comment: it also
+# converted doc/SYSEX.md from CRLF to LF line endings (as .editorconfig
+# asks), which rewrote every line of that file. The content change is the
+# 'Storage format' section at the end.
+366f397976cee6f0624fd3483e095133e96f4ec3

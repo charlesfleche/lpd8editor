@@ -6,6 +6,9 @@
 #include <array>
 
 // SysEx messages used as test data. The layout is described in doc/SYSEX.md.
+// The 66-byte tables are in this application's storage format: a program
+// message with the 'get program' opcode (63 00 01), see "Storage format" in
+// doc/SYSEX.md.
 // Each table is laid out by hand, one field of the message per row, so
 // clang-format is turned off around it.
 
@@ -24,7 +27,7 @@ inline constexpr ProgramSysexBytes default_sysex_bytes{
         '\xf0',                 // SysEx start
         0x47,                   // manufacturer: Akai
         0x7f, 0x75,             // model: LPD8
-        0x63, 0x00, 0x01, 0x01, // opcode: program dump, program 1
+        0x63, 0x00, 0x01, 0x01, // opcode: get program (storage format), slot 1
         0x09,                   // MIDI channel 10
         0x24, 0x01, 0x30, 0x00, // pad 1: note, PC, CC, toggle
         0x25, 0x02, 0x31, 0x00, // pad 2
@@ -53,7 +56,7 @@ inline constexpr ProgramSysexBytes allzero_sysex_bytes{
         '\xf0',                 // SysEx start
         0x47,                   // manufacturer: Akai
         0x7f, 0x75,             // model: LPD8
-        0x63, 0x00, 0x01, 0x01, // opcode: program dump, program 1
+        0x63, 0x00, 0x01, 0x01, // opcode: get program (storage format), slot 1
         0x00,                   // MIDI channel 1
         0x00, 0x00, 0x00, 0x00, // pad 1: note, PC, CC, toggle
         0x00, 0x00, 0x00, 0x00, // pad 2
@@ -82,7 +85,7 @@ inline constexpr ProgramSysexBytes invalid_sysex_channel_bytes{
         '\xf0',                 // SysEx start
         0x47,                   // manufacturer: Akai
         0x7f, 0x75,             // model: LPD8
-        0x63, 0x00, 0x01, 0x01, // opcode: program dump, program 1
+        0x63, 0x00, 0x01, 0x01, // opcode: get program (storage format), slot 1
         0x16,                   // bad MIDI channel
         0x00, 0x00, 0x00, 0x00, // pad 1: note, PC, CC, toggle
         0x00, 0x00, 0x00, 0x00, // pad 2
