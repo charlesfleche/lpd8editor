@@ -8,20 +8,30 @@ lpd8editor is a Linux-only Qt6 desktop editor for the original Akai LPD8 pad con
 
 ## Build and test
 
-Dependencies (Debian/Ubuntu, same as CI): `libasound2-dev qt6-base-dev qt6-svg-dev`, plus CMake 3.25+ and a C++23 compiler (GCC 14+ or Clang 19+).
+Dependencies (Debian/Ubuntu): `cmake ninja-build g++ clang libasound2-dev qt6-base-dev qt6-svg-dev`, plus `clang-format clang-tidy cppcheck valgrind` for the checks. Targets are Debian trixie (GCC 14, Clang 19, Qt 6.8, CMake 3.31: the oldest versions allowed) and GitHub's ubuntu-26.04 image. Code must build with both GCC and Clang.
 
-Build out of source:
+Use the CMake presets (`cmake --list-presets`). Each builds into `build/<preset>/`:
 
 ```bash
-mkdir ../build-lpd8editor && cd ../build-lpd8editor
-cmake ../lpd8editor -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/lpd8editor
-cmake --build .
-cmake --build . --target test      # all tests (ctest)
-cmake --build . --target install
-cmake --build . --target package   # DEB + TGZ into ./packages
+cmake --workflow --preset gcc-debug        # configure + build + test (also clang-debug, clang-asan)
+cmake --build --preset clang-debug         # build only
+ctest --preset clang-debug -R db_test      # one test
+./build/clang-debug/tests/db_test test_createProgram   # one QtTest function
 ```
 
-Run a single test: `ctest -R db_test --output-on-failure` from the build dir, or run the binary directly (`./tests/db_test`). QtTest binaries take a test function name too, e.g. `./tests/db_test test_createProgram`.
+When building in a scratch directory instead, chain the test run after the build (`cmake --build ... && ctest ...`). Otherwise a failed build silently runs the previous binaries.
+
+Checks, all expected to be clean (see `CONTRIBUTING.md` for details):
+
+```bash
+cmake --build --preset clang-debug --target check-format   # or 'format' to fix
+cmake --build --preset clang-debug --target clang-tidy     # Clang presets only
+cmake --build --preset gcc-debug --target cppcheck
+cmake --workflow --preset clang-asan                       # ASan + UBSan
+cmake --preset valgrind && cmake --build --preset valgrind && ctest --test-dir build/valgrind -T memcheck
+```
+
+Add `-DLPD8EDITOR_WERROR=ON` to treat warnings as errors (CI does). The warning flags are in `cmake/CompilerWarnings.cmake`, linked as the `lpd8editor_warnings` target. Packaging: `cmake --build <dir> --target package` (DEB + TGZ into `<dir>/packages`).
 
 Tests live in `tests/` and are registered in `tests/CMakeLists.txt` with `_add_test(<name>)`, which builds `<name>_test.cpp` and links it against the `lpd8editor-lib` static library. Adding a test means creating `tests/<name>_test.cpp` and adding one `_add_test` line. `iomidi_test` opens a real ALSA sequencer client, so it needs `/dev/snd/seq` to be available.
 
@@ -39,3 +49,7 @@ Application code is in `src/`, tests are in `tests/`. Everything except `main.cp
 - **`MainWindow`** (`mainwindow.cpp` + `mainwindow.ui`, AUTOUIC) connects all of this together. A received program becomes an `UpdateProgramFromSysexCommand` on the selected program. The "send to program N" actions serialize the selected program with `programSysex` and send it to device slot N.
 
 The code targets C++23 (`target_compile_features(... cxx_std_23)` on the library, without GNU extensions). Some code still has Qt 5 compatibility idioms (for example `static_cast` signal overloads); they are being removed (see `doc/IMPROVEMENTS.md`).
+
+## Conventions and work in progress
+
+Coding conventions are in `CONTRIBUTING.md` (C++23, Qt idioms, naming, errors, tests, commits). `doc/IMPROVEMENTS.md` is the ongoing improvement checklist: one commit per item, each commit ticks its item and links the previous item to its commit. Some code described above (the SQLite storage, `ProgramsModel`'s tree of proxies, `IOMidi`) is scheduled to be replaced there.

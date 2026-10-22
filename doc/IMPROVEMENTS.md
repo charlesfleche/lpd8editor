@@ -70,10 +70,10 @@ Decisions made before starting:
       `IOMidi` (3.5), and dead code and mutable globals (3.1).
 - [x] 1.13a [`a692917`](https://github.com/charlesfleche/lpd8editor/commit/a692917f6fa0004b37f2db138b3d3fe1962cd779) Add a `cppcheck` target and a suppressions file. This commit only
       makes the findings visible.
-- [x] 1.13b Fix the cppcheck findings: `explicit` constructors, and an
+- [x] 1.13b [`8ea3fe7`](https://github.com/charlesfleche/lpd8editor/commit/8ea3fe7114bc133ef92a1907de93b3c4ce77924a) Fix the cppcheck findings: `explicit` constructors, and an
       assert with a side effect. `alloca` (3.5) and the unused `paths`
       (3.1) are left for their own items.
-- [ ] 1.14 Write the coding conventions in `CONTRIBUTING.md` and update
+- [x] 1.14 Write the coding conventions in `CONTRIBUTING.md` and update
       `CLAUDE.md` to match.
 - [ ] 1.15 Add an opt-in git pre-commit hook that runs the fast checks.
 
