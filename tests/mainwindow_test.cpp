@@ -1,3 +1,4 @@
+#include "commands.h"
 #include "db.h"
 #include "mainwindow.h"
 #include "midiconnectionsmodel.h"
@@ -10,6 +11,7 @@
 #include <QSettings>
 #include <QSqlDatabase>
 #include <QTemporaryDir>
+#include <QUndoStack>
 #include <QtTest>
 
 class TestMainWindow : public QObject
@@ -46,7 +48,15 @@ void TestMainWindow::init()
 
 void TestMainWindow::cleanup()
 {
+    // The undo stack is global (a child of qApp) and outlives this test
+    // function. Its commands point at the window's model, deleted with the window, so it must be
+    // emptied, or the next test function using it reaches a freed model.
+    undoStack()->clear();
     QSqlDatabase::database().close();
+    // init() adds the default connection again: remove it, or Qt warns about
+    // a duplicate connection name. QSqlDatabase objects that refer to it
+    // must be gone first, hence no local QSqlDatabase here.
+    QSqlDatabase::removeDatabase(QLatin1StringView(QSqlDatabase::defaultConnection));
 }
 
 void TestMainWindow::test_destroyWithSelectedProgram()

@@ -1,6 +1,8 @@
 #ifndef PROGRAMSMODEL_H
 #define PROGRAMSMODEL_H
 
+#include "parameterlocation.h"
+
 #include <QRegularExpression>
 #include <QSqlTableModel>
 
@@ -38,20 +40,6 @@ constexpr int ControlChange = 2;
 constexpr int Low = 3;
 constexpr int High = 4;
 } // namespace KnobColumn
-
-// Where an editable value lives, in terms that stay valid when the model
-// rebuilds its internal structure (for example after a program is deleted
-// and then restored by undo): which program, which group of controls, which
-// control, which field. Undo commands store this instead of model pointers.
-struct ParameterLocation
-{
-    enum class Group { Program, Pads, Knobs };
-
-    int programId{-1};
-    Group group{Group::Program};
-    int controlId{0}; // pads and knobs only, 1-8
-    int column{-1};
-};
 
 class ProgramsModel : public QAbstractItemModel
 {

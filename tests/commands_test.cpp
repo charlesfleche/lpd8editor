@@ -41,6 +41,10 @@ void TestCommands::init()
 
 void TestCommands::cleanup()
 {
+    // The undo stack is global (a child of qApp) and outlives this test
+    // function. Its commands point at the model deleted here, so it must be
+    // emptied, or the next test function using it reaches a freed model.
+    undoStack()->clear();
     delete pm;
     db.close();
 }

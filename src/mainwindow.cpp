@@ -33,6 +33,8 @@ MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
     , ui(new Ui::MainWindow)
     , programsModel(new ProgramsModel(this, db))
 {
+    // The database functions only work on the default connection (db.h).
+    Q_ASSERT(db.connectionName() == QLatin1StringView(QSqlDatabase::defaultConnection));
     ui->setupUi(this);
     setStatusBar(nullptr);
 

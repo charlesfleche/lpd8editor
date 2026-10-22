@@ -2,6 +2,7 @@
 
 #include "commands.h"
 #include "db.h"
+#include "enums.h"
 
 #include "test_sysex.h"
 
@@ -27,6 +28,7 @@ private slots:
     void test_modelContract();
 
     void test_columnsMatchTheSchema();
+    void test_noteNamesUseMusicSigns();
 
     void test_setData_data();
     void test_setData();
@@ -51,6 +53,10 @@ void TestProgramsModel::init()
 
 void TestProgramsModel::cleanup()
 {
+    // The undo stack is global (a child of qApp) and outlives this test
+    // function. Its commands point at the model deleted here, so it must be
+    // emptied, or the next test function using it reaches a freed model.
+    undoStack()->clear();
     pm->deleteLater();
     db.close();
 }
@@ -124,6 +130,22 @@ void TestProgramsModel::test_columnsMatchTheSchema()
     QCOMPARE(knobs.indexOf("cc"), KnobColumn::ControlChange);
     QCOMPARE(knobs.indexOf("low"), KnobColumn::Low);
     QCOMPARE(knobs.indexOf("high"), KnobColumn::High);
+}
+
+void TestProgramsModel::test_noteNamesUseMusicSigns()
+{
+    // The note names that the pad editor shows ('61: C♯/D♭1'): every sharp
+    // is written with the sharp sign, not '#', and every flat with the flat
+    // sign, not 'b' (the note B is an uppercase 'B').
+    const int id = pm->createProgram();
+    const QModelIndex pads = pm->padsParentIndex(pm->programIndex(id));
+    const QStringList names = pm->index(0, PadColumn::Note, pads).data(MidiValues).toStringList();
+    QCOMPARE(names.size(), 128);
+    for (const QString &name : names) {
+        QVERIFY2(!name.contains(u'#'), qPrintable(name));
+        QVERIFY2(!name.contains(u'b'), qPrintable(name));
+    }
+    QCOMPARE(names.at(63), QStringLiteral("63: D♯/E♭3"));
 }
 
 void TestProgramsModel::test_setData_data()

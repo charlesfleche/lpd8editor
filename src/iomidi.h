@@ -6,6 +6,9 @@
 #include <alsa/asoundlib.h>
 
 #include <memory>
+#include <vector>
+
+class QSocketNotifier;
 
 class IOMidi : public QObject
 {
@@ -39,6 +42,16 @@ private:
 
     std::unique_ptr<snd_seq_t, SequencerCloser> m_seq;
     unsigned char m_seq_port{0}; // only read after the constructor has set it
+
+    // Watch the sequencer's file descriptors. Declared *after* m_seq on
+    // purpose: members are destroyed in the reverse order of their
+    // declaration, so the notifiers go before the handle closes their file
+    // descriptors, in the destructor and on every throw path of the
+    // constructor. As QObject children they would only be deleted by
+    // ~QObject, after m_seq: watching closed descriptors whose numbers can
+    // be reused in the meantime. Having no parent, they would not follow
+    // an IOMidi::moveToThread(): they would have to be moved one by one.
+    std::vector<std::unique_ptr<QSocketNotifier>> m_notifiers;
 };
 
 #endif // IOMIDI_H

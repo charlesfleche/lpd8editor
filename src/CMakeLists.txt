@@ -31,6 +31,7 @@ add_library(${_lib}
     midiconnectionsmodel.h
     midivaluedelegate.cpp
     midivaluedelegate.h
+    parameterlocation.h
     program.cpp
     program.h
     programsmodel.cpp

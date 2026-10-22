@@ -1,11 +1,12 @@
 #ifndef COMMANDS_H
 #define COMMANDS_H
 
-#include "programsmodel.h"
+#include "parameterlocation.h"
 
 #include <QUndoCommand>
 #include <QVariant>
 
+class ProgramsModel;
 class QItemSelectionModel;
 class QModelIndex;
 class QUndoStack;

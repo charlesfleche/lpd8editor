@@ -40,10 +40,13 @@ static const int group_program_id_column = ProgramColumn::ProgramId;
 ProgramsModel::ProgramsModel(QObject *parent, const QSqlDatabase &db)
     : QAbstractItemModel(parent)
 {
+    // The database functions only work on the default connection (db.h).
+    Q_ASSERT(db.connectionName() == QLatin1StringView(QSqlDatabase::defaultConnection));
+
     // LUTs
 
     const QStringList notes = {
-            "C", "C♯/D♭", "D", "D#/E♭", "E", "F", "F♯/G♭", "G", "G♯/A♭", "A", "A♯/B♭", "B"};
+            "C", "C♯/D♭", "D", "D♯/E♭", "E", "F", "F♯/G♭", "G", "G♯/A♭", "A", "A♯/B♭", "B"};
 
     for (int i = 0; i <= 127; ++i) {
         m_lut_default << QString::number(i);

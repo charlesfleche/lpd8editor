@@ -205,6 +205,17 @@ bool updateProgramFromSysex(int programId, const QByteArray &sysex)
         qWarning() << "Failed to update program from sysex:" << sysex << errorText(q);
         return false;
     };
+    // Each UPDATE must change exactly one row. One that matches nothing is
+    // not an SQL error: without this check, a program id that doesn't exist
+    // would 'succeed' without changing anything.
+    const auto changedOneRow = [&q, programId](const QString &what) {
+        if (q.numRowsAffected() != 1) {
+            qWarning().noquote() << "Failed to update program" << programId
+                                 << "from sysex: the update of its" << what << "changed no row";
+            return false;
+        }
+        return true;
+    };
 
     if (!q.prepare("update programs set channel = ? where programId = ?")) {
         return failed();
@@ -213,6 +224,9 @@ bool updateProgramFromSysex(int programId, const QByteArray &sysex)
     q.addBindValue(programId);
     if (!q.exec()) {
         return failed();
+    }
+    if (!changedOneRow(QStringLiteral("channel"))) {
+        return false;
     }
 
     if (!q.prepare("update pads set note = ?, pc = ?, cc = ?, toggle = ? "
@@ -229,6 +243,9 @@ bool updateProgramFromSysex(int programId, const QByteArray &sysex)
         if (!q.exec()) {
             return failed();
         }
+        if (!changedOneRow(QStringLiteral("pad %1").arg(controlId))) {
+            return false;
+        }
     }
 
     if (!q.prepare("update knobs set cc = ?, low = ?, high = ? "
@@ -244,6 +261,9 @@ bool updateProgramFromSysex(int programId, const QByteArray &sysex)
         q.addBindValue(controlId);
         if (!q.exec()) {
             return failed();
+        }
+        if (!changedOneRow(QStringLiteral("knob %1").arg(controlId))) {
+            return false;
         }
     }
 

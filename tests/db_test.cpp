@@ -28,6 +28,7 @@ private slots:
     void test_failedCreateProgramLeavesNothing_data();
     void test_failedCreateProgramLeavesNothing();
     void test_failedFromSysexChangesNothing();
+    void test_fromSysexForMissingProgramFails();
 
     void test_exportImportRoundTrip();
 
@@ -162,6 +163,14 @@ void TestDB::test_failedFromSysexChangesNothing()
 
     QVERIFY(!fromSysex(id, sysex));
     QCOMPARE(programSysex(id), before);
+}
+
+void TestDB::test_fromSysexForMissingProgramFails()
+{
+    // An UPDATE that matches no row is not an SQL error, so this used to
+    // 'succeed' without changing anything.
+    QVERIFY(programIds().isEmpty());
+    QVERIFY(!fromSysex(42, default_sysex));
 }
 
 void TestDB::test_exportImportRoundTrip()
