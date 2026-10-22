@@ -76,8 +76,8 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include(GNUInstallDirs)
 
 find_package(ALSA REQUIRED)
-find_package(Git REQUIRED)
-find_package(Qt6 COMPONENTS LinguistTools Sql Svg Test Widgets REQUIRED)
+# Qt 6.8 is the version in Debian trixie, the oldest target we build and test.
+find_package(Qt6 6.8 REQUIRED COMPONENTS Sql Svg Test Widgets)
 
 add_subdirectory(src)
 

@@ -16,7 +16,7 @@ Check the [releases](https://github.com/charlesfleche/lpd8editor/releases) page 
 
 ## Building
 
-Building lpd8editor requires a C++23 compiler (GCC 14 or Clang 19 and later), CMake 3.25 or later, Alsa and Qt6 with its internationalization tools. The [Github actions](.github/workflows/release.yml) provides detailed step by step to install dependencies, build, test and release.
+Building lpd8editor requires a C++23 compiler (GCC 14 or Clang 19 and later), CMake 3.25 or later, ALSA and Qt 6.8 or later. The [Github actions](.github/workflows/release.yml) provides detailed step by step to install dependencies, build, test and release.
 
 ### Building from git clone
 

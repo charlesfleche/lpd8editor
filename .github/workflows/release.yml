@@ -15,7 +15,6 @@ jobs:
           libasound2-dev
           qt6-svg-dev
           qt6-base-dev
-          qt6-tools-dev
 
       - name: Code
         uses: actions/checkout@v6
