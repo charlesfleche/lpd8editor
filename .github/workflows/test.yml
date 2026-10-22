@@ -3,31 +3,78 @@ name: Test
 on:
   push:
     branches:
-      - '*'
+      - '**'
+  pull_request:
+
+# Least privilege: these jobs only read the repository. A job that needs
+# more says so itself.
+permissions:
+  contents: read
+
+# A new push to the same branch cancels the run that is still going for the
+# previous one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-
+  trixie:
+    name: Debian trixie / ${{ matrix.compiler }}
+    runs-on: ubuntu-26.04
+    # Debian trixie sets the oldest versions we support (GCC 14, Clang 19,
+    # Qt 6.8), so it runs in its own container rather than on the runner's
+    # Ubuntu.
+    container: debian:trixie
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
     steps:
-      - name: Dependencies
-        run: sudo apt install
-          libasound2-dev
-          qt6-svg-dev
-          qt6-base-dev
+      # git must be in the container before the checkout, otherwise
+      # actions/checkout downloads a tarball without the history.
+      - name: Install git
+        run: apt-get update && apt-get install --yes --no-install-recommends ca-certificates git
 
-      - name: Code
-        uses: actions/checkout@v6
+      - name: Checkout
+        # Actions are pinned to a commit SHA: a tag can be moved to other
+        # code, a SHA cannot. Dependabot keeps them up to date.
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Install dependencies
+        run: tools/ci/install-dependencies.sh
+
+      # Release presets: some warnings only show up with optimizations on.
       - name: Configure
-        run: cmake . -DCMAKE_INSTALL_PREFIX=/tmp/lpd8editor -DCMAKE_BUILD_TYPE=Release
+        run: cmake --preset ${{ matrix.compiler }}-release -DLPD8EDITOR_WERROR=ON
 
       - name: Build
-        run: cmake --build .
+        run: cmake --build --preset ${{ matrix.compiler }}-release
 
       - name: Test
-        run: cmake --build . --target test
+        run: ctest --preset ${{ matrix.compiler }}-release
+
+  ubuntu:
+    name: Ubuntu 26.04 / ${{ matrix.compiler }}
+    runs-on: ubuntu-26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install dependencies
+        run: tools/ci/install-dependencies.sh
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.compiler }}-release -DLPD8EDITOR_WERROR=ON
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.compiler }}-release
+
+      - name: Test
+        run: ctest --preset ${{ matrix.compiler }}-release
 
       - name: Install
-        run: cmake --build . --target install
-
+        run: cmake --install build/${{ matrix.compiler }}-release --prefix "$RUNNER_TEMP/lpd8editor"

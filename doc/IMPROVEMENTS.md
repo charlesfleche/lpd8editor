@@ -75,11 +75,11 @@ Decisions made before starting:
       (3.1) are left for their own items.
 - [x] 1.14 [`630461f`](https://github.com/charlesfleche/lpd8editor/commit/630461faf6c7c6542a6cfba39c151fe990f3acb4) Write the coding conventions in `CONTRIBUTING.md` and update
       `CLAUDE.md` to match.
-- [x] 1.15 Add an opt-in git pre-commit hook that runs the fast checks.
+- [x] 1.15 [`51fc83c`](https://github.com/charlesfleche/lpd8editor/commit/51fc83c3b13b184d9159047df78b751c3f391d65) Add an opt-in git pre-commit hook that runs the fast checks.
 
 ## Phase 2: CI/CD (committed now, tested together later)
 
-- [ ] 2.1 Test workflow: a {trixie container, ubuntu-26.04} × {gcc, clang}
+- [x] 2.1 Test workflow: a {trixie container, ubuntu-26.04} × {gcc, clang}
       matrix, runs on pull requests, least-privilege `permissions`, actions
       pinned to a commit SHA, and `concurrency` to cancel superseded runs.
 - [ ] 2.2 Quality workflow with jobs for clang-format, clang-tidy, cppcheck,
