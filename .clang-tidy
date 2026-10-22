@@ -45,8 +45,6 @@ Checks:
   - -cppcoreguidelines-avoid-magic-numbers
   # Making enums one byte smaller is not worth the noise.
   - -performance-enum-size
-  # Reports any function with two parameters of the same type.
-  - -bugprone-easily-swappable-parameters
 
 CheckOptions:
   # 'if (pointer)' is idiomatic C++ and Qt. Integers still need an explicit
@@ -60,10 +58,14 @@ CheckOptions:
   # check still reports classes that mix public and private data.
   misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: true
 
-# Report warnings in our own headers only. The build folder can be inside
-# the source tree (build/<preset>/src/app_info.h), so it is excluded.
+# Report warnings in our own headers. This loose pattern is for editors
+# (clangd): the clang-tidy target and LPD8EDITOR_CLANG_TIDY pass an exact
+# filter anchored on the source dir instead (cmake/ClangTidy.cmake). It also
+# matches the headers the build generates in build/<preset>/src/
+# (app_info.h), so an editor can show findings there. That is accepted: a
+# pattern without the source dir cannot exclude them without also excluding
+# a clone that lives under a folder called 'build'.
 HeaderFilterRegex: '.*/(src|tests)/[^/]*\.h$'
-ExcludeHeaderFilterRegex: '.*/build/.*'
 
 # Fixes (-fix) are formatted with .clang-format.
 FormatStyle: file

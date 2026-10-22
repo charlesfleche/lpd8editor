@@ -7,11 +7,24 @@
 # clang-format releases format slightly differently, so CI checks the
 # formatting with the version from Debian trixie (19).
 
-find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format clang-format-19)
+# Prefer the versioned name: a machine can have a newer clang-format as the
+# default 'clang-format', which formats slightly differently from CI's 19.
+find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format-19 clang-format)
 
 if (NOT CLANG_FORMAT_EXECUTABLE)
     message(STATUS "clang-format not found: the format targets are not available")
     return()
+endif()
+
+execute_process(
+    COMMAND ${CLANG_FORMAT_EXECUTABLE} --version
+    OUTPUT_VARIABLE _clang_format_version
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if (NOT _clang_format_version MATCHES "version 19\\.")
+    message(WARNING
+        "${CLANG_FORMAT_EXECUTABLE} is not clang-format 19 (${_clang_format_version}). "
+        "CI checks the formatting with clang-format 19, and other versions can disagree.")
 endif()
 
 # CONFIGURE_DEPENDS: CMake checks the glob again at each build, so a new

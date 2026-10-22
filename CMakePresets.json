@@ -69,7 +69,8 @@
     {
       "name": "valgrind",
       "displayName": "GCC, debug, for valgrind: ctest --test-dir build/valgrind -T memcheck (no sanitizers: they don't mix)",
-      "inherits": ["gcc", "debug"]
+      "inherits": ["gcc", "debug"],
+      "cacheVariables": { "LPD8EDITOR_TEST_TIMEOUT": "900" }
     }
   ],
   "buildPresets": [

@@ -57,19 +57,16 @@ target_include_directories(${_lib}
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_include_directories(${_lib}
-    SYSTEM
-    PRIVATE
-        ${ALSA_INCLUDE_DIRS}
-)
-
 target_link_libraries(${_lib}
     PRIVATE
         lpd8editor_warnings
     PUBLIC
         Qt::Sql
         Qt::Widgets
-        ${ALSA_LIBRARIES}
+        # Imported target from FindALSA: include path and library together.
+        # PUBLIC because public headers (iomidi.h, midiconnectionsmodel.h)
+        # use ALSA types, so whatever includes them needs the include path.
+        ALSA::ALSA
 )
 
 add_executable(${_exe}

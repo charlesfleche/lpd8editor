@@ -10,7 +10,13 @@
 # Qt and ALSA headers come in through -isystem, so their own warnings are
 # not reported.
 
-option(LPD8EDITOR_WERROR "Treat compiler warnings as errors" OFF)
+# To treat warnings as errors, use CMake's built-in switch (CMake 3.24+):
+#
+#     cmake --preset <name> -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+#
+# It adds -Werror (or the equivalent for another compiler) to every target.
+# CI turns it on. Locally, 'cmake --build ... --compile-no-warning-as-error'
+# overrides it for one build, for example after a compiler upgrade.
 
 add_library(lpd8editor_warnings INTERFACE)
 
@@ -45,5 +51,4 @@ target_compile_options(lpd8editor_warnings
         # inside quotes (CMake lists are ';'-separated).
         "$<$<CXX_COMPILER_ID:GNU>:${_gcc_only_warnings}>"
 
-        $<$<BOOL:${LPD8EDITOR_WERROR}>:-Werror>
 )

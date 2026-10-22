@@ -33,7 +33,7 @@ jobs:
         run: tools/ci/install-dependencies.sh dpkg-dev file
       - name: Build, test and package
         run: |
-          cmake --preset gcc-release -DLPD8EDITOR_WERROR=ON -DLPD8EDITOR_PACKAGE_DISTRO=debian13
+          cmake --preset gcc-release -DCMAKE_COMPILE_WARNING_AS_ERROR=ON -DLPD8EDITOR_PACKAGE_DISTRO=debian13
           cmake --build --preset gcc-release
           ctest --preset gcc-release
           cmake --build --preset gcc-release --target package
@@ -58,7 +58,7 @@ jobs:
         run: tools/ci/install-dependencies.sh dpkg-dev file
       - name: Build, test and package
         run: |
-          cmake --preset gcc-release -DLPD8EDITOR_WERROR=ON -DLPD8EDITOR_PACKAGE_DISTRO=ubuntu26.04
+          cmake --preset gcc-release -DCMAKE_COMPILE_WARNING_AS_ERROR=ON -DLPD8EDITOR_PACKAGE_DISTRO=ubuntu26.04
           cmake --build --preset gcc-release
           ctest --preset gcc-release
           cmake --build --preset gcc-release --target package

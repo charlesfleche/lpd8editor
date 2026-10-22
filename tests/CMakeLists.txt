@@ -1,3 +1,8 @@
+# Valgrind makes the tests 20 to 50 times slower: programsmodel_test takes
+# 26 s under memcheck on a desktop, and a shared CI runner can be several
+# times slower than that. The valgrind preset raises the limit.
+set(LPD8EDITOR_TEST_TIMEOUT 60 CACHE STRING "Time limit for each test, in seconds")
+
 function(_add_test _name)
     set(_target ${_name}_test)
     add_executable(${_target}
@@ -14,13 +19,12 @@ function(_add_test _name)
         COMMAND ${_target}
     )
     # Tests must not need a display: CI machines have none. The offscreen
-    # platform plugin lets future widget tests run headless too. TIMEOUT
-    # makes a hung test fail quickly instead of after CTest's default
-    # 25 minutes.
+    # platform plugin lets widget tests run headless. TIMEOUT makes a hung
+    # test fail instead of waiting for CTest's default of 25 minutes.
     set_tests_properties(${_target}
         PROPERTIES
             ENVIRONMENT QT_QPA_PLATFORM=offscreen
-            TIMEOUT 60
+            TIMEOUT ${LPD8EDITOR_TEST_TIMEOUT}
     )
 endfunction()
 

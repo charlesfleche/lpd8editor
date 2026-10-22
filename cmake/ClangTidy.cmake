@@ -33,12 +33,28 @@ if (CLANG_TIDY_EXECUTABLE)
     endif()
 endif()
 
+# Which files are ours, as regular expressions anchored on the source dir.
+# The path is escaped first: a folder such as lpd8editor-0.0.18 is full of
+# '.', which a regex would read as 'any character'.
+#
+#   header filter: ^<source>/(src|tests)/[^/]*\.h$
+#   file filter:   ^<source>/(src|tests)/[^/]*\.cpp$
+#
+# They match files directly in src/ and tests/ only, so what the build
+# generates is excluded even when the build folder is in the source tree
+# (<source>/build/<preset>/src/app_info.h, .../qrc_sql.cpp, the *_autogen/
+# folders). These command-line filters override HeaderFilterRegex from
+# .clang-tidy, whose looser pattern is for editors.
+string(REGEX REPLACE "([][.*+?^$(){}|\\])" "\\\\\\1" _source_regex "${CMAKE_SOURCE_DIR}")
+set(_tidy_header_filter "^${_source_regex}/(src|tests)/[^/]*\\.h$")
+set(_tidy_file_filter "^${_source_regex}/(src|tests)/[^/]*\\.cpp$")
+
 if (LPD8EDITOR_CLANG_TIDY)
     if (NOT CLANG_TIDY_EXECUTABLE)
         message(FATAL_ERROR "LPD8EDITOR_CLANG_TIDY is ON but clang-tidy was not found")
     endif()
     # Must be set before the targets are created (add_subdirectory).
-    set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_EXECUTABLE})
+    set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_EXECUTABLE} "--header-filter=${_tidy_header_filter}")
 endif()
 
 if (RUN_CLANG_TIDY_EXECUTABLE)
@@ -48,11 +64,8 @@ if (RUN_CLANG_TIDY_EXECUTABLE)
             -quiet
             # Any finding fails the target (and CI), as with cppcheck.
             -warnings-as-errors=*
-            # Our sources only: files directly in <source dir>/src or /tests.
-            # Anchoring on the source dir excludes what the build generates
-            # (moc, uic and rcc output), even when the build folder is inside
-            # the source tree (build/<preset>/src/qrc_sql.cpp).
-            "^${CMAKE_SOURCE_DIR}/(src|tests)/[^/]*\\.cpp$"
+            -header-filter=${_tidy_header_filter}
+            ${_tidy_file_filter}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Running clang-tidy on the sources"
         VERBATIM

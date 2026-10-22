@@ -47,7 +47,7 @@ Run these before sending a change. CI runs them too.
 | cppcheck | `cmake --build --preset gcc-debug --target cppcheck` |
 | Sanitizers | `cmake --workflow --preset clang-asan` (or `gcc-asan`) |
 | Valgrind | `cmake --preset valgrind && cmake --build --preset valgrind && ctest --test-dir build/valgrind -T memcheck` |
-| Warnings as errors | configure with `-DLPD8EDITOR_WERROR=ON` |
+| Warnings as errors | configure with `-DCMAKE_COMPILE_WARNING_AS_ERROR=ON` |
 
 A git pre-commit hook runs the fast checks (formatting of the staged files and
 whitespace errors) at each commit. It is opt-in, once per clone:

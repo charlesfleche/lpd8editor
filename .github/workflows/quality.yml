@@ -102,7 +102,7 @@ jobs:
         run: sudo sysctl vm.mmap_rnd_bits=28
       - name: Build and test with ASan and UBSan
         run: |
-          cmake --preset ${{ matrix.compiler }}-asan -DLPD8EDITOR_WERROR=ON
+          cmake --preset ${{ matrix.compiler }}-asan -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
           cmake --build --preset ${{ matrix.compiler }}-asan
           ctest --preset ${{ matrix.compiler }}-asan
 

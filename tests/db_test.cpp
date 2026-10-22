@@ -208,7 +208,7 @@ void TestDB::test_openDatabaseCreatesFolderAndSchema()
     QVERIFY(dir.isValid());
     const QString path = dir.filePath("not/yet/there/db.sqlite3");
     {
-        const auto opened = openDatabase(path, "open");
+        const auto opened = openDatabase(path, QLatin1StringView("open"));
         // Not QVERIFY2(opened, opened.error()): its message is evaluated even
         // when the check passes, and error() on a value is undefined.
         if (!opened) {
@@ -227,7 +227,7 @@ void TestDB::test_openDatabaseReportsErrors()
     QVERIFY(file.open());
     const QString path = file.fileName() + "/sub/db.sqlite3";
 
-    const auto opened = openDatabase(path, "unopenable");
+    const auto opened = openDatabase(path, QLatin1StringView("unopenable"));
     QVERIFY(!opened.has_value());
     QVERIFY2(opened.error().contains("Cannot create the folder"), qPrintable(opened.error()));
     QSqlDatabase::removeDatabase("unopenable");

@@ -438,7 +438,7 @@ QSqlError initDb(const QSqlDatabase &db)
 }
 
 std::expected<QSqlDatabase, QString> openDatabase(const QString &path,
-                                                  const QString &connectionName)
+                                                  QLatin1StringView connectionName)
 {
     const auto tr = [](const char *text) { return QCoreApplication::translate("Database", text); };
 

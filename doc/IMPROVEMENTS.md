@@ -135,7 +135,7 @@ test and packaging steps pass on trixie), not that it works on GitHub.
 The target design and the order of the steps are described in
 `doc/ARCHITECTURE.md`. Read it before these commits.
 
-- [x] 4.1 [`b498b68`](https://github.com/charlesfleche/lpd8editor/commit/b498b6827176b5d93384bd161f1eb0adf6f3ccd0) Domain value types: `Program`, `Pad`, `Knob`, and a `DeviceProfile`
+- [x] 4.1 [`561e2e5`](https://github.com/charlesfleche/lpd8editor/commit/561e2e56418c30b205821614a79cff15253c71ab) Domain value types: `Program`, `Pad`, `Knob`, and a `DeviceProfile`
       (device slots and factory program; the control counts are fixed by the
       `Program` type). Its test compares only part of the factory program
       with the old SQL trigger: 4.2 compares all of it, byte for byte.

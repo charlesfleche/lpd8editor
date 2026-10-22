@@ -20,7 +20,7 @@ QSqlError initDb(const QSqlDatabase &db);
 // database, or a message for the user saying what went wrong.
 std::expected<QSqlDatabase, QString>
 openDatabase(const QString &path,
-             const QString &connectionName = QLatin1String(QSqlDatabase::defaultConnection));
+             QLatin1StringView connectionName = QLatin1StringView(QSqlDatabase::defaultConnection));
 bool deleteProgram(int programId);
 
 #endif // DB_H

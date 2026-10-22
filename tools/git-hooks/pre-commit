@@ -18,19 +18,40 @@ if ! git diff --cached --check; then
     status=1
 fi
 
-# Formatting of the staged C++ files, with the project's .clang-format.
-if command -v clang-format >/dev/null 2>&1; then
-    # Added, copied, modified or renamed files only (not deleted ones).
-    files=$(git diff --cached --name-only --diff-filter=ACMR -- 'src/*.cpp' 'src/*.h' 'tests/*.cpp' 'tests/*.h')
-    for file in $files; do
-        # ':file' is the staged version of the file.
-        if ! git show ":$file" | clang-format --assume-filename="$file" --dry-run --Werror >/dev/null 2>&1; then
-            echo "pre-commit: $file is not formatted (run clang-format -i $file, then git add it)" >&2
-            status=1
-        fi
-    done
-else
+# The same clang-format as CI (19) if available: other versions can format
+# differently (see cmake/Format.cmake).
+clang_format=""
+for candidate in clang-format-19 clang-format; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+        clang_format=$candidate
+        break
+    fi
+done
+
+if [ -z "$clang_format" ]; then
     echo "pre-commit: clang-format not found, formatting not checked" >&2
+    exit $status
 fi
+if ! "$clang_format" --version | grep -q "version 19\."; then
+    echo "pre-commit: warning: $clang_format is not version 19, CI may disagree" >&2
+fi
+
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+
+# Added, copied, modified or renamed C++ files (not deleted ones), one per
+# line, read with 'IFS= read -r' so names with spaces are kept whole.
+git diff --cached --name-only --diff-filter=ACMR -- 'src/*.cpp' 'src/*.h' 'tests/*.cpp' 'tests/*.h' > "$tmp/files"
+while IFS= read -r file; do
+    # ':file' is the staged version of the file.
+    git show ":$file" > "$tmp/staged"
+    "$clang_format" --assume-filename="$file" < "$tmp/staged" > "$tmp/formatted"
+    if ! cmp -s "$tmp/staged" "$tmp/formatted"; then
+        echo "pre-commit: $file is not formatted. clang-format wants:" >&2
+        diff -u --label "staged/$file" --label "formatted/$file" "$tmp/staged" "$tmp/formatted" >&2 || true
+        echo "  fix it with: $clang_format -i '$file' && git add '$file'" >&2
+        status=1
+    fi
+done < "$tmp/files"
 
 exit $status
