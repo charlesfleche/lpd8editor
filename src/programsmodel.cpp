@@ -31,8 +31,6 @@ static const QString toggle_label = "Toggle";
 static const int control_type_pad = 0;
 static const int control_type_knob = 1;
 static const int program_id_column_index = 0;
-QStandardItemModel *m_pads_header_model;
-QStandardItemModel *m_knobs_header_model;
 
 ProgramsModel::ProgramsModel(QObject *parent, const QSqlDatabase &db)
     : QAbstractItemModel(parent)

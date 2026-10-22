@@ -86,11 +86,11 @@ Decisions made before starting:
       ASan/UBSan, and valgrind.
 - [x] 2.3 [`7c5e4a2`](https://github.com/charlesfleche/lpd8editor/commit/7c5e4a2965be6ce44b79a8a632de9e87eceae010) Release workflow: packages for both targets, a `SHA256SUMS` file,
       least privilege, and pinned actions.
-- [x] 2.4 Dependabot keeps the pinned action SHAs up to date.
+- [x] 2.4 [`11330c8`](https://github.com/charlesfleche/lpd8editor/commit/11330c873d075af6deb9db1ad9b039951a6a43c3) Dependabot keeps the pinned action SHAs up to date.
 
 ## Phase 3: small, self-contained fixes (smallest first)
 
-- [ ] 3.1 Remove dead code: the empty `Lpd8editor` class,
+- [x] 3.1 Remove dead code: the empty `Lpd8editor` class,
       `readAndValidateChar` (it also contained an impossible condition),
       `defaultSysex()`, stray globals, and the unused `paths` in `main()`.
 - [ ] 3.2 Remove the Qt 5 compatibility code (`QT_VERSION` branches,

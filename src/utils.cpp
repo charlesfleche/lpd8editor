@@ -39,48 +39,6 @@ QString defaultDbPath()
     return dataDir().filePath("db.sqlite3");
 }
 
-char readAndValidateChar(QTextStream &in, char expected)
-{
-    if (in.atEnd()) {
-        throw std::runtime_error("Trying to read from an ended text stream");
-    }
-    int c = 0;
-    in >> c;
-    const char ret = static_cast<char>(c);
-    if (ret != expected) {
-        throw std::runtime_error("Check failed");
-    }
-    return static_cast<char>(ret);
-}
-
-char readAndValidateChar(QTextStream &in, char min, char max)
-{
-    if (in.atEnd()) {
-        throw std::runtime_error("Trying to read from an ended text stream");
-    }
-    int c = 0;
-    in >> c;
-    const char ret = static_cast<char>(c);
-    if (ret < min && ret > max) {
-        throw std::runtime_error("Check failed");
-    }
-    return static_cast<char>(ret);
-}
-
-char readAndValidateChar(QTextStream &in, const QList<char> &allowed)
-{
-    if (in.atEnd()) {
-        throw std::runtime_error("Trying to read from an ended text stream");
-    }
-    int c = 0;
-    in >> c;
-    const char ret = static_cast<char>(c);
-    if (!allowed.contains(ret)) {
-        throw std::runtime_error("Check failed");
-    }
-    return static_cast<char>(ret);
-}
-
 QByteArray fromSysexTextFile(const QString &path)
 {
     QByteArray ret;

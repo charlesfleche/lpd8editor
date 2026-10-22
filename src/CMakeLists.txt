@@ -20,8 +20,6 @@ add_library(${_lib}
     enums.h
     iomidi.cpp
     iomidi.h
-    lpd8editor.cpp
-    lpd8editor.h
     lpd8_sysex.cpp
     lpd8_sysex.h
     mainwindow.cpp

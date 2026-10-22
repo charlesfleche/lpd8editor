@@ -257,11 +257,6 @@ int MainWindow::programModelColumn() const
     return 1;
 }
 
-QString defaultSysex()
-{
-    return readTextFile(":/default-sysex.sql");
-}
-
 void MainWindow::on_actionNewProgram_triggered()
 {
     Q_CHECK_PTR(programsModel);
