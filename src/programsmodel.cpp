@@ -370,6 +370,7 @@ void ProgramsModel::addFilters(int programId)
 
     connect(proxy,
             &QSortFilterProxyModel::dataChanged,
+            this,
             [this, programId](const QModelIndex &topLeft,
                               const QModelIndex &bottomRight,
                               const QVector<int> &roles) {
@@ -390,6 +391,7 @@ void ProgramsModel::addFilters(int programId)
 
     connect(proxy,
             &QSortFilterProxyModel::dataChanged,
+            this,
             [this, programId](const QModelIndex &topLeft,
                               const QModelIndex &bottomRight,
                               const QVector<int> &roles) {

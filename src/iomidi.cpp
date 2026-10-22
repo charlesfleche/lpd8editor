@@ -32,10 +32,15 @@ IOMidi::IOMidi(QObject *parent)
     for (const pollfd &pfd : pfds) {
         qDebug() << "Enabling MIDI poll descriptor" << pfd.fd;
         auto *n = new QSocketNotifier(pfd.fd, QSocketNotifier::Read, this);
-        connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, [fd = pfd.fd, n]() {
-            qDebug() << "Disabling MIDI poll descriptor" << fd;
-            n->setEnabled(false);
-        });
+        // Context 'n': if the notifier is destroyed first (the IOMidi is deleted
+        // before the application quits), the connection goes with it.
+        connect(QCoreApplication::instance(),
+                &QCoreApplication::aboutToQuit,
+                n,
+                [fd = pfd.fd, n]() {
+                    qDebug() << "Disabling MIDI poll descriptor" << fd;
+                    n->setEnabled(false);
+                });
         connect(n, &QSocketNotifier::activated, this, &IOMidi::readEvents);
     }
 

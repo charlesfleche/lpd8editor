@@ -122,7 +122,7 @@ MainWindow::MainWindow(QWidget *parent)
             mapper,
             &QDataWidgetMapper::setCurrentModelIndex);
 
-    connect(sel, &QItemSelectionModel::currentRowChanged, [this](const QModelIndex &current) {
+    connect(sel, &QItemSelectionModel::currentRowChanged, this, [this](const QModelIndex &current) {
         Q_CHECK_PTR(programsModel);
 
         ui->padsView->setRootIndex(programsModel->padsParentIndex(current));
@@ -163,6 +163,7 @@ MainWindow::MainWindow(QWidget *parent)
     clientComboBox->setEnabled(connectionsModel->connectedPort().isValid());
     connect(connectionsModel,
             &MidiConnectionsModel::connectedPortChanged,
+            clientComboBox,
             [clientComboBox](const QModelIndex &index) {
                 clientComboBox->setEnabled(index.isValid());
                 if (index.isValid()) {
@@ -170,7 +171,7 @@ MainWindow::MainWindow(QWidget *parent)
                 }
             });
 
-    connect(clientComboBox, &QComboBox::activated, [connectionsModel](int row) {
+    connect(clientComboBox, &QComboBox::activated, connectionsModel, [connectionsModel](int row) {
         connectionsModel->connectPort(connectionsModel->index(row));
     });
 
@@ -190,6 +191,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     const QList<QAction *> midiActions = midiSendActions + midiReceiveActions;
 
+    // Connected below with connectionsModel as the context: it is the
+    // shortest-lived object the lambda uses (a child of 'io'), so the
+    // connections end when it is destroyed.
     auto midiActionsSetEnabled = [this, midiActions, connectionsModel]() {
         for (QAction *a : midiActions) {
             Q_CHECK_PTR(a);
@@ -201,19 +205,23 @@ MainWindow::MainWindow(QWidget *parent)
 
     midiActionsSetEnabled();
 
-    connect(connectionsModel, &MidiConnectionsModel::connectedChanged, midiActionsSetEnabled);
+    connect(connectionsModel,
+            &MidiConnectionsModel::connectedChanged,
+            connectionsModel,
+            midiActionsSetEnabled);
 
     connect(ui->programsView->selectionModel(),
             &QItemSelectionModel::currentChanged,
+            connectionsModel,
             midiActionsSetEnabled);
 
-    connect(programsModel, &ProgramsModel::modelReset, midiActionsSetEnabled);
+    connect(programsModel, &ProgramsModel::modelReset, connectionsModel, midiActionsSetEnabled);
 
     // Sysex
 
     auto *sysexHandler = new SysexHandler(io);
 
-    connect(sysexHandler, &SysexHandler::programReceived, [this](const QByteArray &sysex) {
+    connect(sysexHandler, &SysexHandler::programReceived, this, [this](const QByteArray &sysex) {
         Q_CHECK_PTR(ui->programsView->selectionModel());
         Q_CHECK_PTR(programsModel);
         Q_CHECK_PTR(undoStack());
@@ -228,7 +236,7 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     for (int i = 0; i < midiSendActions.count(); ++i) {
-        connect(midiSendActions[i], &QAction::triggered, [sysexHandler, i]() {
+        connect(midiSendActions[i], &QAction::triggered, sysexHandler, [sysexHandler, i]() {
             Q_CHECK_PTR(sysexHandler);
 
             sysexHandler->getProgram(i + 1);
@@ -236,10 +244,14 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     for (int i = 0; i < midiReceiveActions.count(); ++i) {
-        connect(midiReceiveActions[i], &QAction::triggered, [this, sysexHandler, i]() {
-            const QByteArray sysex = programsModel->programSysex(currentSelectedProjectId());
-            sysexHandler->sendProgram(sysex, i + 1);
-        });
+        connect(midiReceiveActions[i],
+                &QAction::triggered,
+                sysexHandler,
+                [this, sysexHandler, i]() {
+                    const QByteArray sysex =
+                            programsModel->programSysex(currentSelectedProjectId());
+                    sysexHandler->sendProgram(sysex, i + 1);
+                });
     }
 }
 
