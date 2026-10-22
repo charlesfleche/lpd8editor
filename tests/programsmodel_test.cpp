@@ -7,6 +7,7 @@
 
 #include <QAbstractItemModelTester>
 #include <QSqlDatabase>
+#include <QSqlRecord>
 #include <QUndoStack>
 
 #include <QtTest>
@@ -24,6 +25,8 @@ private slots:
     void test();
 
     void test_modelContract();
+
+    void test_columnsMatchTheSchema();
 
     void test_setData_data();
     void test_setData();
@@ -98,6 +101,31 @@ void TestProgramsModel::test_modelContract()
     QVERIFY(pm->deleteProgram(id));
 }
 
+void TestProgramsModel::test_columnsMatchTheSchema()
+{
+    // The column constants must follow the order of the SQL tables'
+    // columns: check each one against the real schema.
+    const QSqlRecord programs = db.record("programs");
+    QCOMPARE(programs.indexOf("programId"), ProgramColumn::ProgramId);
+    QCOMPARE(programs.indexOf("name"), ProgramColumn::Name);
+    QCOMPARE(programs.indexOf("channel"), ProgramColumn::Channel);
+
+    const QSqlRecord pads = db.record("pads");
+    QCOMPARE(pads.indexOf("programId"), PadColumn::ProgramId);
+    QCOMPARE(pads.indexOf("controlId"), PadColumn::ControlId);
+    QCOMPARE(pads.indexOf("note"), PadColumn::Note);
+    QCOMPARE(pads.indexOf("pc"), PadColumn::ProgramChange);
+    QCOMPARE(pads.indexOf("cc"), PadColumn::ControlChange);
+    QCOMPARE(pads.indexOf("toggle"), PadColumn::Toggle);
+
+    const QSqlRecord knobs = db.record("knobs");
+    QCOMPARE(knobs.indexOf("programId"), KnobColumn::ProgramId);
+    QCOMPARE(knobs.indexOf("controlId"), KnobColumn::ControlId);
+    QCOMPARE(knobs.indexOf("cc"), KnobColumn::ControlChange);
+    QCOMPARE(knobs.indexOf("low"), KnobColumn::Low);
+    QCOMPARE(knobs.indexOf("high"), KnobColumn::High);
+}
+
 void TestProgramsModel::test_setData_data()
 {
     QTest::addColumn<QVariant>("value");
@@ -125,8 +153,7 @@ void TestProgramsModel::test_setData()
 
     const int id = pm->createProgram();
     const QModelIndex pads = pm->padsParentIndex(pm->programIndex(id));
-    const int noteColumn = 2; // programId, controlId, note, ...
-    const QModelIndex note = pm->index(0, noteColumn, pads);
+    const QModelIndex note = pm->index(0, PadColumn::Note, pads);
     QCOMPARE(note.data(Qt::EditRole).toInt(), 36);
 
     const int undoCount = undoStack()->count();

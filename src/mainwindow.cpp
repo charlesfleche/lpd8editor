@@ -60,12 +60,12 @@ MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
     ui->deleteProgramButton->setDefaultAction(ui->actionDeleteProgram);
 
     ui->programsView->setModel(programsModel);
-    ui->programsView->setModelColumn(programModelColumn());
+    ui->programsView->setModelColumn(ProgramColumn::Name);
 
     auto *mapper = new QDataWidgetMapper(this);
     mapper->setModel(programsModel);
     mapper->setItemDelegate(new MidiValueDelegate(this));
-    mapper->addMapping(ui->channelSpinBox, 2); // XXX
+    mapper->addMapping(ui->channelSpinBox, ProgramColumn::Channel);
 
     ui->padsView->setItemDelegate(new MidiValueDelegate(this));
     ui->padsView->setModel(programsModel);
@@ -75,8 +75,8 @@ MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
     headerView->setModel(programsModel->padsHeaderModel());
     ui->padsView->setHorizontalHeader(headerView);
 
-    ui->padsView->hideColumn(0);
-    ui->padsView->hideColumn(1);
+    ui->padsView->hideColumn(PadColumn::ProgramId);
+    ui->padsView->hideColumn(PadColumn::ControlId);
 
     ui->knobsView->setItemDelegate(new MidiValueDelegate(this));
     ui->knobsView->setModel(programsModel);
@@ -86,8 +86,8 @@ MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
     headerView->setModel(programsModel->knobsHeaderModel());
     ui->knobsView->setHorizontalHeader(headerView);
 
-    ui->knobsView->hideColumn(0);
-    ui->knobsView->hideColumn(1);
+    ui->knobsView->hideColumn(KnobColumn::ProgramId);
+    ui->knobsView->hideColumn(KnobColumn::ControlId);
 
     // Refresh action delete program
 
@@ -248,11 +248,6 @@ MainWindow::~MainWindow()
     ui->programsView->selectionModel()->disconnect(this);
     delete programsModel;
     programsModel = nullptr;
-}
-
-int MainWindow::programModelColumn() const
-{
-    return 1;
 }
 
 void MainWindow::on_actionNewProgram_triggered()

@@ -12,6 +12,33 @@ class QSortFilterProxyModel;
 class QSqlTableModel;
 class QStandardItemModel;
 
+// Column numbers of the model, in the order of the SQL tables' columns
+// (create_table_*.sql). programsmodel_test checks that they match. Plain
+// constexpr ints in a namespace: scoped names (PadColumn::Note) of the int
+// type that QAbstractItemModel's API takes.
+namespace ProgramColumn {
+constexpr int ProgramId = 0;
+constexpr int Name = 1;
+constexpr int Channel = 2;
+} // namespace ProgramColumn
+
+namespace PadColumn {
+constexpr int ProgramId = 0;
+constexpr int ControlId = 1;
+constexpr int Note = 2;
+constexpr int ProgramChange = 3;
+constexpr int ControlChange = 4;
+constexpr int Toggle = 5;
+} // namespace PadColumn
+
+namespace KnobColumn {
+constexpr int ProgramId = 0;
+constexpr int ControlId = 1;
+constexpr int ControlChange = 2;
+constexpr int Low = 3;
+constexpr int High = 4;
+} // namespace KnobColumn
+
 // Where an editable value lives, in terms that stay valid when the model
 // rebuilds its internal structure (for example after a program is deleted
 // and then restored by undo): which program, which group of controls, which

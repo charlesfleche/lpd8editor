@@ -80,11 +80,10 @@ void TestCommands::test_DeleteProgramCommand()
 void TestCommands::test_UpdateParameterCommand()
 {
     const int id = pm->createProgram(QStringLiteral("initial"));
-    const int nameColumn = 1; // programId, name, channel
     const ParameterLocation name{.programId = id,
                                  .group = ParameterLocation::Group::Program,
                                  .controlId = 0,
-                                 .column = nameColumn};
+                                 .column = ProgramColumn::Name};
 
     UpdateParameterCommand cmd(pm, name, QStringLiteral("updated"));
     cmd.redo();
@@ -115,8 +114,7 @@ void TestCommands::test_undoEditAfterProgramWasDeletedAndRestored()
     // edit's command kept a pointer to a model deleted with the program.
     const int id = pm->createProgram();
     const QModelIndex pads = pm->padsParentIndex(pm->programIndex(id));
-    const int noteColumn = 2; // programId, controlId, note, ...
-    QVERIFY(pm->setData(pm->index(0, noteColumn, pads), 60, Qt::EditRole));
+    QVERIFY(pm->setData(pm->index(0, PadColumn::Note, pads), 60, Qt::EditRole));
 
     QUndoStack *stack = undoStack();
     stack->push(new DeleteProgramCommand(pm, id));
@@ -126,10 +124,10 @@ void TestCommands::test_undoEditAfterProgramWasDeletedAndRestored()
 
     stack->undo(); // restores the program, with the note at 60
     const QModelIndex restoredPads = pm->padsParentIndex(pm->programIndex(id));
-    QCOMPARE(pm->index(0, noteColumn, restoredPads).data(Qt::EditRole).toInt(), 60);
+    QCOMPARE(pm->index(0, PadColumn::Note, restoredPads).data(Qt::EditRole).toInt(), 60);
 
     stack->undo(); // undoes the edit
-    QCOMPARE(pm->index(0, noteColumn, restoredPads).data(Qt::EditRole).toInt(), 36);
+    QCOMPARE(pm->index(0, PadColumn::Note, restoredPads).data(Qt::EditRole).toInt(), 36);
 }
 
 QTEST_GUILESS_MAIN(TestCommands)

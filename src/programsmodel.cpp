@@ -30,8 +30,12 @@ static const QString toggle_label = "Toggle";
 
 static const int control_type_pad = 0;
 static const int control_type_knob = 1;
-static const int program_id_column_index = 0;
-static const int control_id_column_index = 1;
+// Pads and knobs are handled by the same code, so their id columns must agree.
+static_assert(PadColumn::ProgramId == KnobColumn::ProgramId);
+static_assert(PadColumn::ControlId == KnobColumn::ControlId);
+// The group rows ('pads', 'knobs') have the program id in the same column as
+// the programs.
+static const int group_program_id_column = ProgramColumn::ProgramId;
 
 ProgramsModel::ProgramsModel(QObject *parent, const QSqlDatabase &db)
     : QAbstractItemModel(parent)
@@ -386,7 +390,7 @@ void ProgramsModel::addFilters(int programId)
 
     auto *proxy = new QSortFilterProxyModel(this);
     proxy->setSourceModel(m_groups);
-    proxy->setFilterKeyColumn(program_id_column_index);
+    proxy->setFilterKeyColumn(group_program_id_column);
     proxy->setFilterRegularExpression(regex);
     m_groups_proxies[programId] = proxy;
 
@@ -394,7 +398,7 @@ void ProgramsModel::addFilters(int programId)
 
     proxy = new QSortFilterProxyModel(this);
     proxy->setSourceModel(m_pads);
-    proxy->setFilterKeyColumn(program_id_column_index);
+    proxy->setFilterKeyColumn(PadColumn::ProgramId);
     proxy->setFilterRegularExpression(regex);
     m_pads_proxies[programId] = proxy;
 
@@ -415,7 +419,7 @@ void ProgramsModel::addFilters(int programId)
 
     proxy = new QSortFilterProxyModel(this);
     proxy->setSourceModel(m_knobs);
-    proxy->setFilterKeyColumn(program_id_column_index);
+    proxy->setFilterKeyColumn(KnobColumn::ProgramId);
     proxy->setFilterRegularExpression(regex);
     m_knobs_proxies[programId] = proxy;
 
@@ -483,8 +487,8 @@ QModelIndex ProgramsModel::padsParentIndex(const QModelIndex &programIndex) cons
 
     Q_ASSERT(model(programIndex) == m_programs);
 
-    const QModelIndex program = index(programIndex.row(), program_id_column_index);
-    const QModelIndex pads = index(control_type_pad, program_id_column_index, program);
+    const QModelIndex program = index(programIndex.row(), ProgramColumn::ProgramId);
+    const QModelIndex pads = index(control_type_pad, group_program_id_column, program);
 
 #ifndef QT_NO_DEBUG
     const QAbstractItemModel *m = model(pads);
@@ -503,8 +507,8 @@ QModelIndex ProgramsModel::knobsParentIndex(const QModelIndex &programIndex) con
 
     Q_ASSERT(model(programIndex) == m_programs);
 
-    const QModelIndex program = index(programIndex.row(), program_id_column_index);
-    const QModelIndex knobs = index(control_type_knob, program_id_column_index, program);
+    const QModelIndex program = index(programIndex.row(), ProgramColumn::ProgramId);
+    const QModelIndex knobs = index(control_type_knob, group_program_id_column, program);
 
 #ifndef QT_NO_DEBUG
     const QAbstractItemModel *m = model(knobs);
@@ -536,7 +540,7 @@ QModelIndex ProgramsModel::programIndex(int programId) const
     Q_ASSERT(m_programs);
 
     for (int row = 0; row < m_programs->rowCount(); ++row) {
-        const QModelIndex idx = index(row, program_id_column_index);
+        const QModelIndex idx = index(row, ProgramColumn::ProgramId);
         if (idx.data(Qt::EditRole).toInt() == programId) {
             return idx;
         }
@@ -569,7 +573,7 @@ std::optional<ParameterLocation> ProgramsModel::parameterLocation(const QModelIn
 
     if (m == m_programs) {
         const int programId =
-                m->index(index.row(), program_id_column_index).data(Qt::EditRole).toInt();
+                m->index(index.row(), ProgramColumn::ProgramId).data(Qt::EditRole).toInt();
         return ParameterLocation{.programId = programId,
                                  .group = ParameterLocation::Group::Program,
                                  .controlId = 0,
@@ -590,7 +594,7 @@ std::optional<ParameterLocation> ProgramsModel::parameterLocation(const QModelIn
     }
     const auto &proxies =
             *group == ParameterLocation::Group::Pads ? m_pads_proxies : m_knobs_proxies;
-    const int controlId = m->index(index.row(), control_id_column_index).data(Qt::EditRole).toInt();
+    const int controlId = m->index(index.row(), PadColumn::ControlId).data(Qt::EditRole).toInt();
     return ParameterLocation{.programId = programIdOf(proxies, m),
                              .group = *group,
                              .controlId = controlId,
@@ -613,7 +617,7 @@ QModelIndex ProgramsModel::parameterIndex(const ParameterLocation &location) con
                 ? padsParentIndex(program)
                 : knobsParentIndex(program);
         for (int row = 0; row < rowCount(group); ++row) {
-            const QModelIndex controlId = index(row, control_id_column_index, group);
+            const QModelIndex controlId = index(row, PadColumn::ControlId, group);
             if (controlId.data(Qt::EditRole).toInt() == location.controlId) {
                 return index(row, location.column, group);
             }
