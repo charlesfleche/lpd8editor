@@ -2,7 +2,7 @@
 
 #include "programsmodel.h"
 
-#include <QApplication>
+#include <QCoreApplication>
 #include <QItemSelectionModel>
 #include <utility>
 
@@ -21,11 +21,12 @@ QUndoStack *setupUndoStack(QObject *parent)
 
 QUndoStack *undoStack()
 {
-    Q_CHECK_PTR(qApp);
+    QCoreApplication *app = QCoreApplication::instance();
+    Q_CHECK_PTR(app);
 
-    auto *stack = qApp->findChild<QUndoStack *>(undo_stack_object_name, Qt::FindDirectChildrenOnly);
+    auto *stack = app->findChild<QUndoStack *>(undo_stack_object_name, Qt::FindDirectChildrenOnly);
     if (stack == nullptr) {
-        stack = setupUndoStack(qApp);
+        stack = setupUndoStack(app);
     }
     Q_CHECK_PTR(stack);
     return stack;

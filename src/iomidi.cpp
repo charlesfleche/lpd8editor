@@ -1,6 +1,6 @@
 #include "iomidi.h"
 
-#include <QApplication>
+#include <QCoreApplication>
 #include <QSocketNotifier>
 
 #include <QtDebug>
@@ -25,19 +25,20 @@ IOMidi::IOMidi(QObject *parent)
     for (int i = 0; i < npfdf; ++i) {
         qDebug() << "Enabling MIDI poll descriptor" << i;
         auto *n = new QSocketNotifier(m_pfds[i].fd, QSocketNotifier::Read, this);
-        connect(qApp, &QApplication::aboutToQuit, [i, n]() {
+        connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, [i, n]() {
             qDebug() << "Disabling MIDI poll descriptor" << i;
             n->setEnabled(false);
         });
         connect(n, &QSocketNotifier::activated, this, &IOMidi::readEvents);
     }
 
-    if (snd_seq_set_client_name(m_seq_handle, qPrintable(qApp->applicationName())) < 0) {
+    if (snd_seq_set_client_name(m_seq_handle, qPrintable(QCoreApplication::applicationName()))
+        < 0) {
         throw std::runtime_error("Failed setting sequencer name");
     }
 
     const int res = snd_seq_create_simple_port(m_seq_handle,
-                                               qPrintable(qGuiApp->applicationName()),
+                                               qPrintable(QCoreApplication::applicationName()),
                                                SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_WRITE
                                                        | SND_SEQ_PORT_CAP_SUBS_READ
                                                        | SND_SEQ_PORT_CAP_SUBS_WRITE,
