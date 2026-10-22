@@ -169,79 +169,74 @@ QString defaultProgramName(int programIds)
 
 bool updateProgramFromSysex(int programId, const QByteArray &sysex)
 {
-    Q_ASSERT(!sysex.isNull() && !sysex.isEmpty());
+    // Message layout (doc/SYSEX.md): 8 header bytes, the MIDI channel, 4 bytes
+    // per pad (note, PC, CC, toggle), 3 per knob (CC, low, high), end byte.
+    constexpr qsizetype channel_offset = 8;
+    constexpr qsizetype pads_offset = 9;
+    constexpr qsizetype pad_size = 4;
+    constexpr qsizetype knob_size = 3;
+    const qsizetype knobs_offset = pads_offset + (pad_size * sysex::padsCount());
 
-    bool ret = false;
+    // Check the size once, before reading anything: every offset below is
+    // then inside the message.
+    if (sysex.size() != sysex::programRequestSize()) {
+        qWarning() << "Failed to update program from sysex: expected" << sysex::programRequestSize()
+                   << "bytes, got" << sysex.size();
+        return false;
+    }
+
+    // Values are bound as int. A byte above 127 is negative as a char, and
+    // the CHECK constraints of the tables reject it.
+    const auto byte = [&sysex](qsizetype offset) { return static_cast<int>(sysex.at(offset)); };
 
     QSqlQuery q;
+    const auto failed = [&q, &sysex] {
+        qWarning() << "Failed to update program from sysex:" << sysex << errorText(q);
+        return false;
+    };
 
-    const auto *it = sysex.constBegin();
-
-    // Header
-
-    GOTO_END_IF_FALSE((it != sysex.constEnd())); // Sysex Start
-    ++it;
-    GOTO_END_IF_FALSE((it != sysex.constEnd())); // Manufacturer
-    ++it;
-    GOTO_END_IF_FALSE((it != sysex.constEnd())); // Model byte 1
-    ++it;
-    GOTO_END_IF_FALSE((it != sysex.constEnd())); // Model byte 2
-    ++it;
-    GOTO_END_IF_FALSE((it != sysex.constEnd())); // Opcode set program: byte1
-    ++it;
-    GOTO_END_IF_FALSE((it != sysex.constEnd())); // Opcode set program: byte2
-    ++it;
-    GOTO_END_IF_FALSE((it != sysex.constEnd())); // Opcode set program: byte3
-    ++it;
-    GOTO_END_IF_FALSE((it != sysex.constEnd())); // Program ID
-
-    // Program
-
-    GOTO_END_IF_FALSE(q.prepare("update programs set channel = ? where programId = ?"));
-    q.addBindValue(*(++it));
-    GOTO_END_IF_FALSE((it != sysex.constEnd()));
+    if (!q.prepare("update programs set channel = ? where programId = ?")) {
+        return failed();
+    }
+    q.addBindValue(byte(channel_offset));
     q.addBindValue(programId);
-    GOTO_END_IF_FALSE(q.exec());
+    if (!q.exec()) {
+        return failed();
+    }
 
-    // Pads
-
+    if (!q.prepare("update pads set note = ?, pc = ?, cc = ?, toggle = ? "
+                   "where programId = ? and controlId = ?")) {
+        return failed();
+    }
     for (int controlId = 1; controlId <= sysex::padsCount(); ++controlId) {
-        GOTO_END_IF_FALSE(q.prepare("update pads set note = ?, pc = ?, cc = ?, toggle = ? where "
-                                    "programId = ? and controlId = ?"));
-        q.addBindValue(*(++it));
-        GOTO_END_IF_FALSE((it != sysex.constEnd()));
-        q.addBindValue(*(++it));
-        GOTO_END_IF_FALSE((it != sysex.constEnd()));
-        q.addBindValue(*(++it));
-        GOTO_END_IF_FALSE((it != sysex.constEnd()));
-        q.addBindValue(*(++it));
-        GOTO_END_IF_FALSE((it != sysex.constEnd()));
+        const qsizetype offset = pads_offset + (pad_size * (controlId - 1));
+        for (qsizetype i = 0; i < pad_size; ++i) {
+            q.addBindValue(byte(offset + i));
+        }
         q.addBindValue(programId);
         q.addBindValue(controlId);
-        GOTO_END_IF_FALSE(q.exec());
+        if (!q.exec()) {
+            return failed();
+        }
     }
 
+    if (!q.prepare("update knobs set cc = ?, low = ?, high = ? "
+                   "where programId = ? and controlId = ?")) {
+        return failed();
+    }
     for (int controlId = 1; controlId <= sysex::knobsCount(); ++controlId) {
-        GOTO_END_IF_FALSE(q.prepare("update knobs set cc = ?, low = ?, high = ? where programId = "
-                                    "? and controlId = ?"));
-        q.addBindValue(*(++it));
-        GOTO_END_IF_FALSE((it != sysex.constEnd()));
-        q.addBindValue(*(++it));
-        GOTO_END_IF_FALSE((it != sysex.constEnd()));
-        q.addBindValue(*(++it));
-        GOTO_END_IF_FALSE((it != sysex.constEnd()));
+        const qsizetype offset = knobs_offset + (knob_size * (controlId - 1));
+        for (qsizetype i = 0; i < knob_size; ++i) {
+            q.addBindValue(byte(offset + i));
+        }
         q.addBindValue(programId);
         q.addBindValue(controlId);
-        GOTO_END_IF_FALSE(q.exec());
+        if (!q.exec()) {
+            return failed();
+        }
     }
 
-    ret = true;
-end:
-    if (!ret || error(q)) {
-        qWarning() << "Failed to update program from sysex:" << sysex
-                   << (error(q) ? errorText(q) : "");
-    }
-    return ret;
+    return true;
 }
 
 } // namespace

@@ -120,6 +120,10 @@ void TestDB::test_failedCreateProgramLeavesNothing_data()
 
     QTest::newRow("Short sysex") << invalid_sysex_short;
     QTest::newRow("Out of bound channel") << invalid_sysex_channel;
+    // One byte short: the last knob's 'high' byte is missing. QByteArray
+    // keeps a '\0' after its data, so reading one byte too far returns 0,
+    // a valid value: only a size check catches this.
+    QTest::newRow("Truncated by one byte") << default_sysex.first(default_sysex.size() - 1);
 }
 
 void TestDB::test_failedCreateProgramLeavesNothing()
