@@ -12,29 +12,29 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    app.setOrganizationName(appName);
-    app.setApplicationName(appName);
-    app.setApplicationVersion(appVersion);
+    QApplication::setOrganizationName(appName);
+    QApplication::setApplicationName(appName);
+    QApplication::setApplicationVersion(appVersion);
 
     app.setProperty("applicationLink", appUrl);
     app.setProperty("applicationLicense", "MIT License");
     app.setProperty("applicationCopyright", "Copyright (c) 2017-2018 Charles Flèche");
 
-    auto shareDir = QDir(app.applicationDirPath());
+    auto shareDir = QDir(QApplication::applicationDirPath());
     shareDir.cdUp();
     shareDir.cd("share");
-    shareDir.cd(app.organizationName());
-    shareDir.cd(app.applicationName());
+    shareDir.cd(QApplication::organizationName());
+    shareDir.cd(QApplication::applicationName());
     QStringList paths = {
-            app.applicationDirPath(), // Useful for testing from the build folder
+            QApplication::applicationDirPath(), // Useful for testing from the build folder
             shareDir.path() // Useful for installations in a non-standard location
     };
     paths += QStandardPaths::standardLocations(QStandardPaths::AppDataLocation);
 
     MainWindow win;
-    win.setWindowTitle(app.applicationName());
+    win.setWindowTitle(QApplication::applicationName());
     win.setWindowIcon(QIcon(":/lpd8editor.svg"));
     win.show();
 
-    return app.exec();
+    return QApplication::exec();
 }

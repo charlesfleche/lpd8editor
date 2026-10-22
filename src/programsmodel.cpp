@@ -34,7 +34,7 @@ static const int program_id_column_index = 0;
 QStandardItemModel *m_pads_header_model;
 QStandardItemModel *m_knobs_header_model;
 
-ProgramsModel::ProgramsModel(QObject *parent, QSqlDatabase db)
+ProgramsModel::ProgramsModel(QObject *parent, const QSqlDatabase &db)
     : QAbstractItemModel(parent)
 {
     // LUTs
@@ -46,7 +46,7 @@ ProgramsModel::ProgramsModel(QObject *parent, QSqlDatabase db)
         m_lut_default << QString::number(i);
 
         const QString &note = notes[i % notes.count()];
-        const int octave = i / static_cast<int>(notes.count()) - 2;
+        const int octave = (i / static_cast<int>(notes.count())) - 2;
         m_lut_note << QString("%1: %2%3").arg(i).arg(note).arg(octave);
     }
 

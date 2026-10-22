@@ -44,9 +44,8 @@ IOMidi::IOMidi(QObject *parent)
                                                SND_SEQ_PORT_TYPE_APPLICATION);
     if (res < 0) {
         throw std::runtime_error("Failed setting sequencer port");
-    } else {
-        m_seq_port = static_cast<unsigned char>(res);
     }
+    m_seq_port = static_cast<unsigned char>(res);
 
     // Connect to announce port
 

@@ -17,6 +17,7 @@ private slots:
 
 private:
     IOMidi *io{};
+    QByteArray skipReason;
 };
 
 void TestIOMIdi::initTestCase()
@@ -24,13 +25,17 @@ void TestIOMIdi::initTestCase()
     io = nullptr;
     try {
         io = new IOMidi(this);
-    } catch (const std::exception &) { }
+    } catch (const std::exception &e) {
+        // Not an error: CI machines usually have no /dev/snd/seq. Keep the
+        // reason so the skip message says what happened.
+        skipReason = QByteArray("No ALSA sequencer available: ") + e.what();
+    }
 }
 
 void TestIOMIdi::init()
 {
     if (!io) {
-        QSKIP("No ALSA sequencer available (/dev/snd/seq)");
+        QSKIP(skipReason.constData());
     }
 }
 

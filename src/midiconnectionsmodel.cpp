@@ -28,7 +28,7 @@ MidiConnectionsModel::MidiConnectionsModel(IOMidi *io)
         emit externallyManagedChanged(externallyManaged());
     });
 
-    m_addrs.append({0, 0}); // Row for disconnect choice
+    m_addrs.append({.client = 0, .port = 0}); // Row for disconnect choice
 
     // Loop from already connected clients and ports to populate the addresses list
 
@@ -99,6 +99,18 @@ QModelIndex MidiConnectionsModel::connectedPort() const
                 return {};
             }
             ret = index(r);
+            break;
+
+        // portConnection() only combines From and To, so the four cases
+        // above are every possible value: anything else is a programmer
+        // error. A switch over QFlags is a switch over an int, which
+        // -Wswitch doesn't check, so this default is where the mistake gets
+        // caught. Q_ASSERT_X stops in debug builds and does nothing in
+        // release ones (unlike Q_UNREACHABLE(), whose release behavior
+        // would be undefined). bugprone-switch-missing-default-case asks
+        // for a default too.
+        default:
+            Q_ASSERT_X(false, "MidiConnectionsModel::connectedPort", "invalid Directions value");
             break;
         }
     }
@@ -194,20 +206,20 @@ void MidiConnectionsModel::handleMidiEvent(const snd_seq_event_t *ev)
 
     switch (ev->type) {
     case SND_SEQ_EVENT_PORT_START:
-        return addAddressIfAccepted(&ev->data.addr);
+        addAddressIfAccepted(&ev->data.addr);
+        return;
     case SND_SEQ_EVENT_PORT_EXIT:
-        return removeAddressIfAccepted(&ev->data.addr);
+        removeAddressIfAccepted(&ev->data.addr);
+        return;
     case SND_SEQ_EVENT_PORT_CHANGE:
-        return notifyDataChangedForAddress(&ev->data.addr);
+        notifyDataChangedForAddress(&ev->data.addr);
+        return;
     case SND_SEQ_EVENT_PORT_SUBSCRIBED:
     case SND_SEQ_EVENT_PORT_UNSUBSCRIBED:
-        if (ownaddr == ev->data.connect.sender || ownaddr == ev->data.connect.dest) {
-            if (ownaddr == ev->data.connect.sender) {
-                return notifyDataChangedForAddress(&ev->data.connect.dest);
-            }
-            if (ownaddr == ev->data.connect.dest) {
-                return notifyDataChangedForAddress(&ev->data.connect.sender);
-            }
+        if (ownaddr == ev->data.connect.sender) {
+            notifyDataChangedForAddress(&ev->data.connect.dest);
+        } else if (ownaddr == ev->data.connect.dest) {
+            notifyDataChangedForAddress(&ev->data.connect.sender);
         }
         return;
     case SND_SEQ_EVENT_CLIENT_START:
@@ -293,8 +305,8 @@ bool MidiConnectionsModel::acceptPort(const snd_seq_port_info_t *info) const
     Q_CHECK_PTR(info);
 
     const unsigned int caps = snd_seq_port_info_get_capability(info);
-    return !(caps & SND_SEQ_PORT_CAP_NO_EXPORT) && caps & SND_SEQ_PORT_CAP_READ
-            && caps & SND_SEQ_PORT_CAP_WRITE;
+    return (caps & SND_SEQ_PORT_CAP_NO_EXPORT) == 0 && (caps & SND_SEQ_PORT_CAP_READ) != 0
+            && (caps & SND_SEQ_PORT_CAP_WRITE) != 0;
 }
 
 QString MidiConnectionsModel::portName(const QModelIndex &index) const

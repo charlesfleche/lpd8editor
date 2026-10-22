@@ -46,9 +46,7 @@ void MidiValueDelegate::paint(QPainter *painter,
         buttonOption.state |=
                 index.data(Qt::EditRole).toInt() == 0 ? QStyle::State_Off : QStyle::State_On;
         buttonOption.text = index.data().toString();
-        auto *app = qobject_cast<QApplication *>(qGuiApp);
-        Q_CHECK_PTR(app);
-        app->style()->drawControl(QStyle::CE_PushButton, &buttonOption, painter);
+        QApplication::style()->drawControl(QStyle::CE_PushButton, &buttonOption, painter);
         return;
     }
 

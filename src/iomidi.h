@@ -8,6 +8,8 @@
 class IOMidi : public QObject
 {
     Q_OBJECT
+    Q_DISABLE_COPY_MOVE(IOMidi)
+
 public:
     explicit IOMidi(QObject *parent = nullptr);
     ~IOMidi() override;

@@ -15,7 +15,7 @@ class ProgramsModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
-    ProgramsModel(QObject *parent = nullptr, QSqlDatabase db = QSqlDatabase());
+    ProgramsModel(QObject *parent = nullptr, const QSqlDatabase &db = QSqlDatabase());
 
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
