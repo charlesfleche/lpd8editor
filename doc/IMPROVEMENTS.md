@@ -59,8 +59,8 @@ Decisions made before starting:
       `auto`, `return {}`, default member initializers, range-for...).
 - [x] 1.12c [`0803157`](https://github.com/charlesfleche/lpd8editor/commit/0803157a2599cc90eb8e43bee777515ae810fea5) Give file-local functions and constants internal linkage.
 - [x] 1.12d [`8502bfa`](https://github.com/charlesfleche/lpd8editor/commit/8502bfa8e46893af7f1944e348650e7be265fbc7) Make const what never changes, and initialize every variable.
-- [x] 1.12e Spell out lambda captures instead of `[=]`.
-- [ ] 1.12f Name parameters, the same way in declarations and definitions.
+- [x] 1.12e [`d063017`](https://github.com/charlesfleche/lpd8editor/commit/d063017314270f4b8e5df96f07f369a914da79a6) Spell out lambda captures instead of `[=]`.
+- [x] 1.12f Name parameters, the same way in declarations and definitions.
 - [ ] 1.12g Smaller readability and bugprone fixes, and `Q_DISABLE_COPY_MOVE`.
 - [ ] 1.12h Use `std::array` for the SysEx byte tables.
 

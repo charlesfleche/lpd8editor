@@ -13,12 +13,12 @@ int knobsCount();
 
 void makeSetProgramRequest(QByteArray &sysex, int programId);
 
-Type type(const QByteArray &);
-void addProgramHeader(QByteArray &, int);
-void addFooter(QByteArray &);
-QByteArray getProgram(int);
+Type type(const QByteArray &sysex);
+void addProgramHeader(QByteArray &sysex, int programId);
+void addFooter(QByteArray &sysex);
+QByteArray getProgram(int programId);
 
-char channel(const QByteArray &);
+char channel(const QByteArray &sysex);
 } // namespace sysex
 
 #endif // LPD8_SYSEX_H

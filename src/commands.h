@@ -18,7 +18,10 @@ int selectedProgramId(QItemSelectionModel *model);
 class CreateProgramCommand : public QUndoCommand
 {
 public:
-    CreateProgramCommand(ProgramsModel *model, QString, QByteArray, QUndoCommand *parent = nullptr);
+    CreateProgramCommand(ProgramsModel *model,
+                         QString name,
+                         QByteArray sysex,
+                         QUndoCommand *parent = nullptr);
 
     void undo() override;
     void redo() override;

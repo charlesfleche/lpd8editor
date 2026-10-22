@@ -11,7 +11,7 @@ QByteArray programSysex(int programId);
 bool fromSysex(int programId, const QByteArray &sysex);
 QList<int> programIds();
 
-QSqlError initDb(const QSqlDatabase &);
-bool deleteProgram(int);
+QSqlError initDb(const QSqlDatabase &db);
+bool deleteProgram(int programId);
 
 #endif // DB_H

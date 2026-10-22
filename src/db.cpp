@@ -24,10 +24,10 @@ QString errorText(const T &val)
 }
 
 template<>
-QString errorText(const QSqlError &err)
+QString errorText(const QSqlError &val)
 {
-    Q_ASSERT(err.isValid());
-    return err.text().trimmed();
+    Q_ASSERT(val.isValid());
+    return val.text().trimmed();
 }
 
 } // namespace

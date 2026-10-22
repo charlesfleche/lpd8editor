@@ -30,7 +30,7 @@ public:
     bool externallyManaged() const;
 
 public slots:
-    void connectPort(const QModelIndex &index);
+    void connectPort(const QModelIndex &idx);
 
     void handleMidiEvent(const snd_seq_event_t *ev);
 

@@ -45,53 +45,54 @@ int knobsCount()
 namespace {
 
 // Caller handle bound exceptions
-bool is(const QByteArray &b, const char *code, int size)
+bool is(const QByteArray &sysex, const char *code, int size)
 {
     for (int i = 0; i < 3; ++i) {
-        if (b[opcode_offset + i] != code[i]) {
+        if (sysex[opcode_offset + i] != code[i]) {
             return false;
         }
     }
-    return b.size() == size;
+    return sysex.size() == size;
 }
 
 } // namespace
 
-Type type(const QByteArray &b)
+Type type(const QByteArray &sysex)
 {
-    if (b.size() < minimum_rep_sysex_size || b[0] != sysex_start || b[b.size() - 1] != sysex_end) {
+    if (sysex.size() < minimum_rep_sysex_size || sysex[0] != sysex_start
+        || sysex[sysex.size() - 1] != sysex_end) {
         return TypeInvalid;
     }
 
-    RETURN_IF_TYPE(TypeProgram, b, sysex_program_rep, sysex_program_rep_size);
+    RETURN_IF_TYPE(TypeProgram, sysex, sysex_program_rep, sysex_program_rep_size);
 
     return TypeInvalid;
 }
 
 namespace {
 
-void addHeader(QByteArray &b)
+void addHeader(QByteArray &sysex)
 {
-    b += sysex_start;
-    b += sysex_manufacturer;
-    b += sysex_model_byte_1;
-    b += sysex_model_byte_2;
+    sysex += sysex_start;
+    sysex += sysex_manufacturer;
+    sysex += sysex_model_byte_1;
+    sysex += sysex_model_byte_2;
 }
 
 } // namespace
 
-void addFooter(QByteArray &b)
+void addFooter(QByteArray &sysex)
 {
-    b += sysex_end;
+    sysex += sysex_end;
 }
 
-void addProgramHeader(QByteArray &b, int programId)
+void addProgramHeader(QByteArray &sysex, int programId)
 {
-    addHeader(b);
-    b += sysex_program_req[0];
-    b += sysex_program_req[1];
-    b += sysex_program_req[2];
-    b += static_cast<char>(programId);
+    addHeader(sysex);
+    sysex += sysex_program_req[0];
+    sysex += sysex_program_req[1];
+    sysex += sysex_program_req[2];
+    sysex += static_cast<char>(programId);
 }
 
 QByteArray getProgram(int programId)

@@ -65,11 +65,11 @@ void CreateProgramCommand::undo()
 }
 
 DeleteProgramCommand::DeleteProgramCommand(ProgramsModel *model,
-                                           int program_id,
+                                           int programId,
                                            QUndoCommand *parent)
     : QUndoCommand(parent)
     , m_model(model)
-    , m_program_id(program_id)
+    , m_program_id(programId)
 {
     Q_CHECK_PTR(m_model);
 

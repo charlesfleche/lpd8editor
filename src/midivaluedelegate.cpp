@@ -98,7 +98,7 @@ void MidiValueDelegate::setModelData(QWidget *editor,
 
 void MidiValueDelegate::updateEditorGeometry(QWidget *editor,
                                              const QStyleOptionViewItem &option,
-                                             const QModelIndex &) const
+                                             const QModelIndex & /*index*/) const
 {
     Q_CHECK_PTR(editor);
 

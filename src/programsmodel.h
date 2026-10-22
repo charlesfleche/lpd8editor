@@ -18,7 +18,7 @@ public:
     ProgramsModel(QObject *parent = nullptr, QSqlDatabase db = QSqlDatabase());
 
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex &idx, int role = Qt::DisplayRole) const override;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role) override;
     QModelIndex
     index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
@@ -48,8 +48,8 @@ public slots:
     void select();
 
 private:
-    QAbstractItemModel *model(const QModelIndex &idx);
-    const QAbstractItemModel *model(const QModelIndex &idx) const;
+    QAbstractItemModel *model(const QModelIndex &index);
+    const QAbstractItemModel *model(const QModelIndex &index) const;
     const QAbstractItemModel *modelFromParent(const QModelIndex &parent) const;
 
     void addFilters(int programId);

@@ -193,7 +193,7 @@ const QAbstractItemModel *ProgramsModel::modelFromParent(const QModelIndex &pare
     return m_empty;
 }
 
-int ProgramsModel::columnCount(const QModelIndex &) const
+int ProgramsModel::columnCount(const QModelIndex & /*parent*/) const
 {
     Q_CHECK_PTR(m_programs);
     Q_CHECK_PTR(m_groups);
@@ -612,14 +612,14 @@ int ProgramIdSelectionRestorer::selectedProgramId() const
     return ::selectedProgramId(m_model);
 }
 
-void ProgramIdSelectionRestorer::selectProgramId(int program_id)
+void ProgramIdSelectionRestorer::selectProgramId(int programId)
 {
     Q_CHECK_PTR(m_model);
 
     const ProgramsModel *m = qobject_cast<ProgramsModel *>(m_model->model());
     Q_CHECK_PTR(m);
 
-    const QModelIndex programIdx = m->programIndex(program_id);
+    const QModelIndex programIdx = m->programIndex(programId);
     Q_ASSERT(programIdx.isValid());
 
     m_model->setCurrentIndex(programIdx,

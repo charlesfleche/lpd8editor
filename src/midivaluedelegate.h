@@ -11,19 +11,24 @@ class MidiValueDelegate : public QStyledItemDelegate
 public:
     MidiValueDelegate(QObject *parent = nullptr);
 
-    void paint(QPainter *, const QStyleOptionViewItem &, const QModelIndex &) const override;
-    QWidget *
-    createEditor(QWidget *, const QStyleOptionViewItem &, const QModelIndex &) const override;
-    void setEditorData(QWidget *, const QModelIndex &) const override;
-    void setModelData(QWidget *, QAbstractItemModel *, const QModelIndex &) const override;
-    void updateEditorGeometry(QWidget *,
-                              const QStyleOptionViewItem &,
-                              const QModelIndex &) const override;
+    void paint(QPainter *painter,
+               const QStyleOptionViewItem &option,
+               const QModelIndex &index) const override;
+    QWidget *createEditor(QWidget *parent,
+                          const QStyleOptionViewItem &option,
+                          const QModelIndex &index) const override;
+    void setEditorData(QWidget *editor, const QModelIndex &index) const override;
+    void setModelData(QWidget *editor,
+                      QAbstractItemModel *model,
+                      const QModelIndex &index) const override;
+    void updateEditorGeometry(QWidget *editor,
+                              const QStyleOptionViewItem &option,
+                              const QModelIndex &index) const override;
 
-    bool editorEvent(QEvent *,
-                     QAbstractItemModel *,
-                     const QStyleOptionViewItem &,
-                     const QModelIndex &) override;
+    bool editorEvent(QEvent *event,
+                     QAbstractItemModel *model,
+                     const QStyleOptionViewItem &option,
+                     const QModelIndex &index) override;
 };
 
 class LutSpinBox : public QSpinBox
