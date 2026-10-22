@@ -246,10 +246,34 @@ end:
 
 } // namespace
 
-int createProgram(const QString &name, const QByteArray &sysex, int programId)
-{
-    QSqlDatabase::database().transaction();
+namespace {
 
+// Runs 'work' in a database transaction: commits if it succeeds, rolls back
+// if it fails, so a failure never leaves half of the changes behind.
+template<typename Work>
+bool inTransaction(const char *what, Work work)
+{
+    QSqlDatabase db = QSqlDatabase::database();
+    if (!db.transaction()) {
+        qWarning() << "Failed to start a transaction to" << what << ":" << errorText(db);
+        return false;
+    }
+    if (!work()) {
+        db.rollback();
+        return false;
+    }
+    if (!db.commit()) {
+        qWarning() << "Failed to commit the transaction to" << what << ":" << errorText(db);
+        db.rollback();
+        return false;
+    }
+    return true;
+}
+
+// Inserts the program and returns its id, or -1. Runs inside the caller's
+// transaction.
+int insertProgram(const QString &name, const QByteArray &sysex, int programId)
+{
     QSqlQuery q;
 
     int ret = -1;
@@ -284,19 +308,25 @@ end:
         qWarning() << "Failed to create program: " << errorText(q);
         ret = -1;
     }
-    if (!QSqlDatabase::database().commit()) {
-        qWarning() << "Failed to commit program creation transaction:"
-                   << errorText(QSqlDatabase::database());
-        ret = -1;
-    }
     return ret;
+}
+
+} // namespace
+
+int createProgram(const QString &name, const QByteArray &sysex, int programId)
+{
+    int id = -1;
+    inTransaction("create a program", [&] {
+        id = insertProgram(name, sysex, programId);
+        return id != -1;
+    });
+    return id;
 }
 
 bool fromSysex(int programId, const QByteArray &sysex)
 {
-    QSqlDatabase::database().transaction();
-    updateProgramFromSysex(programId, sysex);
-    return QSqlDatabase::database().commit();
+    return inTransaction("update a program from SysEx",
+                         [&] { return updateProgramFromSysex(programId, sysex); });
 }
 
 bool deleteProgram(int programId)

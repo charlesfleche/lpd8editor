@@ -21,6 +21,10 @@ private slots:
     void test_createProgram();
     void test_createProgram_data();
 
+    void test_failedCreateProgramLeavesNothing_data();
+    void test_failedCreateProgramLeavesNothing();
+    void test_failedFromSysexChangesNothing();
+
 private:
     QSqlDatabase db;
 };
@@ -108,6 +112,38 @@ void TestDB::test_createProgram()
         QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".*"));
     }
     QCOMPARE(programSysex(resId), resSysex);
+}
+
+void TestDB::test_failedCreateProgramLeavesNothing_data()
+{
+    QTest::addColumn<QByteArray>("sysex");
+
+    QTest::newRow("Short sysex") << invalid_sysex_short;
+    QTest::newRow("Out of bound channel") << invalid_sysex_channel;
+}
+
+void TestDB::test_failedCreateProgramLeavesNothing()
+{
+    // NOLINTNEXTLINE(misc-const-correctness): QFETCH declares the variable
+    QFETCH(QByteArray, sysex);
+
+    QCOMPARE(createProgram(QString(), sysex), -1);
+    // The failed creation must be rolled back: no half-created program.
+    QCOMPARE(programIds(), QList<int>());
+}
+
+void TestDB::test_failedFromSysexChangesNothing()
+{
+    const int id = createProgram();
+    const QByteArray before = programSysex(id);
+
+    // Valid up to pad 8, whose note (byte 37) is out of range: the update
+    // fails after pads 1 to 7 were already written.
+    QByteArray sysex = allzero_sysex;
+    sysex[37] = '\x80';
+
+    QVERIFY(!fromSysex(id, sysex));
+    QCOMPARE(programSysex(id), before);
 }
 
 QTEST_GUILESS_MAIN(TestDB)

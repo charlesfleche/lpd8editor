@@ -53,7 +53,7 @@ void TestMidiConnectionsModel::test_modelContract()
 void TestMidiConnectionsModel::test_connectPortSignalsValidRange()
 {
     MidiConnectionsModel model(io);
-    QSignalSpy spy(&model, &QAbstractItemModel::dataChanged);
+    const QSignalSpy spy(&model, &QAbstractItemModel::dataChanged);
 
     model.connectPort(model.index(0));
 

@@ -102,8 +102,8 @@ Decisions made before starting:
 - [x] 3.5 [`d27ce5e`](https://github.com/charlesfleche/lpd8editor/commit/d27ce5ec3826d7a6029315a013207472fd8e45bd) `IOMidi`: no dangling `alloca` member, check the result of
       `snd_seq_event_input`, and use RAII so a throwing constructor doesn't
       leak the sequencer handle.
-- [x] 3.6 Give every lambda `connect` a context object.
-- [ ] 3.7 `createProgram` rolls back instead of committing on failure, and
+- [x] 3.6 [`2775f9b`](https://github.com/charlesfleche/lpd8editor/commit/2775f9bfdb0cdc58e570a46b5bb2a56bea9683ad) Give every lambda `connect` a context object.
+- [x] 3.7 `createProgram` rolls back instead of committing on failure, and
       `fromSysex` reports failures. Add regression tests.
 - [ ] 3.8 `updateProgramFromSysex`: check bounds *before* dereferencing.
 - [ ] 3.9 `initDb`: report query errors and create the schema inside one
