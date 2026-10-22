@@ -53,3 +53,7 @@ debian/lpd8editor/
 
 # python
 env
+
+# CMake presets build folders, and personal presets
+/build/
+CMakeUserPresets.json

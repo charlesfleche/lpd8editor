@@ -1,0 +1,127 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "description": "Shared settings: Ninja, one build folder per preset, compile_commands.json for clangd and clang-tidy",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "gcc",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_CXX_COMPILER": "g++" }
+    },
+    {
+      "name": "clang",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_CXX_COMPILER": "clang++" }
+    },
+    {
+      "name": "debug",
+      "hidden": true,
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "release",
+      "hidden": true,
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "gcc-debug",
+      "displayName": "GCC, debug",
+      "inherits": ["gcc", "debug"]
+    },
+    {
+      "name": "gcc-release",
+      "displayName": "GCC, release",
+      "inherits": ["gcc", "release"]
+    },
+    {
+      "name": "clang-debug",
+      "displayName": "Clang, debug",
+      "inherits": ["clang", "debug"]
+    },
+    {
+      "name": "clang-release",
+      "displayName": "Clang, release",
+      "inherits": ["clang", "release"]
+    },
+    {
+      "name": "gcc-asan",
+      "displayName": "GCC, debug, AddressSanitizer + UndefinedBehaviorSanitizer",
+      "inherits": ["gcc", "debug"],
+      "cacheVariables": { "LPD8EDITOR_SANITIZERS": "address;undefined" }
+    },
+    {
+      "name": "clang-asan",
+      "displayName": "Clang, debug, AddressSanitizer + UndefinedBehaviorSanitizer",
+      "inherits": ["clang", "debug"],
+      "cacheVariables": { "LPD8EDITOR_SANITIZERS": "address;undefined" }
+    },
+    {
+      "name": "valgrind",
+      "displayName": "GCC, debug, for valgrind: ctest --test-dir build/valgrind -T memcheck (no sanitizers: they don't mix)",
+      "inherits": ["gcc", "debug"]
+    }
+  ],
+  "buildPresets": [
+    { "name": "gcc-debug", "configurePreset": "gcc-debug" },
+    { "name": "gcc-release", "configurePreset": "gcc-release" },
+    { "name": "clang-debug", "configurePreset": "clang-debug" },
+    { "name": "clang-release", "configurePreset": "clang-release" },
+    { "name": "gcc-asan", "configurePreset": "gcc-asan" },
+    { "name": "clang-asan", "configurePreset": "clang-asan" },
+    { "name": "valgrind", "configurePreset": "valgrind" }
+  ],
+  "testPresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "output": { "outputOnFailure": true },
+      "execution": { "noTestsAction": "error" }
+    },
+    { "name": "gcc-debug", "inherits": "base", "configurePreset": "gcc-debug" },
+    { "name": "gcc-release", "inherits": "base", "configurePreset": "gcc-release" },
+    { "name": "clang-debug", "inherits": "base", "configurePreset": "clang-debug" },
+    { "name": "clang-release", "inherits": "base", "configurePreset": "clang-release" },
+    { "name": "gcc-asan", "inherits": "base", "configurePreset": "gcc-asan" },
+    { "name": "clang-asan", "inherits": "base", "configurePreset": "clang-asan" }
+  ],
+  "workflowPresets": [
+    {
+      "name": "gcc-debug",
+      "displayName": "Configure, build and test with GCC",
+      "steps": [
+        { "type": "configure", "name": "gcc-debug" },
+        { "type": "build", "name": "gcc-debug" },
+        { "type": "test", "name": "gcc-debug" }
+      ]
+    },
+    {
+      "name": "clang-debug",
+      "displayName": "Configure, build and test with Clang",
+      "steps": [
+        { "type": "configure", "name": "clang-debug" },
+        { "type": "build", "name": "clang-debug" },
+        { "type": "test", "name": "clang-debug" }
+      ]
+    },
+    {
+      "name": "clang-asan",
+      "displayName": "Configure, build and test with Clang and sanitizers",
+      "steps": [
+        { "type": "configure", "name": "clang-asan" },
+        { "type": "build", "name": "clang-asan" },
+        { "type": "test", "name": "clang-asan" }
+      ]
+    }
+  ]
+}
