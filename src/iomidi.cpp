@@ -8,7 +8,7 @@
 IOMidi::IOMidi(QObject *parent) :
     QObject(parent),
     m_seq_handle(nullptr),
-    m_seq_port(-1),
+    m_seq_port(0), // only read after the constructor has set it
     m_pfds(nullptr)
 {
     qDebug() << "Opening MIDI sequencer";
@@ -20,8 +20,8 @@ IOMidi::IOMidi(QObject *parent) :
     // Poll
 
     int npfd = snd_seq_poll_descriptors_count(m_seq_handle, POLLIN);
-    m_pfds = (struct pollfd *)alloca(npfd * sizeof(struct pollfd));
-    int npfdf = snd_seq_poll_descriptors(m_seq_handle, m_pfds, npfd, POLLIN);
+    m_pfds = static_cast<struct pollfd *>(alloca(static_cast<size_t>(npfd) * sizeof(struct pollfd)));
+    int npfdf = snd_seq_poll_descriptors(m_seq_handle, m_pfds, static_cast<unsigned int>(npfd), POLLIN);
 
     for (int i = 0 ; i < npfdf ; ++i) {
         qDebug() << "Enabling MIDI poll descriptor" << i;
@@ -79,7 +79,8 @@ snd_seq_t* IOMidi::handle() const {
 }
 
 unsigned char IOMidi::clientId() const {
-    return snd_seq_client_id(m_seq_handle);
+    // ALSA client ids are below 256 (SND_SEQ_MAX_CLIENTS is 192)
+    return static_cast<unsigned char>(snd_seq_client_id(m_seq_handle));
 }
 
 unsigned char IOMidi::portId() const {

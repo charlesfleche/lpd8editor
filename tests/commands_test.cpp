@@ -93,7 +93,7 @@ void TestCommands::test_UpdateProgramFromSysexCommand()
     const int id = createProgram();
     const QByteArray initial = programSysex(id);
     QByteArray updated(initial);
-    updated[21] = (char)0;
+    updated[21] = '\0';
     QVERIFY(initial != updated);
     UpdateProgramFromSysexCommand cmd(pm, id, updated);
     cmd.redo();

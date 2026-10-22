@@ -64,7 +64,7 @@ ProgramsModel::ProgramsModel(QObject *parent, QSqlDatabase db) :
         m_lut_default << QString::number(i);
 
         const QString &note = notes[i % notes.count()];
-        const int octave = i / notes.count() - 2;
+        const int octave = i / static_cast<int>(notes.count()) - 2;
         m_lut_note << QString("%1: %2%3").arg(i).arg(note).arg(octave);
     }
 
@@ -446,7 +446,7 @@ void ProgramsModel::removeFilters(int programId) {
     Q_CHECK_PTR(items[0]);
     Q_CHECK_PTR(items[1]);
     Q_ASSERT((items[1]->row() - items[0]->row()) == 1); // The two indices are contiguous
-    m_groups->removeRows(items[0]->row(), items.count());
+    m_groups->removeRows(items[0]->row(), static_cast<int>(items.count()));
 
     // Pads
 

@@ -76,7 +76,7 @@ void addProgramHeader(QByteArray& b, int programId) {
     b += sysex_program_req[0];
     b += sysex_program_req[1];
     b += sysex_program_req[2];
-    b += '\x00' + programId;
+    b += static_cast<char>(programId);
 }
 
 QByteArray getProgram(int programId) {
@@ -85,7 +85,7 @@ QByteArray getProgram(int programId) {
     ret += sysex_program_req[0];
     ret += sysex_program_req[1];
     ret += sysex_program_req[2];
-    ret += '\x00' + programId;
+    ret += static_cast<char>(programId);
     addFooter(ret);
     return ret;
 }

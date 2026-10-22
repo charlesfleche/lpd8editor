@@ -116,7 +116,7 @@ LutSpinBox::LutSpinBox(QWidget *parent) :
 void LutSpinBox::setLut(const QStringList &lut) {
     m_lut = lut;
     setMinimum(0);
-    setMaximum(m_lut.count() - 1);
+    setMaximum(static_cast<int>(m_lut.count()) - 1);
 }
 
 QString LutSpinBox::textFromValue(int value) const {
@@ -132,5 +132,5 @@ QString lutTextFromValue(const QStringList &lut, int value) {
 }
 
 int lutValueFromText(const QStringList &lut, const QString &text) {
-    return lut.indexOf(text);
+    return static_cast<int>(lut.indexOf(text));
 }

@@ -6,7 +6,7 @@
 
 static const int default_sysex_size = 66;
 static const char default_sysex_buf[default_sysex_size] = {
-(char)0xf0,
+'\xf0',
 0x47,
 0x7f, 0x75,
 0x63, 0x00, 0x01, 0x01,
@@ -27,12 +27,12 @@ static const char default_sysex_buf[default_sysex_size] = {
 0x31, 0x00, 0x7f,
 0x32, 0x00, 0x7f,
 0x33, 0x00, 0x7f,
-(char)0xf7
+'\xf7'
 };
 static const QByteArray default_sysex(default_sysex_buf, default_sysex_size);
 
 static const char allzero_sysex_buf[default_sysex_size] = {
-(char)0xf0,
+'\xf0',
 0x47,
 0x7f, 0x75,
 0x63, 0x00, 0x01, 0x01,
@@ -53,12 +53,12 @@ static const char allzero_sysex_buf[default_sysex_size] = {
 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00,
-(char)0xf7
+'\xf7'
 };
 static const QByteArray allzero_sysex(allzero_sysex_buf, default_sysex_size);
 
 static const char invalid_sysex_channel_buf[default_sysex_size] = {
-(char)0xf0,
+'\xf0',
 0x47,
 0x7f, 0x75,
 0x63, 0x00, 0x01, 0x01,
@@ -79,18 +79,18 @@ static const char invalid_sysex_channel_buf[default_sysex_size] = {
 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00,
-(char)0xf7
+'\xf7'
 };
 static const QByteArray invalid_sysex_channel(invalid_sysex_channel_buf, default_sysex_size);
 
 static const int invalid_sysex_short_size = 6;
 static const char invalid_sysex_short_buff[invalid_sysex_short_size] = {
-(char)0xf0,
+'\xf0',
 0x47,
 0x7f,
 0x33,
 0x00,
-(char)0x7f
+'\x7f'
 };
 static const QByteArray invalid_sysex_short(invalid_sysex_short_buff, invalid_sysex_short_size);
 

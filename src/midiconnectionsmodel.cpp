@@ -62,7 +62,7 @@ MidiConnectionsModel::MidiConnectionsModel(IOMidi* io) :
 }
 
 int MidiConnectionsModel::rowCount(const QModelIndex &parent) const {
-    return parent.isValid() ? 0 : m_addrs.count();
+    return parent.isValid() ? 0 : static_cast<int>(m_addrs.count());
 }
 
 QVariant MidiConnectionsModel::data(const QModelIndex &index, int role) const {
@@ -126,7 +126,7 @@ void MidiConnectionsModel::connectPort(const QModelIndex &idx) {
         connectPort(m_addrs[idx.row()]);
     }
 
-    emit dataChanged(index(0), index(m_addrs.count()));
+    emit dataChanged(index(0), index(static_cast<int>(m_addrs.count())));
 }
 
 void MidiConnectionsModel::disconnectAllPorts() const {
@@ -223,7 +223,7 @@ void MidiConnectionsModel::addAddressIfAccepted(const snd_seq_addr_t *addr) {
 void MidiConnectionsModel::removeAddressIfAccepted(const snd_seq_addr_t *addr) {
     Q_CHECK_PTR(addr);
 
-    const int r = m_addrs.indexOf(*addr);
+    const int r = static_cast<int>(m_addrs.indexOf(*addr));
     if (r >= 0) {
         beginRemoveRows(QModelIndex(), r, r);
         m_addrs.removeAt(r);
@@ -234,7 +234,7 @@ void MidiConnectionsModel::removeAddressIfAccepted(const snd_seq_addr_t *addr) {
 void MidiConnectionsModel::notifyDataChangedForAddress(const snd_seq_addr_t *addr) {
     Q_CHECK_PTR(addr);
 
-    const int r = m_addrs.indexOf(*addr);
+    const int r = static_cast<int>(m_addrs.indexOf(*addr));
     if (r >= 0) {
         const QModelIndex idx = index(r);
         emit dataChanged(idx, idx);
@@ -245,7 +245,8 @@ void MidiConnectionsModel::addAddress(const snd_seq_addr_t *addr) {
     Q_CHECK_PTR(addr);
     Q_ASSERT(!m_addrs.contains(*addr));
 
-    beginInsertRows(QModelIndex(), m_addrs.count(), m_addrs.count());
+    const int row = static_cast<int>(m_addrs.count());
+    beginInsertRows(QModelIndex(), row, row);
     m_addrs.append(*addr);
     endInsertRows();
 }

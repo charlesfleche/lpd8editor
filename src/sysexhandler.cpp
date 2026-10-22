@@ -61,7 +61,13 @@ void SysexHandler::sendSysex(const QByteArray &sysex) const {
     snd_seq_ev_clear(&ev);
     snd_seq_ev_set_subs(&ev);
     snd_seq_ev_set_direct(&ev);
-    snd_seq_ev_set_sysex(&ev, s.length(), s.data());
+    // The ALSA macro clears a flag with '&= ~MASK' on an unsigned char,
+    // which GCC reports as a sign conversion. The warning is about the
+    // macro's code, not ours, so it is silenced for this line only.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+    snd_seq_ev_set_sysex(&ev, static_cast<unsigned int>(s.length()), s.data());
+#pragma GCC diagnostic pop
 
     m_io->sendEvent(&ev);
 }
