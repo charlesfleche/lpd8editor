@@ -21,15 +21,15 @@ cmake --build . --target install
 cmake --build . --target package   # DEB + TGZ into ./packages
 ```
 
-Run a single test: `ctest -R db_test --output-on-failure` from the build dir, or run the binary directly (`./src/db_test`). QtTest binaries take a test function name too, e.g. `./src/db_test test_createProgram`.
+Run a single test: `ctest -R db_test --output-on-failure` from the build dir, or run the binary directly (`./tests/db_test`). QtTest binaries take a test function name too, e.g. `./tests/db_test test_createProgram`.
 
-Tests are registered in `src/CMakeLists.txt` with `_add_test(<name>)`, which builds `<name>_test.cpp` and links it against the `lpd8editor-lib` static library. Adding a test means creating `src/<name>_test.cpp` and adding one `_add_test` line. `iomidi_test` opens a real ALSA sequencer client, so it needs `/dev/snd/seq` to be available.
+Tests live in `tests/` and are registered in `tests/CMakeLists.txt` with `_add_test(<name>)`, which builds `<name>_test.cpp` and links it against the `lpd8editor-lib` static library. Adding a test means creating `tests/<name>_test.cpp` and adding one `_add_test` line. `iomidi_test` opens a real ALSA sequencer client, so it needs `/dev/snd/seq` to be available.
 
 The version comes from `git describe` (tags like `x.y.z`), or else from the source folder name (`lpd8editor-x.y.z`). It is written into the generated `app_info.h`.
 
 ## Architecture
 
-All code is in `src/`. Everything except `main.cpp` builds into `lpd8editor-lib`, so tests can link the same code the app uses.
+Application code is in `src/`, tests are in `tests/`. Everything except `main.cpp` builds into `lpd8editor-lib`, so tests can link the same code the app uses.
 
 - **Storage is SQLite, and it is the source of truth.** `db.cpp` has free functions (`createProgram`, `fromSysex`, `programSysex`, `deleteProgram`, ...) that run on the default `QSqlDatabase` connection. `initDb` creates the schema from the `.sql` files embedded through `sql.qrc`. Tables: `programs` (name, MIDI channel), `pads` (8 per program: note/pc/cc/toggle), `knobs` (8 per program: cc/low/high). SQL triggers insert the default pads and knobs when a program is created and delete them when it is removed, so C++ never inserts those rows itself. The app database is at `defaultDbPath()` (`db.sqlite3` in the app data dir). Tests use `:memory:` and call `initDb` in `init()`.
 - **SysEx ⇄ DB conversion**: `lpd8_sysex.*` builds and parses the raw message layout (header, channel, 8×4 pad bytes, 8×3 knob bytes, footer). `db.cpp` maps that layout to and from table rows (`programSysex` serializes, `fromSysex` updates rows).

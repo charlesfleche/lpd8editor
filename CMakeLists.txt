@@ -80,6 +80,7 @@ find_package(ALSA REQUIRED)
 find_package(Qt6 6.8 REQUIRED COMPONENTS Sql Svg Test Widgets)
 
 add_subdirectory(src)
+add_subdirectory(tests)
 
 add_custom_target(github
   SOURCES

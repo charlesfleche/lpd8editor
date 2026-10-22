@@ -33,10 +33,10 @@ Decisions made before starting:
 - [x] 1.2 [`d008dfe`](https://github.com/charlesfleche/lpd8editor/commit/d008dfe07bdaefdfa8a427130aa9d0637f45220f) Raise the CMake minimum to 3.25 and the language to C++23, set per
       target. *Why:* Qt 6 needs C++17 anyway, and C++23 gives us
       `std::expected` for error handling. GCC 14 and Clang 19 support it.
-- [x] 1.3 Drop build dependencies we don't need: Git becomes optional, and
+- [x] 1.3 [`445e281`](https://github.com/charlesfleche/lpd8editor/commit/445e2818ebfa67a3191bad4fb1c4d0cae5facc15) Drop build dependencies we don't need: Git becomes optional, and
       LinguistTools is no longer required. *Why:* tarball builds failed without
       git, and translations were removed.
-- [ ] 1.4 Move the tests to `tests/`. A pure rename, so it is easy to review.
+- [x] 1.4 Move the tests to `tests/`. A pure rename, so it is easy to review.
 - [ ] 1.5 Build tests only when `BUILD_TESTING` is on, and run them headless
       (`QT_QPA_PLATFORM=offscreen`).
 - [ ] 1.6 Add one shared compiler-warnings target for GCC and Clang, with an
