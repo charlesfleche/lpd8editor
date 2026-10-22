@@ -125,7 +125,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(sel,
             &QItemSelectionModel::currentRowChanged,
-            [=](const QModelIndex &current) {
+            [=, this](const QModelIndex &current) {
                 Q_CHECK_PTR(programsModel);
 
                 ui->padsView->setRootIndex(programsModel->padsParentIndex(current));
@@ -204,7 +204,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QList<QAction *> midiActions = midiSendActions + midiReceiveActions;
 
-    auto midiActionsSetEnabled = [=](){
+    auto midiActionsSetEnabled = [=, this](){
         for (auto it = midiActions.begin() ; it != midiActions.end() ; ++it) {
             QAction* a = *it;
             Q_CHECK_PTR(a);
@@ -240,7 +240,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(sysexHandler,
             &SysexHandler::programReceived,
-            [=](const QByteArray& sysex) {
+            [=, this](const QByteArray& sysex) {
                 Q_CHECK_PTR(ui->programsView->selectionModel());
                 Q_CHECK_PTR(programsModel);
                 Q_CHECK_PTR(undoStack());
@@ -274,7 +274,7 @@ MainWindow::MainWindow(QWidget *parent) :
         connect(
             midiReceiveActions[i],
             &QAction::triggered,
-            [=]() {
+            [=, this]() {
                 const QByteArray sysex = programsModel->programSysex(currentSelectedProjectId());
                 sysexHandler->sendProgram(sysex, i+1);
             }

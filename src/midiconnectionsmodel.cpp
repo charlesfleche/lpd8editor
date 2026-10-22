@@ -23,7 +23,7 @@ MidiConnectionsModel::MidiConnectionsModel(IOMidi* io) :
     connect(
         this,
         &MidiConnectionsModel::dataChanged,
-        [=]() {
+        [=, this]() {
             emit connectedPortChanged(connectedPort());
             emit connectedChanged(connected());
             emit externallyManagedChanged(externallyManaged());

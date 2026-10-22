@@ -27,10 +27,10 @@ Decisions made before starting:
 
 ## Phase 1: build system and developer tooling
 
-- [x] 1.1 Make the SQL-backed tests run on recent Qt (`QTEST_GUILESS_MAIN`).
+- [x] 1.1 [`e637ae3`](https://github.com/charlesfleche/lpd8editor/commit/e637ae3ecceae84be80c4a69fa7ca9d0ea81efcc) Make the SQL-backed tests run on recent Qt (`QTEST_GUILESS_MAIN`).
       *Why:* 3 of 7 tests segfault on Qt 6.8, and no tooling can be checked
       while the tests are red.
-- [ ] 1.2 Raise the CMake minimum to 3.25 and the language to C++23, set per
+- [x] 1.2 Raise the CMake minimum to 3.25 and the language to C++23, set per
       target. *Why:* Qt 6 needs C++17 anyway, and C++23 gives us
       `std::expected` for error handling. GCC 14 and Clang 19 support it.
 - [ ] 1.3 Drop build dependencies we don't need: Git becomes optional, and

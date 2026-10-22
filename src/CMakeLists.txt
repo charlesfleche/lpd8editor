@@ -41,6 +41,13 @@ add_library(${_lib}
     ${_rcc_sources}
 )
 
+# PUBLIC: everything linking the library (the app and the tests) is
+# compiled as C++23 too.
+target_compile_features(${_lib}
+    PUBLIC
+        cxx_std_23
+)
+
 target_include_directories(${_lib}
     SYSTEM
     PRIVATE

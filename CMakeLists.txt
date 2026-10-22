@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.25)
 
 
 set(_project_version 0.0.0)
@@ -63,8 +63,9 @@ message(STATUS "QApplication version: ${LPD8EDITOR_QAPPLICATION_VERSION}")
 
 enable_testing()
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# The language standard is set per target (see src/CMakeLists.txt).
+# Turn off GNU extensions so the code stays portable between GCC and Clang.
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
