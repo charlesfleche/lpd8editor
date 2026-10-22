@@ -1,0 +1,10 @@
+# cppcheck suppressions, used by the 'cppcheck' target (cmake/Cppcheck.cmake).
+# Format: <id>[:<file>[:<line>]]. Prefer an inline '// cppcheck-suppress <id>'
+# next to the code, and use this file only for findings in files we don't
+# write.
+
+# The tests include the moc output (#include "foo_test.moc"). That file
+# starts with '#error ... doesn't include <QObject>', guarded by a macro
+# cppcheck can't see because it doesn't read the Qt headers. Not a real
+# error: the compiler does see the macro.
+preprocessorErrorDirective:*_autogen/*

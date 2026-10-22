@@ -62,13 +62,17 @@ Decisions made before starting:
 - [x] 1.12e [`d063017`](https://github.com/charlesfleche/lpd8editor/commit/d063017314270f4b8e5df96f07f369a914da79a6) Spell out lambda captures instead of `[=]`.
 - [x] 1.12f [`e913a2e`](https://github.com/charlesfleche/lpd8editor/commit/e913a2e1b176abd72c015bf2a1534a488f1545ab) Name parameters, the same way in declarations and definitions.
 - [x] 1.12g [`1975c4c`](https://github.com/charlesfleche/lpd8editor/commit/1975c4c15ee62a2b6a00c3ff73ff7c88adc66d26) Smaller readability and bugprone fixes, and `Q_DISABLE_COPY_MOVE`.
-- [x] 1.12h Use `std::array` for the SysEx byte tables.
+- [x] 1.12h [`3ce5cbb`](https://github.com/charlesfleche/lpd8editor/commit/3ce5cbb0129cd402d5fcf5f15ea4fbeb1e337e80) Use `std::array` for the SysEx byte tables.
 
       Findings deliberately left for later items, which rewrite that code:
       `goto` and macros in `db.cpp` (4.7), the macro in `lpd8_sysex.cpp`
       (4.2), `const_cast` in `ProgramsModel` (4.5), pointer arithmetic in
       `IOMidi` (3.5), and dead code and mutable globals (3.1).
-- [ ] 1.13 Add a cppcheck configuration and a `cppcheck` target.
+- [x] 1.13a Add a `cppcheck` target and a suppressions file. This commit only
+      makes the findings visible.
+- [ ] 1.13b Fix the cppcheck findings: `explicit` constructors, and an
+      assert with a side effect. `alloca` (3.5) and the unused `paths`
+      (3.1) are left for their own items.
 - [ ] 1.14 Write the coding conventions in `CONTRIBUTING.md` and update
       `CLAUDE.md` to match.
 - [ ] 1.15 Add an opt-in git pre-commit hook that runs the fast checks.
