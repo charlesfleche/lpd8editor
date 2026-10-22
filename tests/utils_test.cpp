@@ -45,8 +45,7 @@ void TestUtils::test_sysexTextFile_data()
     QTest::addColumn<char>("readEnd");
     QTest::addColumn<QString>("warningMsg");
 
-    const char short_buf[] = {0x70, 0x60, 0x7F};
-    QTest::newRow("Short") << QByteArray(short_buf, 3) << 0 << char(0) << char(0)
+    QTest::newRow("Short") << QByteArrayLiteral("\x70\x60\x7f") << 0 << char(0) << char(0)
                            << "Reading from sysex file ended prematurely at position 4";
 
     QByteArray long_buf;

@@ -61,8 +61,8 @@ Decisions made before starting:
 - [x] 1.12d [`8502bfa`](https://github.com/charlesfleche/lpd8editor/commit/8502bfa8e46893af7f1944e348650e7be265fbc7) Make const what never changes, and initialize every variable.
 - [x] 1.12e [`d063017`](https://github.com/charlesfleche/lpd8editor/commit/d063017314270f4b8e5df96f07f369a914da79a6) Spell out lambda captures instead of `[=]`.
 - [x] 1.12f [`e913a2e`](https://github.com/charlesfleche/lpd8editor/commit/e913a2e1b176abd72c015bf2a1534a488f1545ab) Name parameters, the same way in declarations and definitions.
-- [x] 1.12g Smaller readability and bugprone fixes, and `Q_DISABLE_COPY_MOVE`.
-- [ ] 1.12h Use `std::array` for the SysEx byte tables.
+- [x] 1.12g [`1975c4c`](https://github.com/charlesfleche/lpd8editor/commit/1975c4c15ee62a2b6a00c3ff73ff7c88adc66d26) Smaller readability and bugprone fixes, and `Q_DISABLE_COPY_MOVE`.
+- [x] 1.12h Use `std::array` for the SysEx byte tables.
 
       Findings deliberately left for later items, which rewrite that code:
       `goto` and macros in `db.cpp` (4.7), the macro in `lpd8_sysex.cpp`
