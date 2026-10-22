@@ -102,6 +102,6 @@ void TestCommands::test_UpdateProgramFromSysexCommand()
     QCOMPARE(programSysex(id), initial);
 }
 
-QTEST_APPLESS_MAIN(TestCommands)
+QTEST_GUILESS_MAIN(TestCommands)
 
 #include "commands_test.moc"

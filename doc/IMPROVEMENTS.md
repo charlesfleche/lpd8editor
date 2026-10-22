@@ -27,7 +27,7 @@ Decisions made before starting:
 
 ## Phase 1: build system and developer tooling
 
-- [ ] 1.1 Make the SQL-backed tests run on recent Qt (`QTEST_GUILESS_MAIN`).
+- [x] 1.1 Make the SQL-backed tests run on recent Qt (`QTEST_GUILESS_MAIN`).
       *Why:* 3 of 7 tests segfault on Qt 6.8, and no tooling can be checked
       while the tests are red.
 - [ ] 1.2 Raise the CMake minimum to 3.25 and the language to C++23, set per

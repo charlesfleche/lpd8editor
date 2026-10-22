@@ -67,6 +67,6 @@ void TestProgramsModel::test() {
     QCOMPARE(pm->rowCount(), 0);
 }
 
-QTEST_APPLESS_MAIN(TestProgramsModel)
+QTEST_GUILESS_MAIN(TestProgramsModel)
 
 #include "programsmodel_test.moc"
