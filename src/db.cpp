@@ -62,7 +62,14 @@ QString programName(int programId)
     GOTO_END_IF_FALSE(q.first());
     ret = q.value(0).toString();
 
-    Q_ASSERT(!q.next());
+    {
+        // Call next() outside Q_ASSERT: in a release build the whole assert
+        // expression is removed, and a call inside it would not happen at
+        // all. The block ends the variable's scope, because a goto may not
+        // jump over an initialization into its scope.
+        [[maybe_unused]] const bool hasMoreRows = q.next();
+        Q_ASSERT(!hasMoreRows);
+    }
 
 end:
     if (error(q)) {
@@ -92,7 +99,14 @@ QByteArray programSysex(int programId)
     GOTO_END_IF_FALSE(q.first());
     ret += q.value(0).value<char>();
 
-    Q_ASSERT(!q.next());
+    {
+        // Call next() outside Q_ASSERT: in a release build the whole assert
+        // expression is removed, and a call inside it would not happen at
+        // all. The block ends the variable's scope, because a goto may not
+        // jump over an initialization into its scope.
+        [[maybe_unused]] const bool hasMoreRows = q.next();
+        Q_ASSERT(!hasMoreRows);
+    }
 
     // pads
 

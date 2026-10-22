@@ -68,9 +68,9 @@ Decisions made before starting:
       `goto` and macros in `db.cpp` (4.7), the macro in `lpd8_sysex.cpp`
       (4.2), `const_cast` in `ProgramsModel` (4.5), pointer arithmetic in
       `IOMidi` (3.5), and dead code and mutable globals (3.1).
-- [x] 1.13a Add a `cppcheck` target and a suppressions file. This commit only
+- [x] 1.13a [`a692917`](https://github.com/charlesfleche/lpd8editor/commit/a692917f6fa0004b37f2db138b3d3fe1962cd779) Add a `cppcheck` target and a suppressions file. This commit only
       makes the findings visible.
-- [ ] 1.13b Fix the cppcheck findings: `explicit` constructors, and an
+- [x] 1.13b Fix the cppcheck findings: `explicit` constructors, and an
       assert with a side effect. `alloca` (3.5) and the unused `paths`
       (3.1) are left for their own items.
 - [ ] 1.14 Write the coding conventions in `CONTRIBUTING.md` and update

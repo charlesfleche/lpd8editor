@@ -20,7 +20,7 @@ public:
     Q_PROPERTY(bool connected READ connected NOTIFY connectedChanged)
     Q_PROPERTY(bool externallyManaged READ externallyManaged NOTIFY externallyManagedChanged)
 
-    MidiConnectionsModel(IOMidi *io);
+    explicit MidiConnectionsModel(IOMidi *io);
 
     int rowCount(const QModelIndex &parent) const override;
     QVariant data(const QModelIndex &index, int role) const override;
