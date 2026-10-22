@@ -106,9 +106,9 @@ Decisions made before starting:
 - [x] 3.7 [`91e31ac`](https://github.com/charlesfleche/lpd8editor/commit/91e31aca58dddfd9bbb437c1db14c61afac9d59d) `createProgram` rolls back instead of committing on failure, and
       `fromSysex` reports failures. Add regression tests.
 - [x] 3.8 [`64e1f24`](https://github.com/charlesfleche/lpd8editor/commit/64e1f24898f3d0d59117fba9b6532a274ccf01d8) `updateProgramFromSysex`: check bounds *before* dereferencing.
-- [x] 3.9 `initDb`: report query errors and create the schema inside one
+- [x] 3.9 [`9917b18`](https://github.com/charlesfleche/lpd8editor/commit/9917b185e368137d25b609c9c5c5f9897182e558) `initDb`: report query errors and create the schema inside one
       transaction.
-- [ ] 3.10 `ProgramsModel`: respect the `QAbstractItemModel` contract for
+- [x] 3.10 `ProgramsModel`: respect the `QAbstractItemModel` contract for
       invalid indexes and `hasIndex`, checked by `QAbstractItemModelTester`
       in the tests.
 - [ ] 3.11 `ProgramsModel::setData`: reject invalid values, skip changes that

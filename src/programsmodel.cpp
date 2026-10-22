@@ -206,6 +206,9 @@ int ProgramsModel::rowCount(const QModelIndex &parent) const
 
 QVariant ProgramsModel::data(const QModelIndex &index, int role) const
 {
+    if (!index.isValid()) {
+        return {};
+    }
     const QAbstractItemModel *m = model(index);
     Q_CHECK_PTR(m);
 
@@ -225,7 +228,9 @@ QVariant ProgramsModel::data(const QModelIndex &index, int role) const
 
 bool ProgramsModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    Q_ASSERT(index.isValid());
+    if (!index.isValid()) {
+        return false;
+    }
 
     QAbstractItemModel *m = model(index);
     Q_CHECK_PTR(m);
@@ -237,7 +242,10 @@ bool ProgramsModel::setData(const QModelIndex &index, const QVariant &value, int
 
 Qt::ItemFlags ProgramsModel::flags(const QModelIndex &index) const
 {
-    Q_ASSERT(index.isValid());
+    // The invalid index is the root: views ask for its flags too.
+    if (!index.isValid()) {
+        return Qt::NoItemFlags;
+    }
 
     const QAbstractItemModel *m = model(index);
     Q_CHECK_PTR(m);
@@ -275,6 +283,11 @@ QVariant ProgramsModel::headerData(int section, Qt::Orientation orientation, int
 
 QModelIndex ProgramsModel::index(int row, int column, const QModelIndex &parent) const
 {
+    // hasIndex() checks row and column against rowCount() and columnCount():
+    // an index must never point outside the model.
+    if (!hasIndex(row, column, parent)) {
+        return {};
+    }
     const QAbstractItemModel *m = modelFromParent(parent);
     Q_CHECK_PTR(m);
 
@@ -283,6 +296,9 @@ QModelIndex ProgramsModel::index(int row, int column, const QModelIndex &parent)
 
 QModelIndex ProgramsModel::parent(const QModelIndex &child) const
 {
+    if (!child.isValid()) {
+        return {};
+    }
     const QAbstractItemModel *m = model(child);
     Q_CHECK_PTR(m);
 

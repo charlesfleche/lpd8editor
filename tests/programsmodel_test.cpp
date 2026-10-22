@@ -4,6 +4,7 @@
 
 #include "test_sysex.h"
 
+#include <QAbstractItemModelTester>
 #include <QSqlDatabase>
 
 #include <QtTest>
@@ -19,6 +20,8 @@ private slots:
 
     void test_data();
     void test();
+
+    void test_modelContract();
 
 private:
     QSqlDatabase db;
@@ -73,6 +76,21 @@ void TestProgramsModel::test()
     QCOMPARE(pm->programSysex(id), default_sysex);
     QVERIFY(pm->deleteProgram(id));
     QCOMPARE(pm->rowCount(), 0);
+}
+
+void TestProgramsModel::test_modelContract()
+{
+    // QAbstractItemModelTester walks the whole tree when attached, then
+    // checks every change the model signals, and fails the test on the
+    // first violation of the QAbstractItemModel rules.
+    pm->createProgram(QStringLiteral("First"));
+    pm->createProgram(QStringLiteral("Second"));
+    const QAbstractItemModelTester tester(pm,
+                                          QAbstractItemModelTester::FailureReportingMode::QtTest);
+
+    const int id = pm->createProgram(QStringLiteral("Third"));
+    QVERIFY(pm->updateProgramFromSysex(id, allzero_sysex));
+    QVERIFY(pm->deleteProgram(id));
 }
 
 QTEST_GUILESS_MAIN(TestProgramsModel)
