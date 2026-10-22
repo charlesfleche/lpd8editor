@@ -61,8 +61,6 @@ project(lpd8editor
 message(STATUS "Project version: ${CMAKE_PROJECT_VERSION}")
 message(STATUS "QApplication version: ${LPD8EDITOR_QAPPLICATION_VERSION}")
 
-enable_testing()
-
 # The language standard is set per target (see src/CMakeLists.txt).
 # Turn off GNU extensions so the code stays portable between GCC and Clang.
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -77,10 +75,17 @@ include(GNUInstallDirs)
 
 find_package(ALSA REQUIRED)
 # Qt 6.8 is the version in Debian trixie, the oldest target we build and test.
-find_package(Qt6 6.8 REQUIRED COMPONENTS Sql Svg Test Widgets)
+find_package(Qt6 6.8 REQUIRED COMPONENTS Sql Svg Widgets)
+
+# CTest defines the BUILD_TESTING option (ON by default). Packagers can
+# configure with -DBUILD_TESTING=OFF to skip building the tests.
+include(CTest)
 
 add_subdirectory(src)
-add_subdirectory(tests)
+if (BUILD_TESTING)
+    find_package(Qt6 REQUIRED COMPONENTS Test)
+    add_subdirectory(tests)
+endif()
 
 add_custom_target(github
   SOURCES

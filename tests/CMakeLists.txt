@@ -11,6 +11,15 @@ function(_add_test _name)
         NAME ${_target}
         COMMAND ${_target}
     )
+    # Tests must not need a display: CI machines have none. The offscreen
+    # platform plugin lets future widget tests run headless too. TIMEOUT
+    # makes a hung test fail quickly instead of after CTest's default
+    # 25 minutes.
+    set_tests_properties(${_target}
+        PROPERTIES
+            ENVIRONMENT QT_QPA_PLATFORM=offscreen
+            TIMEOUT 60
+    )
 endfunction()
 
 _add_test(commands)

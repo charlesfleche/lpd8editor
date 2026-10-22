@@ -9,6 +9,7 @@ class TestIOMIdi : public QObject
 
 private slots:
     void initTestCase();
+    void init();
 
     void test_handle();
     void test_clientId();
@@ -27,12 +28,14 @@ void TestIOMIdi::initTestCase() {
     }
 }
 
+void TestIOMIdi::init() {
+    if (!io) {
+        QSKIP("No ALSA sequencer available (/dev/snd/seq)");
+    }
+}
+
 void TestIOMIdi::test_handle()
 {
-    if (!io) {
-        return;
-    }
-
     snd_seq_t* seq = io->handle();
     QVERIFY(seq);
 
@@ -44,19 +47,11 @@ void TestIOMIdi::test_handle()
 
 void TestIOMIdi::test_clientId()
 {
-    if (!io) {
-        return;
-    }
-
     QVERIFY(io->clientId() > 0);
 }
 
 void TestIOMIdi::test_portId()
 {
-    if (!io) {
-        return;
-    }
-
     QVERIFY(io->clientId() > 0);
 }
 
