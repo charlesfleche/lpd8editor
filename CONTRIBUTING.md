@@ -49,6 +49,13 @@ Run these before sending a change. CI runs them too.
 | Valgrind | `cmake --preset valgrind && cmake --build --preset valgrind && ctest --test-dir build/valgrind -T memcheck` |
 | Warnings as errors | configure with `-DLPD8EDITOR_WERROR=ON` |
 
+A git pre-commit hook runs the fast checks (formatting of the staged files and
+whitespace errors) at each commit. It is opt-in, once per clone:
+
+```bash
+git config core.hooksPath tools/git-hooks
+```
+
 Use the Clang presets for clang-tidy, which doesn't understand GCC-only
 warning flags. Valgrind and the sanitizers need separate builds, because both
 replace the memory allocator.

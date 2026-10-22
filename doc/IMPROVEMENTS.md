@@ -73,9 +73,9 @@ Decisions made before starting:
 - [x] 1.13b [`8ea3fe7`](https://github.com/charlesfleche/lpd8editor/commit/8ea3fe7114bc133ef92a1907de93b3c4ce77924a) Fix the cppcheck findings: `explicit` constructors, and an
       assert with a side effect. `alloca` (3.5) and the unused `paths`
       (3.1) are left for their own items.
-- [x] 1.14 Write the coding conventions in `CONTRIBUTING.md` and update
+- [x] 1.14 [`630461f`](https://github.com/charlesfleche/lpd8editor/commit/630461faf6c7c6542a6cfba39c151fe990f3acb4) Write the coding conventions in `CONTRIBUTING.md` and update
       `CLAUDE.md` to match.
-- [ ] 1.15 Add an opt-in git pre-commit hook that runs the fast checks.
+- [x] 1.15 Add an opt-in git pre-commit hook that runs the fast checks.
 
 ## Phase 2: CI/CD (committed now, tested together later)
 

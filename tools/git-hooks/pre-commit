@@ -1,0 +1,36 @@
+#!/bin/sh
+# Fast checks before each commit. Opt in once per clone with:
+#
+#     git config core.hooksPath tools/git-hooks
+#
+# Skip it for one commit with 'git commit --no-verify'.
+#
+# It checks what is *staged*, not the working copy: a file may have
+# unstaged changes that won't be part of the commit.
+
+set -eu
+
+status=0
+
+# Whitespace errors (trailing spaces, mixed indentation) in the staged diff.
+if ! git diff --cached --check; then
+    echo "pre-commit: whitespace errors (shown above)" >&2
+    status=1
+fi
+
+# Formatting of the staged C++ files, with the project's .clang-format.
+if command -v clang-format >/dev/null 2>&1; then
+    # Added, copied, modified or renamed files only (not deleted ones).
+    files=$(git diff --cached --name-only --diff-filter=ACMR -- 'src/*.cpp' 'src/*.h' 'tests/*.cpp' 'tests/*.h')
+    for file in $files; do
+        # ':file' is the staged version of the file.
+        if ! git show ":$file" | clang-format --assume-filename="$file" --dry-run --Werror >/dev/null 2>&1; then
+            echo "pre-commit: $file is not formatted (run clang-format -i $file, then git add it)" >&2
+            status=1
+        fi
+    done
+else
+    echo "pre-commit: clang-format not found, formatting not checked" >&2
+fi
+
+exit $status
