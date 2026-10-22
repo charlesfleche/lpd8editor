@@ -46,9 +46,9 @@ Decisions made before starting:
       UndefinedBehaviorSanitizer.
 - [x] 1.8 [`f6ad9a7`](https://github.com/charlesfleche/lpd8editor/commit/f6ad9a72e4b246bcfe7c8373a9d7826290217baa) Run the test suite under valgrind memcheck with `ctest -T memcheck`,
       with a commented suppressions file.
-- [x] 1.9 Add `CMakePresets.json` with named, reproducible configurations: GCC
+- [x] 1.9 [`431ecdd`](https://github.com/charlesfleche/lpd8editor/commit/431ecdd57ba9d51246e32d36b772f7ee3a2135aa) Add `CMakePresets.json` with named, reproducible configurations: GCC
       or Clang, debug or release, plus sanitizers and valgrind.
-- [ ] 1.10 Add `.editorconfig` and `.clang-format`, plus `format` and
+- [x] 1.10 Add `.editorconfig` and `.clang-format`, plus `format` and
       `check-format` targets.
 - [ ] 1.11 Reformat the whole tree with clang-format, a mechanical commit only,
       and list it in `.git-blame-ignore-revs`.

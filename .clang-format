@@ -1,0 +1,65 @@
+# Code style, close to the one Qt itself uses. Needs clang-format 19 or later
+# (Debian trixie). Apply with: cmake --build <dir> --target format
+---
+Language: Cpp
+BasedOnStyle: WebKit
+Standard: Latest
+ColumnLimit: 100
+IndentWidth: 4
+ContinuationIndentWidth: 8
+AccessModifierOffset: -4
+
+# 'QObject *parent' and 'const QString &name': the * and & go with the name.
+PointerAlignment: Right
+ReferenceAlignment: Pointer
+
+# Braces: on their own line after classes and functions, on the same line
+# for everything else (if, for, lambdas, namespaces...).
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterEnum: false
+  AfterFunction: true
+  AfterNamespace: false
+  AfterControlStatement: Never
+  BeforeCatch: false
+  BeforeElse: false
+  BeforeLambdaBody: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortLambdasOnASingleLine: All
+InsertBraces: true
+
+# Constructor initializer lists: one per line, comma first.
+BreakConstructorInitializers: BeforeComma
+PackConstructorInitializers: Never
+
+# Function calls and declarations: either everything fits on one line, or
+# each argument goes on its own line.
+AlignAfterOpenBracket: Align
+BinPackArguments: false
+BinPackParameters: false
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+
+BreakBeforeBinaryOperators: NonAssignment
+AlwaysBreakTemplateDeclarations: Yes
+Cpp11BracedListStyle: true
+FixNamespaceComments: true
+NamespaceIndentation: None
+SpaceAfterTemplateKeyword: false
+SpaceBeforeCpp11BracedList: false
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
+InsertNewlineAtEOF: true
+
+# Includes: sorted within each block, and the blocks (own headers, Qt,
+# system) are kept as written.
+SortIncludes: CaseSensitive
+IncludeBlocks: Preserve
+...
