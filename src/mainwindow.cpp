@@ -170,13 +170,9 @@ MainWindow::MainWindow(QWidget *parent)
                 }
             });
 
-    // Do not use QOverload for compatibility with older Qt,
-    // as in Linux Mint 18.3
-    connect(clientComboBox,
-            static_cast<void (QComboBox::*)(int)>(&QComboBox::activated),
-            [connectionsModel](int row) {
-                connectionsModel->connectPort(connectionsModel->index(row));
-            });
+    connect(clientComboBox, &QComboBox::activated, [connectionsModel](int row) {
+        connectionsModel->connectPort(connectionsModel->index(row));
+    });
 
     // MIDI actions
 

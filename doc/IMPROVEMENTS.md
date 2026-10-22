@@ -90,10 +90,10 @@ Decisions made before starting:
 
 ## Phase 3: small, self-contained fixes (smallest first)
 
-- [x] 3.1 Remove dead code: the empty `Lpd8editor` class,
+- [x] 3.1 [`6b3d080`](https://github.com/charlesfleche/lpd8editor/commit/6b3d080042a6e3e17b96a943e7c014a3491bbc8f) Remove dead code: the empty `Lpd8editor` class,
       `readAndValidateChar` (it also contained an impossible condition),
       `defaultSysex()`, stray globals, and the unused `paths` in `main()`.
-- [ ] 3.2 Remove the Qt 5 compatibility code (`QT_VERSION` branches,
+- [x] 3.2 Remove the Qt 5 compatibility code (`QT_VERSION` branches,
       `static_cast` signal overloads, the `setObsolete` shim) and use `nullptr`.
 - [ ] 3.3 `MidiConnectionsModel`: fix the off-by-one `dataChanged` range.
 - [ ] 3.4 `IOMidi`: use `QCoreApplication`, because the downcasts to

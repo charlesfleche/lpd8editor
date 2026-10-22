@@ -101,11 +101,7 @@ void ProgramsModel::select()
     Q_CHECK_PTR(m_knobs);
 
     const auto idsList = programIds();
-#if (QT_VERSION < QT_VERSION_CHECK(5, 14, 0))
-    const QSet<int> ids(QSet<int>::fromList(idsList));
-#else
-    const QSet<int> ids(QSet<int>(idsList.begin(), idsList.end()));
-#endif
+    const QSet<int> ids(idsList.begin(), idsList.end());
     for (const int id : ids) {
         if (!m_groups_proxies.contains(id)) {
             addFilters(id);
@@ -113,11 +109,7 @@ void ProgramsModel::select()
     }
 
     const auto proxyIdsList = m_groups_proxies.keys();
-#if (QT_VERSION < QT_VERSION_CHECK(5, 14, 0))
-    const QSet<int> toDeleteIds(QSet<int>::fromList(proxyIdsList).subtract(ids));
-#else
-    const QSet<int> toDeleteIds(QSet<int>(proxyIdsList.begin(), proxyIdsList.end()).subtract(ids));
-#endif
+    const QSet<int> toDeleteIds = QSet<int>(proxyIdsList.begin(), proxyIdsList.end()) - ids;
     for (const int id : toDeleteIds) {
         removeFilters(id);
     }

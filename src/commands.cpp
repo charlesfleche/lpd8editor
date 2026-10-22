@@ -6,10 +6,6 @@
 #include <QItemSelectionModel>
 #include <utility>
 
-#if (QT_VERSION < QT_VERSION_CHECK(5, 9, 0))
-void setObsolete(bool) { }
-#endif
-
 namespace {
 
 const QString undo_stack_object_name = "undo_stack";

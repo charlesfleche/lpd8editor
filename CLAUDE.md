@@ -48,7 +48,7 @@ Application code is in `src/`, tests are in `tests/`. Everything except `main.cp
 - **MIDI I/O**: `IOMidi` wraps an ALSA sequencer client and port, polls its fds, and emits `eventReceived`. Its constructor throws `std::runtime_error` when ALSA is unavailable, and `MainWindow` then turns MIDI features off instead of failing. `MidiConnectionsModel` lists the ALSA clients and ports in the connection combo box and handles subscriptions. `SysexHandler` sends get/send program requests for device slots 1–4 and emits `programReceived(QByteArray)`.
 - **`MainWindow`** (`mainwindow.cpp` + `mainwindow.ui`, AUTOUIC) connects all of this together. A received program becomes an `UpdateProgramFromSysexCommand` on the selected program. The "send to program N" actions serialize the selected program with `programSysex` and send it to device slot N.
 
-The code targets C++23 (`target_compile_features(... cxx_std_23)` on the library, without GNU extensions). Some code still has Qt 5 compatibility idioms (for example `static_cast` signal overloads); they are being removed (see `doc/IMPROVEMENTS.md`).
+The code targets C++23 (`target_compile_features(... cxx_std_23)` on the library, without GNU extensions). Qt 6.8 is the minimum, so there is no Qt 5 compatibility code: use Qt 6 APIs directly.
 
 ## Conventions and work in progress
 
