@@ -58,8 +58,18 @@ QByteArray fromSysexTextFile(const QString &path)
 
         int c = 0;
         in >> c;
-        const char ch = static_cast<char>(c);
-        ret.append(ch);
+        // '>>' fails silently, leaving c at 0, so check the stream status:
+        // ReadPastEnd if only whitespace was left, ReadCorruptData if the
+        // next word is not a number.
+        if (in.status() == QTextStream::ReadPastEnd) {
+            qWarning() << "Reading from sysex file ended prematurely at position" << i;
+            return {};
+        }
+        if (in.status() != QTextStream::Ok || c < 0 || c > 255) {
+            qWarning() << "Invalid byte in sysex file at position" << i;
+            return {};
+        }
+        ret.append(static_cast<char>(c));
     }
 
     return ret;

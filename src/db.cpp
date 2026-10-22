@@ -187,11 +187,12 @@ bool updateProgramFromSysex(int programId, const QByteArray &sysex)
     constexpr qsizetype knob_size = 3;
     const qsizetype knobs_offset = pads_offset + (pad_size * sysex::padsCount());
 
-    // Check the size once, before reading anything: every offset below is
-    // then inside the message.
-    if (sysex.size() != sysex::programRequestSize()) {
-        qWarning() << "Failed to update program from sysex: expected" << sysex::programRequestSize()
-                   << "bytes, got" << sysex.size();
+    // Check the message once, before reading anything. Every path that
+    // stores a program goes through here (file import, device dump, undo),
+    // so this is where foreign or truncated data is stopped. A valid message
+    // has the right size, so every offset below is inside it.
+    if (!sysex::isProgram(sysex)) {
+        qWarning() << "Failed to update program from sysex: not an LPD8 program message" << sysex;
         return false;
     }
 

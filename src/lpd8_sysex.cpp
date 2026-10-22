@@ -64,10 +64,30 @@ bool is(const QByteArray &sysex, const Opcode &code, int size)
 
 } // namespace
 
+namespace {
+
+// A SysEx message from an LPD8: start byte, Akai, LPD8 model, end byte.
+bool isLpd8SysEx(const QByteArray &sysex)
+{
+    return sysex.size() >= minimum_rep_sysex_size && sysex[0] == sysex_start
+            && sysex[1] == sysex_manufacturer && sysex[2] == sysex_model_byte_1
+            && sysex[3] == sysex_model_byte_2 && sysex.back() == sysex_end;
+}
+
+} // namespace
+
+bool isProgram(const QByteArray &sysex)
+{
+    return isLpd8SysEx(sysex)
+            && (is(sysex, sysex_program_rep, sysex_program_rep_size)
+                || is(sysex, sysex_set_program_req, sysex_set_program_req_size)
+                // How this application stores programs (see programSysex())
+                || is(sysex, sysex_program_req, sysex_program_rep_size));
+}
+
 Type type(const QByteArray &sysex)
 {
-    if (sysex.size() < minimum_rep_sysex_size || sysex[0] != sysex_start
-        || sysex[sysex.size() - 1] != sysex_end) {
+    if (!isLpd8SysEx(sysex)) {
         return TypeInvalid;
     }
 

@@ -16,6 +16,9 @@ private slots:
 
     void test_sysexTextFile_data();
     void test_sysexTextFile();
+
+    void test_sysexTextFileRejectsGarbage_data();
+    void test_sysexTextFileRejectsGarbage();
 };
 
 void TestUtils::test_readTextFile()
@@ -46,7 +49,7 @@ void TestUtils::test_sysexTextFile_data()
     QTest::addColumn<QString>("warningMsg");
 
     QTest::newRow("Short") << QByteArrayLiteral("\x70\x60\x7f") << 0 << char(0) << char(0)
-                           << "Reading from sysex file ended prematurely at position 4";
+                           << "Reading from sysex file ended prematurely at position 3";
 
     QByteArray long_buf;
     for (char c = 0; c < 100; ++c) {
@@ -85,6 +88,34 @@ void TestUtils::test_sysexTextFile()
         QCOMPARE(read.at(0), readBegin);
         QCOMPARE(read.at(readCount - 1), readEnd);
     }
+}
+
+void TestUtils::test_sysexTextFileRejectsGarbage_data()
+{
+    QTest::addColumn<QByteArray>("content");
+
+    // 65 valid values, then a bad one.
+    QByteArray valid;
+    for (int i = 0; i < 65; ++i) {
+        valid += "1 ";
+    }
+    QTest::newRow("Not a number") << valid + "abc";
+    QTest::newRow("Above a byte") << valid + "300";
+    QTest::newRow("Negative") << valid + "-1";
+}
+
+void TestUtils::test_sysexTextFileRejectsGarbage()
+{
+    // NOLINTNEXTLINE(misc-const-correctness): QFETCH declares the variable
+    QFETCH(QByteArray, content);
+
+    QTemporaryFile f;
+    QVERIFY(f.open());
+    f.write(content);
+    f.close();
+
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("Invalid byte in sysex file"));
+    QCOMPARE(fromSysexTextFile(f.fileName()), QByteArray());
 }
 
 QTEST_APPLESS_MAIN(TestUtils)

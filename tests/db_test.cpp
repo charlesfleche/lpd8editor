@@ -1,4 +1,5 @@
 #include "db.h"
+#include "utils.h"
 
 #include "test_sysex.h"
 
@@ -26,6 +27,8 @@ private slots:
     void test_failedCreateProgramLeavesNothing_data();
     void test_failedCreateProgramLeavesNothing();
     void test_failedFromSysexChangesNothing();
+
+    void test_exportImportRoundTrip();
 
     void test_initDbReportsErrors();
     void test_initDbIsAllOrNothing();
@@ -129,6 +132,9 @@ void TestDB::test_failedCreateProgramLeavesNothing_data()
     // keeps a '\0' after its data, so reading one byte too far returns 0,
     // a valid value: only a size check catches this.
     QTest::newRow("Truncated by one byte") << default_sysex.first(default_sysex.size() - 1);
+    QByteArray otherManufacturer = default_sysex;
+    otherManufacturer[1] = '\x41';
+    QTest::newRow("Not from Akai") << otherManufacturer;
 }
 
 void TestDB::test_failedCreateProgramLeavesNothing()
@@ -153,6 +159,25 @@ void TestDB::test_failedFromSysexChangesNothing()
 
     QVERIFY(!fromSysex(id, sysex));
     QCOMPARE(programSysex(id), before);
+}
+
+void TestDB::test_exportImportRoundTrip()
+{
+    // A file exported by the application must import again: the stricter
+    // validation must accept the application's own format.
+    const int id = createProgram(QStringLiteral("Exported"), allzero_sysex);
+    const QByteArray exported = programSysex(id);
+
+    QTemporaryFile file;
+    QVERIFY(file.open());
+    file.close();
+    writeProgramFile(exported, file.fileName());
+
+    const QByteArray imported = fromSysexTextFile(file.fileName());
+    QCOMPARE(imported, exported);
+    const int importedId = createProgram(QStringLiteral("Imported"), imported);
+    QVERIFY(importedId != -1);
+    QCOMPARE(programSysex(importedId), exported);
 }
 
 void TestDB::test_initDbReportsErrors()

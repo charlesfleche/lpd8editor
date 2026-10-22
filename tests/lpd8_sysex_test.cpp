@@ -16,6 +16,8 @@ private slots:
     void test_knobsCount();
     void test_makeSetProgramRequest();
     void test_type();
+    void test_isProgram_data();
+    void test_isProgram();
     void test_addProgramHeader();
     void test_addFooter();
     void test_getProgram();
@@ -56,11 +58,55 @@ void TestLpd8Sysex::test_type()
     sysex = QByteArray(programRequestSize(), 0);
     QCOMPARE(type(sysex), Type::TypeInvalid);
     sysex[0] = '\xf0';
-    sysex[4] = '\x63';
+    sysex[1] = '\x47'; // Akai
+    sysex[2] = '\x7f'; // LPD8
+    sysex[3] = '\x75';
+    sysex[4] = '\x63'; // program dump
     sysex[5] = '\x00';
     sysex[6] = '\x3a';
     sysex[sysex.size() - 1] = '\xf7';
     QCOMPARE(type(sysex), Type::TypeProgram);
+
+    // Same message from another manufacturer's device
+    sysex[1] = '\x41';
+    QCOMPARE(type(sysex), Type::TypeInvalid);
+}
+
+void TestLpd8Sysex::test_isProgram_data()
+{
+    QTest::addColumn<QByteArray>("sysex");
+    QTest::addColumn<bool>("expected");
+
+    const auto withByte = [](qsizetype offset, char value) {
+        QByteArray s = default_sysex;
+        s[offset] = value;
+        return s;
+    };
+
+    // Programs as this application stores and exports them use the 'get
+    // program' opcode (63 00 01), so files exported by older versions do too.
+    QTest::newRow("Stored program") << default_sysex << true;
+    QTest::newRow("Device dump") << withByte(6, '\x3a') << true;
+    QByteArray sendRequest = withByte(4, '\x61');
+    sendRequest[6] = '\x3a';
+    QTest::newRow("Send request") << sendRequest << true;
+    QTest::newRow("Unknown opcode") << withByte(4, '\x10') << false;
+    QTest::newRow("Wrong manufacturer") << withByte(1, '\x41') << false;
+    QTest::newRow("Wrong model") << withByte(3, '\x76') << false;
+    QTest::newRow("No SysEx start") << withByte(0, '\x00') << false;
+    QTest::newRow("No SysEx end") << withByte(65, '\x00') << false;
+    QTest::newRow("Truncated") << default_sysex.first(65) << false;
+    QTest::newRow("Empty") << QByteArray() << false;
+}
+
+void TestLpd8Sysex::test_isProgram()
+{
+    // NOLINTBEGIN(misc-const-correctness): QFETCH declares the variables
+    QFETCH(QByteArray, sysex);
+    QFETCH(bool, expected);
+    // NOLINTEND(misc-const-correctness)
+
+    QCOMPARE(isProgram(sysex), expected);
 }
 
 void TestLpd8Sysex::test_addProgramHeader()

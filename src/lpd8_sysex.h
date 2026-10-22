@@ -14,6 +14,11 @@ int knobsCount();
 void makeSetProgramRequest(QByteArray &sysex, int programId);
 
 Type type(const QByteArray &sysex);
+
+// True if 'sysex' is a complete LPD8 program message: Akai and LPD8 header,
+// one of the program opcodes (get, dump or send), the right size, and the
+// SysEx end byte. The values themselves are not checked.
+bool isProgram(const QByteArray &sysex);
 void addProgramHeader(QByteArray &sysex, int programId);
 void addFooter(QByteArray &sysex);
 QByteArray getProgram(int programId);
