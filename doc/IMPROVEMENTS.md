@@ -67,7 +67,9 @@ Decisions made before starting:
       Findings deliberately left for later items, which rewrite that code:
       `goto` and macros in `db.cpp` (4.7), the macro in `lpd8_sysex.cpp`
       (4.2), `const_cast` in `ProgramsModel` (4.5), pointer arithmetic in
-      `IOMidi` (3.5), and dead code and mutable globals (3.1).
+      `IOMidi` (3.5), and dead code and mutable globals (3.1). All closed:
+      the last one, `RETURN_IF_TYPE` in `lpd8_sysex.cpp`, went with that
+      file in 4.10b, and clang-tidy has no deferred finding left.
 - [x] 1.13a [`a692917`](https://github.com/charlesfleche/lpd8editor/commit/a692917f6fa0004b37f2db138b3d3fe1962cd779) Add a `cppcheck` target and a suppressions file. This commit only
       makes the findings visible.
 - [x] 1.13b [`8ea3fe7`](https://github.com/charlesfleche/lpd8editor/commit/8ea3fe7114bc133ef92a1907de93b3c4ce77924a) Fix the cppcheck findings: `explicit` constructors, and an
@@ -333,7 +335,7 @@ commit, after the new code is in place and tested on its own.
 - [x] 4.9 [`7f930e4`](https://github.com/charlesfleche/lpd8editor/commit/7f930e41d15af8edfda64cc7bd9f1a9fc3e3ceab) An LPD8 simulator over `FakeTransport`, answering like the device
       (get program, send program, four slots), to test the device protocol
       without hardware.
-- [x] 4.10a `Lpd8Device`, tested against the simulator: match each program
+- [x] 4.10a [`02fea82`](https://github.com/charlesfleche/lpd8editor/commit/02fea8281c402d2373bad120f54a5ad39b840dd8) `Lpd8Device`, tested against the simulator: match each program
       reply to its request, with a timeout. A reply goes where it was
       requested. Nothing uses it yet.
 
@@ -378,7 +380,7 @@ commit, after the new code is in place and tested on its own.
         own send hook on the fake, test-only: real backends never do this),
         and the answer is accepted, since the request's state is set before
         the message is sent (L1).
-- [ ] 4.10b The switch of the MIDI menu to `Lpd8Device`, in one commit.
+- [x] 4.10b The switch of the MIDI menu to `Lpd8Device`, in one commit.
       `SysexHandler` and what is left of `lpd8_sysex.*` are deleted, and
       the 'program received' path goes through the device. This is a
       behaviour change, for the release notes (5.3): only answers to the
@@ -451,6 +453,19 @@ commit, after the new code is in place and tested on its own.
         which the first start migrates and keeps as
         `db.sqlite3.migrated`, with a report next to it (item 4.7a).
       - Quitting without an edit no longer writes the programs file.
+      - Only the answer to a request of the application is applied ('Get
+        program N'), from a port connected to it. Before, any program dump
+        that arrived, from any client and whether asked for or not,
+        overwrote the selected program: the security finding of the
+        review. Connections made with aconnect, qjackctl or a JACK bridge
+        keep working.
+      - The answer goes to the program that was selected when 'Get program
+        N' was chosen, even if another one is selected by the time it
+        arrives. Before, it went to the selection at arrival (a fix).
+      - While the LPD8 is asked for a program, the MIDI actions are off. A
+        device that doesn't answer within 2 seconds, or that is unplugged
+        meanwhile, is reported in one message that doesn't block the
+        window.
       - Devices plugged in or out are seen after using the connection menu
         too. Until the fix, connecting or choosing 'Disconnect' also
         dropped the subscription to ALSA's announcements, so the list

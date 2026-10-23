@@ -29,7 +29,6 @@ function(_add_test _name)
 endfunction()
 
 _add_test(alsaseqtransport)
-_add_test(lpd8_sysex)
 _add_test(lpd8codec)
 _add_test(lpd8device)
 _add_test(lpd8simulator)

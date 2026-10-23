@@ -13,8 +13,6 @@ add_library(${_lib}
     lpd8device.cpp
     lpd8device.h
     lpd8codec.h
-    lpd8_sysex.cpp
-    lpd8_sysex.h
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
@@ -47,8 +45,6 @@ add_library(${_lib}
     storecommands.h
     sysexassembler.cpp
     sysexassembler.h
-    sysexhandler.cpp
-    sysexhandler.h
     utils.cpp
     utils.h
 )

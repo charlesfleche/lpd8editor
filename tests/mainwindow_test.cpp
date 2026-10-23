@@ -1,6 +1,8 @@
 #include "deviceprofile.h"
 #include "faketransport.h"
 #include "lpd8codec.h"
+#include "lpd8device.h"
+#include "lpd8simulator.h"
 #include "mainwindow.h"
 #include "midiconnectionsmodel.h"
 #include "programmodels.h"
@@ -9,6 +11,7 @@
 #include <QAction>
 #include <QItemSelectionModel>
 #include <QListView>
+#include <QMessageBox>
 #include <QPointer>
 #include <QSettings>
 #include <QSpinBox>
@@ -22,17 +25,23 @@ using namespace lpd8;
 
 namespace {
 
-// Shows 'window'. The offscreen platform plugin, which the tests run on,
+// A window is about to be shown, by the test or by the window itself (its
+// message box). The offscreen platform plugin, which the tests run on,
 // warns that it can't propagate size hints each time a window is shown.
 // That warning is the plugin's, not the window's, and only that exact
 // message is ignored: every other warning fails the test
 // (QTest::failOnWarning() in init()). It can't be filtered by category: it
 // is in the 'default' category, with the application's own warnings.
-void show(QWidget &window)
+void expectWindowShown()
 {
     if (QGuiApplication::platformName() == QLatin1StringView("offscreen")) {
         QTest::ignoreMessage(QtWarningMsg, "This plugin does not support propagateSizeHints()");
     }
+}
+
+void show(QWidget &window)
+{
+    expectWindowShown();
     window.show();
 }
 
@@ -44,6 +53,8 @@ QByteArray dumpOf(const Program &program)
     sysex[6] = '\x3a';
     return sysex;
 }
+
+constexpr int wait_ms = 2000;
 
 Program withChannel(quint8 channel)
 {
@@ -78,8 +89,12 @@ private slots:
     void test_viewsHaveTheExactColumns();
     void test_editUndoRedoThroughThePadsView();
     void test_selectionFollowsRenamesAndRemovals();
-    void test_programDumpReplacesTheSelectedProgram();
-    void test_programDumpThroughTheTransport();
+    void test_getThroughTheSimulator();
+    void test_sendThroughTheSimulator();
+    void test_answerGoesToTheProgramSelectedAtRequest();
+    void test_targetDeletedBeforeTheAnswer();
+    void test_failureShowsOneNonModalMessage();
+    void test_unsolicitedDumpIsIgnored();
     void test_midiActionsGoThroughTheTransport();
     void test_midiOff();
     void test_closingTheWindowSavesTheLastEdit();
@@ -97,9 +112,11 @@ private:
     std::unique_ptr<QTemporaryDir> dataDir;
     QString path;
     std::unique_ptr<ProgramsDocument> document;
-    // The window's MIDI: a fake with one device, so no test depends on the
-    // machine's sequencer. Declared after the document, reset before it.
+    // The window's MIDI: a fake with a simulated LPD8 on "20:0", so no test
+    // depends on the machine's sequencer. Declared after the document, reset
+    // before it.
     std::unique_ptr<FakeTransport> transport;
+    std::unique_ptr<Lpd8Simulator> simulator;
 };
 
 void TestMainWindow::initTestCase()
@@ -118,13 +135,14 @@ void TestMainWindow::init()
     document = std::make_unique<ProgramsDocument>(path);
     QVERIFY(document->store().load().has_value());
     transport = std::make_unique<FakeTransport>();
-    transport->addPort("20:0", "LPD8");
+    simulator = std::make_unique<Lpd8Simulator>(*transport); // "20:0"
 }
 
 void TestMainWindow::cleanup()
 {
     // Each test destroys its window first: the transport and the document
     // outlive it.
+    simulator.reset();
     transport.reset();
     document.reset();
     QSettings().clear();
@@ -291,43 +309,118 @@ void TestMainWindow::test_selectionFollowsRenamesAndRemovals()
     QCOMPARE(stacked->currentWidget()->objectName(), QStringLiteral("pageDefault"));
 }
 
-void TestMainWindow::test_programDumpReplacesTheSelectedProgram()
+void TestMainWindow::test_getThroughTheSimulator()
 {
+    // End to end: Get program 2, the device answers, and the selected
+    // program is now its slot 2, as one undo step, shown in the pads view.
     const auto window = windowWithPrograms(2);
-    const int first = document->store().programs().at(0).id;
+    QVERIFY(transport->connectTo(simulator->portId()));
+    Program inSlot2 = withChannel(5);
+    inSlot2.pads[0].note = 60;
+    simulator->setProgram(2, inSlot2);
     const int selected = document->store().programs().at(1).id;
-    auto *channel = window->findChild<QSpinBox *>("channelSpinBox");
-    QVERIFY(channel);
+    const int steps = document->undoStack().count();
+    auto *get = window->findChild<QAction *>("actionGetProgram2");
+    auto *pads = window->findChild<QTableView *>("padsView");
 
-    window->applyProgramDump(dumpOf(withChannel(5)));
-    QCOMPARE(document->store().get(selected)->program, withChannel(5));
-    QCOMPARE(document->store().get(first)->program, profile().defaultProgram);
-    QCOMPARE(document->undoStack().count(), 3); // two new programs, the dump
-
-    // Not a program: ignored, with a warning.
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("Ignoring a program dump"));
-    window->applyProgramDump(QByteArray("\xf0\xf7"));
-    QCOMPARE(document->undoStack().count(), 3);
-
-    // Nothing selected: nothing changes, as before the switch.
-    programsView(*window)->selectionModel()->clearCurrentIndex();
-    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("Unimplemented code"));
-    window->applyProgramDump(dumpOf(withChannel(7)));
-    QCOMPARE(document->store().get(selected)->program, withChannel(5));
+    get->trigger();
+    QVERIFY(!get->isEnabled()); // one request at a time
+    QVERIFY(QTest::qWaitFor([&] { return document->store().get(selected)->program == inSlot2; },
+                            wait_ms));
+    QCOMPARE(document->undoStack().count(), steps + 1);
+    QCOMPARE(pads->model()->index(0, ControlsModel::NoteColumn).data().toString(),
+             QStringLiteral("60: C3"));
+    QCOMPARE(document->store().programs().at(0).program, profile().defaultProgram);
+    QVERIFY(get->isEnabled());
 }
 
-void TestMainWindow::test_programDumpThroughTheTransport()
+void TestMainWindow::test_sendThroughTheSimulator()
 {
-    // The wiring: a SysEx message from the device reaches the selected
-    // program through the transport, SysexHandler and applyProgramDump().
     const auto window = windowWithPrograms(1);
-    QVERIFY(transport->connectTo("20:0"));
-    transport->receive(dumpOf(withChannel(2)), "20:0");
-    QCOMPARE(document->store().programs().at(0).program, withChannel(2));
+    QVERIFY(transport->connectTo(simulator->portId()));
+    auto *pads = window->findChild<QTableView *>("padsView");
+    QVERIFY(pads->model()->setData(pads->model()->index(0, ControlsModel::NoteColumn), 48));
+    const Program edited = document->store().programs().at(0).program;
 
-    // A message that is not a program dump is not handed on.
-    transport->receive(encodeGetProgram(1).value(), "20:0");
-    QCOMPARE(document->undoStack().count(), 2); // the new program, the dump
+    window->findChild<QAction *>("actionSendToProgram3")->trigger();
+    QCOMPARE(simulator->program(3), edited);
+    QCOMPARE(simulator->program(1), profile().defaultProgram);
+    QVERIFY(window->findChild<QAction *>("actionSendToProgram3")->isEnabled());
+}
+
+void TestMainWindow::test_answerGoesToTheProgramSelectedAtRequest()
+{
+    // E2: the user asks, then selects another program before the answer
+    // arrives. The answer goes to the program it was asked for.
+    const auto window = windowWithPrograms(2);
+    QVERIFY(transport->connectTo(simulator->portId()));
+    simulator->setProgram(1, withChannel(3));
+    const int first = document->store().programs().at(0).id;
+    const int second = document->store().programs().at(1).id;
+    QListView *view = programsView(*window);
+    view->setCurrentIndex(view->model()->index(0, 0));
+
+    window->findChild<QAction *>("actionGetProgram1")->trigger();
+    view->setCurrentIndex(view->model()->index(1, 0)); // before the answer
+    QVERIFY(QTest::qWaitFor([&] { return document->store().get(first)->program == withChannel(3); },
+                            wait_ms));
+    QCOMPARE(document->store().get(second)->program, profile().defaultProgram);
+}
+
+void TestMainWindow::test_targetDeletedBeforeTheAnswer()
+{
+    const auto window = windowWithPrograms(2);
+    QVERIFY(transport->connectTo(simulator->portId()));
+    const int target = document->store().programs().at(1).id;
+    window->findChild<QAction *>("actionGetProgram1")->trigger();
+    QVERIFY(document->store().remove(target)); // before the answer
+    expectWindowShown(); // the message box
+
+    QVERIFY(QTest::qWaitFor([&] { return simulator->pendingAnswers() == 0; }, wait_ms));
+    auto *box = window->findChild<QMessageBox *>();
+    QVERIFY(box && box->isVisible());
+    QVERIFY(box->text().contains(QStringLiteral("deleted")));
+    QCOMPARE(document->store().programs().at(0).program, profile().defaultProgram);
+}
+
+void TestMainWindow::test_failureShowsOneNonModalMessage()
+{
+    // A device that never answers: one message, which doesn't block, and the
+    // actions are back once the request has failed.
+    const auto window = windowWithPrograms(1);
+    QVERIFY(transport->connectTo(simulator->portId()));
+    simulator->setMode(Lpd8Simulator::Mode::Silent);
+    window->findChild<lpd8::Lpd8Device *>()->setReplyTimeout(std::chrono::milliseconds(50));
+    auto *get = window->findChild<QAction *>("actionGetProgram1");
+
+    expectWindowShown(); // the message box, once
+    get->trigger();
+    QVERIFY(QTest::qWaitFor([&] { return get->isEnabled(); }, wait_ms));
+    const QList<QMessageBox *> boxes = window->findChildren<QMessageBox *>();
+    QCOMPARE(boxes.size(), 1);
+    QVERIFY(boxes.at(0)->isVisible());
+    QCOMPARE(boxes.at(0)->windowModality(), Qt::NonModal);
+    QVERIFY(boxes.at(0)->text().contains(QStringLiteral("did not answer")));
+
+    // Another failure while it is shown: still one box, one message.
+    get->trigger();
+    QVERIFY(QTest::qWaitFor([&] { return get->isEnabled(); }, wait_ms));
+    QCOMPARE(window->findChildren<QMessageBox *>().size(), 1);
+    QCOMPARE(document->store().programs().at(0).program, profile().defaultProgram);
+}
+
+void TestMainWindow::test_unsolicitedDumpIsIgnored()
+{
+    // The security finding: a dump nobody asked for, from the device or
+    // from another client, changes nothing.
+    const auto window = windowWithPrograms(1);
+    QVERIFY(transport->connectTo(simulator->portId()));
+    transport->addPort("other:0", "Another client");
+    const int steps = document->undoStack().count();
+    transport->receive(dumpOf(withChannel(2)), simulator->portId());
+    transport->receive(dumpOf(withChannel(2)), "other:0");
+    QCOMPARE(document->undoStack().count(), steps);
+    QCOMPARE(document->store().programs().at(0).program, profile().defaultProgram);
 }
 
 void TestMainWindow::test_midiActionsGoThroughTheTransport()
@@ -344,16 +437,19 @@ void TestMainWindow::test_midiActionsGoThroughTheTransport()
     QVERIFY(send->isEnabled());
     QVERIFY(get->isEnabled());
 
-    // The same bytes as the codec's: the old helpers and it agree.
+    // The codec's bytes, through the device: a send has no answer, so the
+    // get goes right after it, and the actions are off until it is answered.
     send->trigger();
     get->trigger();
     const Program &selected = document->store().programs().at(0).program;
     QCOMPARE(transport->sent(),
              (QList<QByteArray>{encodeSendProgram(selected, 2).value(),
                                 encodeGetProgram(3).value()}));
+    QVERIFY(!send->isEnabled());
+    QVERIFY(QTest::qWaitFor([&] { return send->isEnabled(); }, wait_ms));
 
     // The device goes away: the actions are off again.
-    transport->removePort("20:0");
+    simulator.reset();
     QVERIFY(!send->isEnabled());
 }
 
@@ -375,13 +471,14 @@ void TestMainWindow::test_closingTheWindowSavesTheLastEdit()
     // hasn't run, so only closeEvent() can have written the edit.
     const auto window = windowWithPrograms(1);
     show(*window);
-    window->applyProgramDump(dumpOf(withChannel(11)));
+    auto *pads = window->findChild<QTableView *>("padsView");
+    QVERIFY(pads->model()->setData(pads->model()->index(0, ControlsModel::NoteColumn), 50));
     window->close();
 
     ProgramStore written(path);
     QVERIFY(written.load().has_value());
     QCOMPARE(written.programs().size(), 1);
-    QCOMPARE(written.programs().at(0).program, withChannel(11));
+    QCOMPARE(written.programs().at(0).program.pads[0].note, 50);
 }
 
 void TestMainWindow::test_closeThenQuitReportsAFailureOnce()

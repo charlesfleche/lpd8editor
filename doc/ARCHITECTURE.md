@@ -110,10 +110,10 @@ functions with no I/O:
 - `encodeStoredProgram()` builds the format the application stores and
   exports (doc/SYSEX.md, "Storage format").
 
-The byte offsets of `doc/SYSEX.md` belong in this one file. The database layer
-already goes through it. The MIDI path's older helpers (`lpd8_sysex.cpp`) move
-to it in item 4.10, and then it is the only place. Supporting another device
-means writing another codec, not editing the database code.
+The byte offsets of `doc/SYSEX.md` belong in this one file, and since item
+4.10b it is the only place that knows them: the store's files, the migration
+and `Lpd8Device` all go through it. Supporting another device means writing
+another codec.
 
 ### Storage: `ProgramStore`
 
@@ -171,14 +171,24 @@ JACK sees them through pipewire-jack or a2jmidid, so this one backend reaches
 the usual Linux audio setups. Another backend can be added behind the same
 interface later.
 
-`Lpd8Device` speaks the LPD8 protocol on top of a transport:
+`Lpd8Device` speaks the LPD8 protocol on top of a transport (item 4.10):
 
 - `requestProgram(slot)` sends a 'get program' message and waits for the reply
-  **for that slot**, with a timeout. The reply becomes a `Program` through the
-  codec. Today, any program dump that arrives, whether requested or not, and
-  from any client, overwrites the selected program. That was the security
-  finding of the review.
-- `sendProgram(slot, program)` encodes and sends a program.
+  **for that slot**, with a timeout of 2 seconds. One request is in flight at
+  a time; others wait in order.
+- `sendProgram(slot, program)` encodes and sends a program, which has no
+  reply.
+- A reply is accepted only if it is a program dump for the slot asked for,
+  from a port the application receives from, read at that moment (never a
+  remembered id: a replugged device gets a new one). With the connection made
+  in lpd8editor, that is the device; with connections made by another tool,
+  any port patched into the application. Everything else is ignored and
+  counted. **The security finding of the review is resolved** by this rule:
+  before 4.10b, any program dump that arrived, requested or not and from any
+  client, overwrote the selected program.
+- The window fixes the target program when the user asks (the reply goes
+  there, whatever is selected when it arrives), turns the MIDI actions off
+  while a request is in flight, and shows failures in one non-modal box.
 
 A `FakeTransport` with an `Lpd8Simulator` behind it answers like a real LPD8,
 so the device protocol is tested without hardware, on CI machines too.

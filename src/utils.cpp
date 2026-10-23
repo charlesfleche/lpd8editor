@@ -1,6 +1,6 @@
 #include "utils.h"
 
-#include "lpd8_sysex.h"
+#include "lpd8codec.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -64,11 +64,11 @@ std::expected<QByteArray, QString> fromSysexTextFile(const QString &path)
         return std::unexpected(tr("%1 ends too early: %2 values instead of %3.")
                                        .arg(file,
                                             QString::number(count),
-                                            QString::number(sysex::programRequestSize())));
+                                            QString::number(lpd8::program_message_size)));
     };
 
     QTextStream in(&data);
-    for (int i = 0; i < sysex::programRequestSize(); ++i) {
+    for (int i = 0; i < lpd8::program_message_size; ++i) {
         if (in.atEnd()) {
             return tooShort(i);
         }
@@ -97,7 +97,7 @@ std::expected<QByteArray, QString> fromSysexTextFile(const QString &path)
     if (!in.atEnd()) {
         return std::unexpected(
                 tr("%1 has data after the %2 values of a program: it is not one LPD8 program.")
-                        .arg(file, QString::number(sysex::programRequestSize())));
+                        .arg(file, QString::number(lpd8::program_message_size)));
     }
 
     return ret;

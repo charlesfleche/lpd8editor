@@ -3,13 +3,13 @@
 
 #include "deviceprofile.h"
 #include "lpd8codec.h"
+#include "lpd8device.h"
 #include "midiconnectionsmodel.h"
 #include "miditransport.h"
 #include "midivaluedelegate.h"
 #include "programfile.h"
 #include "programmodels.h"
 #include "programsdocument.h"
-#include "sysexhandler.h"
 
 #include <QApplication>
 #include <QCloseEvent>
@@ -163,13 +163,17 @@ MainWindow::MainWindow(lpd8::ProgramsDocument &document, lpd8::MidiTransport *mi
 
     const QList<QAction *> midiActions = getProgramActions + sendProgramActions;
 
+    device = new lpd8::Lpd8Device(*midi, this);
+
     // Connected below with connectionsModel as the context: ~MainWindow
     // deletes it first, while 'ui' still exists, so the connections end
-    // before anything the lambda uses is gone.
+    // before anything the lambda uses is gone. Off while a request is in
+    // flight: one at a time.
     auto midiActionsSetEnabled = [this, midiActions]() {
         for (QAction *a : midiActions) {
             a->setEnabled(connectionsModel->connected()
-                          && ui->programsView->selectionModel()->currentIndex().row() != -1);
+                          && ui->programsView->selectionModel()->currentIndex().row() != -1
+                          && !device->isBusy());
         }
     };
 
@@ -190,29 +194,93 @@ MainWindow::MainWindow(lpd8::ProgramsDocument &document, lpd8::MidiTransport *mi
             connectionsModel,
             midiActionsSetEnabled);
 
-    // Sysex
+    connect(device, &lpd8::Lpd8Device::busyChanged, connectionsModel, midiActionsSetEnabled);
 
-    sysexHandler = new SysexHandler(*midi, this);
+    // The device: its signals may come from inside requestProgram(), so they
+    // are connected before any request (lpd8device.h).
 
-    connect(sysexHandler, &SysexHandler::programReceived, this, &MainWindow::applyProgramDump);
+    connect(device, &lpd8::Lpd8Device::programReceived, this, &MainWindow::programReceived);
+    connect(device, &lpd8::Lpd8Device::sendDone, this, &MainWindow::requestEnded);
+    connect(device, &lpd8::Lpd8Device::requestFailed, this, [this](int, const QString &reason) {
+        requestFailed(reason);
+    });
 
     for (int i = 0; i < getProgramActions.count(); ++i) {
-        connect(getProgramActions[i], &QAction::triggered, sysexHandler, [this, i]() {
-            sysexHandler->getProgram(i + 1);
+        connect(getProgramActions[i], &QAction::triggered, device, [this, i]() {
+            getProgram(i + 1);
         });
     }
 
     for (int i = 0; i < sendProgramActions.count(); ++i) {
-        connect(sendProgramActions[i], &QAction::triggered, sysexHandler, [this, i]() {
-            const lpd8::StoredProgram *stored = m_document.store().get(currentProgramId());
-            if (!stored) {
-                return; // nothing selected (the actions are disabled then)
-            }
-            // The same bytes as before the switch: the storage
-            // format, which sendProgram() turns into a request.
-            sysexHandler->sendProgram(lpd8::encodeStoredProgram(stored->program), i + 1);
+        connect(sendProgramActions[i], &QAction::triggered, device, [this, i]() {
+            sendProgram(i + 1);
         });
     }
+}
+
+void MainWindow::getProgram(int slot)
+{
+    const int target = currentProgramId();
+    if (target == -1 || pending) {
+        return; // the actions are disabled then
+    }
+    // Set before the request: its answer, or its failure, may come before
+    // requestProgram() returns.
+    pending = PendingRequest{.slot = slot, .targetProgramId = target};
+    device->requestProgram(slot);
+}
+
+void MainWindow::sendProgram(int slot)
+{
+    const lpd8::StoredProgram *stored = m_document.store().get(currentProgramId());
+    if (!stored || pending) {
+        return; // the actions are disabled then
+    }
+    pending = PendingRequest{.slot = slot, .targetProgramId = -1};
+    device->sendProgram(slot, stored->program);
+}
+
+void MainWindow::programReceived(int slot, const lpd8::Program &program)
+{
+    Q_ASSERT(pending && pending->slot == slot);
+    const int target = pending ? pending->targetProgramId : -1;
+    requestEnded();
+    // The program selected when the user asked, not the one selected now
+    // (E2). It may have been deleted while the device answered.
+    if (!m_document.store().get(target)) {
+        showMidiProblem(tr("The program received from the LPD8 was not applied: the program it "
+                           "was for has been deleted."));
+        return;
+    }
+    push(lpd8::makeSetProgramCommand(m_document.store(), target, program),
+         "apply a received program");
+}
+
+void MainWindow::requestEnded()
+{
+    pending.reset();
+}
+
+void MainWindow::requestFailed(const QString &reason)
+{
+    requestEnded();
+    showMidiProblem(reason);
+}
+
+void MainWindow::showMidiProblem(const QString &text)
+{
+    if (!midiProblemBox) {
+        midiProblemBox =
+                new QMessageBox(QMessageBox::Warning, tr("LPD8"), QString(), QMessageBox::Ok, this);
+        // Never modal, never exec(): this is called from the device's
+        // signals, which may come from inside its request loop.
+        midiProblemBox->setWindowModality(Qt::NonModal);
+    }
+    if (midiProblemBox->isVisible()) {
+        return; // one message for problems that come together
+    }
+    midiProblemBox->setText(text);
+    midiProblemBox->show();
 }
 
 MainWindow::~MainWindow()
@@ -236,8 +304,8 @@ MainWindow::~MainWindow()
     // tests/mainwindow_test.cpp makes signals fire during the teardown to
     // check this.
     m_document.setSaveFailureHandler({});
-    delete sysexHandler;
-    sysexHandler = nullptr;
+    delete device;
+    device = nullptr;
     delete connectionsModel;
     connectionsModel = nullptr;
     ui->programsView->selectionModel()->disconnect(this);
@@ -247,22 +315,6 @@ MainWindow::~MainWindow()
     padsModel = nullptr;
     delete knobsModel;
     knobsModel = nullptr;
-}
-
-void MainWindow::applyProgramDump(const QByteArray &sysex)
-{
-    const int programId = currentProgramId();
-    if (programId == -1) {
-        Q_UNIMPLEMENTED();
-        return;
-    }
-    const auto decoded = lpd8::decodeProgram(sysex);
-    if (!decoded) {
-        qWarning() << "Ignoring a program dump:" << lpd8::describe(decoded.error());
-        return;
-    }
-    push(lpd8::makeSetProgramCommand(m_document.store(), programId, decoded->program),
-         "apply a program dump");
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

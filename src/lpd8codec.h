@@ -10,10 +10,9 @@
 #include <expected>
 
 // Encoding and decoding of the LPD8's SysEx messages (doc/SYSEX.md). Pure
-// functions: no I/O, no state. This is the reference implementation of the
-// format: the database layer stores and reads programs through it. The
-// older helpers in lpd8_sysex.cpp still serve the MIDI path until item 4.10
-// moves it here too.
+// functions: no I/O, no state. The only place that knows the byte layout:
+// the store's files, the migration and the device (Lpd8Device) all go
+// through it.
 namespace lpd8 {
 
 inline constexpr qsizetype program_message_size = 66;
