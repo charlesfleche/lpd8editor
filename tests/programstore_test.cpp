@@ -48,6 +48,7 @@ private slots:
     void test_addRefuses();
     void test_idsRunOutWithoutOverflow();
     void test_remove();
+    void test_insertAtRow();
     void test_signalsComeBeforeAndAfterTheChange();
     void test_setProgramAndNameSignalSeparately();
     void test_noOpSetsEmitNothing();
@@ -148,6 +149,27 @@ void TestProgramStore::test_remove()
     QCOMPARE(removed.at(0).at(0).toInt(), id);
     QVERIFY(!store.remove(id));
     QCOMPARE(removed.count(), 1);
+}
+
+void TestProgramStore::test_insertAtRow()
+{
+    ProgramStore store(path);
+    const int a = store.add(QStringLiteral("A"), someProgram()).value();
+    const int c = store.add(QStringLiteral("C"), someProgram()).value();
+    const QSignalSpy aboutToAdd(&store, &ProgramStore::programAboutToBeAdded);
+    const QSignalSpy added(&store, &ProgramStore::programAdded);
+
+    const int b = store.insert(1, QStringLiteral("B"), someProgram()).value();
+    QCOMPARE(store.rowOf(a), std::optional<int>(0));
+    QCOMPARE(store.rowOf(b), std::optional<int>(1));
+    QCOMPARE(store.rowOf(c), std::optional<int>(2));
+    QCOMPARE(aboutToAdd.at(0).at(1).toInt(), 1); // the row, before...
+    QCOMPARE(added.at(0).at(1).toInt(), 1); // ...and after
+
+    QVERIFY(!store.insert(-1, QStringLiteral("X"), someProgram()).has_value());
+    QVERIFY(!store.insert(4, QStringLiteral("X"), someProgram()).has_value());
+    QVERIFY(store.insert(3, QStringLiteral("D"), someProgram()).has_value()); // at the end
+    QVERIFY(!store.rowOf(42).has_value());
 }
 
 void TestProgramStore::test_signalsComeBeforeAndAfterTheChange()

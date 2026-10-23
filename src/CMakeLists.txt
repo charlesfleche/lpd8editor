@@ -45,6 +45,8 @@ add_library(${_lib}
     sql.qrc
     sqlvalue.cpp
     sqlvalue.h
+    storecommands.cpp
+    storecommands.h
     sysexhandler.cpp
     sysexhandler.h
     utils.cpp

@@ -349,9 +349,24 @@ std::optional<StoredProgram> ProgramStore::find(int id) const
     return m_programs.at(i);
 }
 
+std::optional<int> ProgramStore::rowOf(int id) const
+{
+    const qsizetype i = indexOf(id);
+    if (i < 0) {
+        return std::nullopt;
+    }
+    return static_cast<int>(i);
+}
+
 std::optional<int> ProgramStore::add(const QString &name, const Program &program, int id)
 {
-    if (!program.isValid() || !isAcceptableName(name)) {
+    return insert(static_cast<int>(m_programs.size()), name, program, id);
+}
+
+std::optional<int>
+ProgramStore::insert(int row, const QString &name, const Program &program, int id)
+{
+    if (row < 0 || row > m_programs.size() || !program.isValid() || !isAcceptableName(name)) {
         return std::nullopt;
     }
     if (id == -1) {
@@ -365,9 +380,8 @@ std::optional<int> ProgramStore::add(const QString &name, const Program &program
     // id <= max_program_id, so id + 1 can't overflow.
     m_nextId = std::max(m_nextId, id + 1);
 
-    const auto row = static_cast<int>(m_programs.size());
     emit programAboutToBeAdded(id, row);
-    m_programs.append(StoredProgram{.id = id, .name = name, .program = program});
+    m_programs.insert(row, StoredProgram{.id = id, .name = name, .program = program});
     emit programAdded(id, row);
     return id;
 }

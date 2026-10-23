@@ -62,12 +62,17 @@ public:
     const QString &path() const { return m_path; }
     const QList<StoredProgram> &programs() const { return m_programs; }
     std::optional<StoredProgram> find(int id) const;
+    // The row of program 'id' in programs(), if there is one.
+    std::optional<int> rowOf(int id) const;
 
     // Adds a program at the end and returns its id: a new one, or 'id' if
     // it is given (to restore a deleted program). Returns nothing if 'id' is
     // taken or out of range, if no id is left, or if 'name' or 'program' is
     // not acceptable.
     std::optional<int> add(const QString &name, const Program &program, int id = -1);
+    // The same, at 'row' (0 to programs().size()): undoing a removal puts the
+    // program back where it was. Returns nothing if 'row' is out of range.
+    std::optional<int> insert(int row, const QString &name, const Program &program, int id = -1);
     bool remove(int id);
     // False if there is no such program, or 'program' (or 'name') is not
     // acceptable.

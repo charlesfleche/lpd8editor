@@ -146,7 +146,7 @@ The target design and the order of the steps are described in
       moves those to the codec.
 - [x] 4.3 [`226a7f7`](https://github.com/charlesfleche/lpd8editor/commit/226a7f77a56fcc37016c7799b5b7f3387b4f9426) `ProgramStore`: the program list in memory, saved as JSON with
       `QSaveFile` and a format version, with tests.
-- [x] 4.4 [`aa2dc43`](https://github.com/charlesfleche/lpd8editor/commit/aa2dc43afdbff66e2b90c7cd24c24d531cc94e7a) One-time migration from `db.sqlite3` to the JSON store. It must
+- [x] 4.4 [`cab90e8`](https://github.com/charlesfleche/lpd8editor/commit/cab90e86fd113eb59ed183dc27b0b58fc1fcb220) One-time migration from `db.sqlite3` to the JSON store. It must
       expect databases created before 2018 (v0.0.0 to v0.0.5), whose tables
       have no CHECK constraints and can hold any integer: report bad rows
       to the user, never wrap or drop them silently.
@@ -158,7 +158,7 @@ commands come first, then the models (used by nothing yet), then one commit
 that switches everything at once.
 
 
-- [ ] 4.6 Undo commands over `ProgramStore`, by program id: set a program,
+- [x] 4.6 Undo commands over `ProgramStore`, by program id: set a program,
       rename, add, remove. Each holds ids and values, never rows or pointers.
       An undo whose program is gone marks itself obsolete instead of
       asserting. A command that changes nothing is not pushed. Repeated edits
@@ -205,6 +205,15 @@ that switches everything at once.
       - Selection: a rename, and the removal of another program, keep the
         selected program selected. Removing the selected program selects its
         neighbour, or nothing if the list is empty. Tested on the real window.
+      - The undo stack: owned next to the store, declared after it so it is
+        destroyed first, instead of the global `undoStack()` child of `qApp`
+        (the first half of 4.11's 'App owns the stack'). The commands' header
+        claims this order. Whoever owns the stack clears it on
+        `programsAboutToBeReset`: commands hold ids, which only mean
+        something for the content they were made against, and after a
+        `load()` an id may name another program, which an undo would edit
+        silently. Test: push an edit, `load()`, and the stack is empty, so
+        undo does nothing.
       - `ProgramIdSelectionRestorer` and the substitute header views are
         deleted. The window is rendered offscreen (`QWidget::grab()`) before
         and after, and the visual change is described.
