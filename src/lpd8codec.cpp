@@ -137,11 +137,16 @@ std::expected<DecodedProgram, DecodeError> decodeProgram(QByteArrayView sysex)
     if (!matches(sysex, header_offset, lpd8_header)) {
         return notAProgram(header_offset);
     }
-    if (!matches(sysex, opcode_offset, program_dump) && !matches(sysex, opcode_offset, send_program)
-        && !matches(sysex, opcode_offset, get_program)) {
+    DecodedProgram decoded;
+    if (matches(sysex, opcode_offset, program_dump)) {
+        decoded.kind = DecodedProgram::Kind::Dump;
+    } else if (matches(sysex, opcode_offset, send_program)) {
+        decoded.kind = DecodedProgram::Kind::SendRequest;
+    } else if (matches(sysex, opcode_offset, get_program)) {
+        decoded.kind = DecodedProgram::Kind::Stored;
+    } else {
         return notAProgram(opcode_offset);
     }
-    DecodedProgram decoded;
     decoded.slot = byteAt(sysex, slot_offset);
     if (!isValidSlot(decoded.slot)) {
         return notAProgram(slot_offset);

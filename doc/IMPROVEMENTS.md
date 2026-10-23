@@ -330,21 +330,76 @@ commit, after the new code is in place and tested on its own.
         silent.
       - No behaviour change: a program dump from any client still replaces
         the selected program (that is 4.10).
-- [x] 4.9 An LPD8 simulator over `FakeTransport`, answering like the device
+- [x] 4.9 [`7f930e4`](https://github.com/charlesfleche/lpd8editor/commit/7f930e41d15af8edfda64cc7bd9f1a9fc3e3ceab) An LPD8 simulator over `FakeTransport`, answering like the device
       (get program, send program, four slots), to test the device protocol
       without hardware.
-- [ ] 4.10a `Lpd8Device`, tested against the simulator: match each program
+- [x] 4.10a `Lpd8Device`, tested against the simulator: match each program
       reply to its request, with a timeout. A reply goes where it was
-      requested. Unsolicited dumps, and dumps whose source is not the
-      connected device, are ignored (the security finding). The source is
-      compared with the connected port's *current* id, read again after
-      every `portsChanged()`, never a cached one (M1). Test: the device is
-      replugged under a new id, and its replies are still accepted, while
-      another client's are not. Nothing uses it yet.
+      requested. Nothing uses it yet.
+
+      - One request in flight: the next one is queued, not sent (tested by
+        counting what is sent while one is pending). Sends, which have no
+        answer, go through the same queue, so nothing is sent between a get
+        and its answer.
+      - A timeout of 2 seconds, documented. On a timeout: one
+        `requestFailed` signal, no program applied, and the device is no
+        longer busy, so the window (4.10b) re-enables the action and shows
+        one message.
+      - An answer for another slot (the simulator's WrongSlot mode) is
+        ignored, not applied, and the request still times out.
+      - Unsolicited dumps, and dumps from a port the application doesn't
+        receive from, are ignored (the security finding). The connections
+        are read at that moment, never a cached id (M1). Test: after a
+        replug under a new id, an answer from the old id is ignored, and the
+        device's are accepted.
+      - Connections made by another tool keep working (E1, choice (a)):
+        aconnect, qjackctl or a JACK bridge make no single "connected port",
+        and the MIDI actions are enabled on any connection, as before. So a
+        request goes to whatever receives from the application, as today,
+        and an answer is accepted from any port the application receives
+        from. With the connection made in lpd8editor, that is exactly the
+        device. Dropping such setups would surprise their users after an
+        update; this keeps them, and is still far stricter than accepting a
+        dump from anyone. Tests: a both-ways patch plus a MIDI monitor
+        works, and a dump from the monitor or from an unpatched client is
+        ignored; a monitor added during a request doesn't fail it.
+      - Ignored messages (another client, nothing asked, another slot) are
+        counted, for the tests, and logged under the `lpd8.device` logging
+        category, at debug level. A user doesn't notice them, which is
+        fine; `QT_LOGGING_RULES=lpd8.device.debug=true` shows them.
+      - The device unplugged or disconnected during a request (nothing sends
+        to the application any more): the request fails at once, not at the
+        timeout, and the queued ones too. No crash: tested by destroying the
+        simulator with a get pending.
+      - The header says that the signals may come before the call that
+        caused them returns (requestFailed() from inside requestProgram()
+        when nothing is connected), and that handlers must not block.
+      - No reentrancy window: a test answers from inside the send call (its
+        own send hook on the fake, test-only: real backends never do this),
+        and the answer is accepted, since the request's state is set before
+        the message is sent (L1).
 - [ ] 4.10b The switch of the MIDI menu to `Lpd8Device`, in one commit.
       `SysexHandler` and what is left of `lpd8_sysex.*` are deleted, and
       the 'program received' path goes through the device. This is a
-      behaviour change, for the release notes (5.3).
+      behaviour change, for the release notes (5.3): only answers to the
+      application's own requests are applied.
+
+      - The dump lands on the program that was selected when the user asked
+        for it (E2), not on whatever is selected when it arrives, up to two
+        seconds later: the target program id is captured with the request.
+        If that program was deleted in the meantime, the dump is dropped,
+        with the one message. Test: request, change the selection, the
+        answer arrives, and only the original program changes. A fix, for
+        5.3: until then, the dump went to the selection at arrival.
+      - While a request is in flight, the Get and Send actions are disabled,
+        and enabled again on `busyChanged(false)`.
+      - A failure is shown without blocking: a non-modal box
+        (`QMessageBox::open()`, one reusable box), never `exec()` inside a
+        handler, since the device's signals can come from inside its request
+        loop. Several failures at once (an unplug with requests queued) show
+        one message, not one each.
+      - The old `Q_UNIMPLEMENTED()` for "nothing selected" goes: Get is
+        disabled with no selection, and the target is fixed at request time.
 - [ ] 4.11 Composition root: an `App` object owns and wires the store, the
       device, and the window, so `MainWindow` only displays things.
 

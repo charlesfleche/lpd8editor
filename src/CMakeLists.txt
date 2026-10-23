@@ -10,6 +10,8 @@ add_library(${_lib}
     deviceprofile.h
     enums.h
     lpd8codec.cpp
+    lpd8device.cpp
+    lpd8device.h
     lpd8codec.h
     lpd8_sysex.cpp
     lpd8_sysex.h

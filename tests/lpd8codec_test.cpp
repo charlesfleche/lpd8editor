@@ -32,6 +32,7 @@ void TestLpd8Codec::test_decodeStoredDefault()
     QVERIFY(decoded.has_value());
     QCOMPARE(decoded->slot, 1);
     QCOMPARE(decoded->program, profile().defaultProgram);
+    QCOMPARE(decoded->kind, DecodedProgram::Kind::Stored);
 }
 
 void TestLpd8Codec::test_encodeStoredIsByteCompatible()
@@ -70,6 +71,7 @@ void TestLpd8Codec::test_decodeDocumentedDump()
     const auto decoded = decodeProgram(dump);
     QVERIFY(decoded.has_value());
     QCOMPARE(decoded->slot, 1);
+    QCOMPARE(decoded->kind, DecodedProgram::Kind::Dump);
     QCOMPARE(decoded->program.channel, quint8(6));
     QCOMPARE(decoded->program.pads[0],
              (Pad{.note = 0x0c, .programChange = 0x0d, .controlChange = 0x0e, .toggle = false}));
@@ -89,6 +91,10 @@ void TestLpd8Codec::test_encodeSendProgram()
     QVERIFY(message.has_value());
     QCOMPARE(message->size(), program_message_size);
     QCOMPARE(message->first(8), QByteArray::fromHex("F0477F7561003A04"));
+    const auto decoded = decodeProgram(*message);
+    QVERIFY(decoded.has_value());
+    QCOMPARE(decoded->kind, DecodedProgram::Kind::SendRequest);
+    QCOMPARE(decoded->slot, 4);
 }
 
 void TestLpd8Codec::test_encodersRefuse_data()

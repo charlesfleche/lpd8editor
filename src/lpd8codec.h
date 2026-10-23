@@ -39,8 +39,16 @@ QString describe(const DecodeError &error);
 
 struct DecodedProgram
 {
+    // Which of the program messages it was.
+    enum class Kind {
+        Dump, // 63 00 3A: the device's answer to 'get program'
+        SendRequest, // 61 00 3A: 'send program', to the device
+        Stored, // 63 00 01: this application's storage format
+    };
+
     Program program;
     int slot{0}; // the device slot named in the message, 1 to profile().programSlots
+    Kind kind{Kind::Dump};
 };
 
 // Decodes a device dump, a 'send program' request, or the format this
