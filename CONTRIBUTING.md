@@ -128,6 +128,13 @@ below are the ones a tool can't check, or that need their reason explained.
   run with the offscreen platform, so they never need a display.
 - Use data-driven tests (`<test>_data()` with `QFETCH`) for tables of cases.
 - Every bug fix comes with a test that fails without the fix.
+- In tests, read a `std::optional` or `std::expected` with `.value()`, not
+  `*` or `->`. A test checks it first with `QVERIFY(x.has_value())`, but if
+  that check is wrong or missing, `.value()` throws, and QtTest reports a
+  failure, while `*` would be undefined behaviour. clang-tidy's
+  `bugprone-unchecked-optional-access` is off for the tests
+  (`tests/.clang-tidy`), because it can't see through `QVERIFY`, so this rule
+  is the safeguard.
 
 ## Commits
 

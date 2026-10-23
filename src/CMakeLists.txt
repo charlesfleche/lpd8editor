@@ -38,6 +38,8 @@ add_library(${_lib}
     program.h
     programsmodel.cpp
     programsmodel.h
+    programstore.cpp
+    programstore.h
     sql.qrc
     sqlvalue.cpp
     sqlvalue.h

@@ -139,12 +139,12 @@ The target design and the order of the steps are described in
       (device slots and factory program; the control counts are fixed by the
       `Program` type). Its test compares only part of the factory program
       with the old SQL trigger: 4.2 compares all of it, byte for byte.
-- [x] 4.2 Pure SysEx codec: `decodeProgram` and the encoders, with
+- [x] 4.2 [`691fb56`](https://github.com/charlesfleche/lpd8editor/commit/691fb56505a6aefe22d8e2a9dc2c905fdd52ca3a) Pure SysEx codec: `decodeProgram` and the encoders, with
       `std::expected` and round-trip tests. It replaces the byte parsing of
       `db.cpp`, which now reads and writes SysEx through it. The helpers in
       `lpd8_sysex.cpp` still serve the MIDI path and the file checks: 4.10
       moves those to the codec.
-- [ ] 4.3 `ProgramStore`: the program list in memory, saved as JSON with
+- [x] 4.3 `ProgramStore`: the program list in memory, saved as JSON with
       `QSaveFile` and a format version, with tests.
 - [ ] 4.4 One-time migration from `db.sqlite3` to the JSON store. It must
       expect databases created before 2018 (v0.0.0 to v0.0.5), whose tables
@@ -153,6 +153,29 @@ The target design and the order of the steps are described in
 - [ ] 4.5 New models: a programs list model and a controls table model for the
       selected program. They replace the tree of proxies and are checked with
       `QAbstractItemModelTester`.
+
+      It must also fix two symptoms of the tree of proxies, found while
+      investigating a warning in `mainwindow_test`:
+
+      - `QAbstractItemView::setRootIndex failed: index must be from the
+        currently set model`, twice when a program is selected. The pads and
+        knobs tables have substitute horizontal headers whose model is the
+        raw `QSqlTableModel` (for column names, since
+        `ProgramsModel::headerData()` always returns the pads' headers).
+        `QTableView::setRootIndex()` passes the index on to the headers,
+        which reject it. Removing the substitute headers removes both
+        warnings.
+      - `ProgramsModel::columnCount()` returns 6 at every level, so the knobs
+        view has a sixth, data-less column. It is not visible: the window,
+        rendered offscreen with `QWidget::grab()`, shows exactly cc, low and
+        high, because the substitute header has 5 sections. What users do
+        see is the raw SQL column names as headers (`pc`, `cc`, `toggle`),
+        which the new models should replace with readable, translatable ones.
+
+      Tests: `mainwindow_test` runs with `QTest::failOnWarning()`, and checks
+      the exact column counts of both views (4 visible fields for pads, 3 for
+      knobs).
+
 - [ ] 4.6 Undo commands work on `ProgramStore` by program id.
 - [ ] 4.7 Remove the SQLite schema, triggers, and `db.cpp`. QtSql stays only for
       the migration.
@@ -167,6 +190,14 @@ The target design and the order of the steps are described in
       other local clients are ignored (the security finding).
 - [ ] 4.11 Composition root: an `App` object owns and wires the store, the
       device, and the window, so `MainWindow` only displays things.
+
+      If the programs file can't be read at startup (`ProgramStore::load()`
+      fails: corrupt, or written by a newer version), `App` must tell the
+      user why, and must not save over it. Setting the file aside
+      (`ProgramStore::setAsideUnreadableFile()`, which renames and never
+      deletes) happens only after asking the user. Until then the store
+      refuses to save, so the user must also be told that changes can't be
+      kept.
 
 ## Phase 5: packaging and documentation
 

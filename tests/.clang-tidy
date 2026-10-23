@@ -1,0 +1,9 @@
+# clang-tidy settings for the tests: the project's settings, with one change.
+InheritParentConfig: true
+Checks:
+  # QVERIFY(x.has_value()) stops the test when x is empty, but it passes the
+  # condition through a function call (QTest::qVerify), so this check can't
+  # see the test and reports every later access. The tests read optionals
+  # with .value(), which throws on an empty one: QtTest then reports a
+  # failure, never undefined behaviour.
+  - -bugprone-unchecked-optional-access

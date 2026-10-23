@@ -1,0 +1,477 @@
+#include "deviceprofile.h"
+#include "programstore.h"
+
+#include <QFile>
+#include <QSignalSpy>
+#include <QTemporaryDir>
+#include <QtTest>
+
+using namespace lpd8;
+
+namespace {
+
+Program someProgram(quint8 channel = 9)
+{
+    Program p = profile().defaultProgram;
+    p.channel = channel;
+    return p;
+}
+
+QByteArray readAll(const QString &path)
+{
+    QFile f(path);
+    return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+}
+
+void writeAll(const QString &path, const QByteArray &bytes)
+{
+    QFile f(path);
+    QVERIFY(f.open(QIODevice::WriteOnly));
+    f.write(bytes);
+}
+
+bool hasProgram(const ProgramStore &store, int id)
+{
+    return store.find(id).has_value();
+}
+
+} // namespace
+
+class TestProgramStore : public QObject
+{
+    Q_OBJECT
+
+private slots:
+    void init();
+
+    void test_addAndFind();
+    void test_addRefuses();
+    void test_idsRunOutWithoutOverflow();
+    void test_remove();
+    void test_signalsComeBeforeAndAfterTheChange();
+    void test_setProgramAndNameSignalSeparately();
+    void test_noOpSetsEmitNothing();
+    void test_idsAreNotReusedInASession();
+    void test_idsAreNotReusedAcrossSessions();
+    void test_handEditedNextIdCannotCollide();
+    void test_saveAndLoadRoundTrip();
+    void test_loadMissingFileIsEmpty();
+    void test_loadRejects_data();
+    void test_loadRejects();
+    void test_failedLoadKeepsStoreAndProtectsFile();
+    void test_unreadableFileStaysProtectedUntilReadable();
+    void test_newerFormatIsNotOverwritten();
+    void test_tooLargeFileIsRefused();
+    void test_setAsideKeepsTheBytes();
+    void test_saveCreatesTheFolder();
+    void test_saveReportsFailure();
+
+private:
+    std::unique_ptr<QTemporaryDir> dir;
+    QString path; // a programs file in 'dir', not created
+};
+
+void TestProgramStore::init()
+{
+    dir = std::make_unique<QTemporaryDir>();
+    QVERIFY(dir->isValid());
+    path = dir->filePath("programs.json");
+}
+
+void TestProgramStore::test_addAndFind()
+{
+    ProgramStore store(path);
+    const QSignalSpy added(&store, &ProgramStore::programAdded);
+
+    const int id = store.add(QStringLiteral("Drums"), someProgram()).value();
+    QCOMPARE(added.count(), 1);
+    QCOMPARE(added.at(0).at(0).toInt(), id);
+    QCOMPARE(added.at(0).at(1).toInt(), 0); // the row
+
+    const StoredProgram found = store.find(id).value();
+    QCOMPARE(found.name, QStringLiteral("Drums"));
+    QCOMPARE(found.program, someProgram());
+    QVERIFY(!hasProgram(store, id + 1));
+
+    // Names are labels: duplicates are allowed.
+    QVERIFY(store.add(QStringLiteral("Drums"), someProgram()).has_value());
+    QCOMPARE(store.programs().size(), 2);
+    QCOMPARE(added.at(1).at(1).toInt(), 1);
+}
+
+void TestProgramStore::test_addRefuses()
+{
+    ProgramStore store(path);
+    const QSignalSpy added(&store, &ProgramStore::programAdded);
+    const int id = store.add(QStringLiteral("A"), someProgram()).value();
+
+    Program invalid = someProgram();
+    invalid.channel = 16;
+    QVERIFY(!store.add(QStringLiteral("B"), invalid).has_value());
+    QVERIFY(!store.add(QStringLiteral("B"), someProgram(), id).has_value()); // id taken
+    QVERIFY(!store.add(QStringLiteral("B"), someProgram(), 0).has_value()); // ids start at 1
+    QVERIFY(!store.add(QStringLiteral("B"), someProgram(), max_program_id + 1).has_value());
+    // A lone surrogate can't be written as UTF-8: it would come back as U+FFFD.
+    const QString loneSurrogate(QChar(0xd800));
+    QVERIFY(!store.add(loneSurrogate, someProgram()).has_value());
+    QVERIFY(!store.setName(id, loneSurrogate));
+
+    QCOMPARE(added.count(), 1);
+    QCOMPARE(store.programs().size(), 1);
+}
+
+void TestProgramStore::test_idsRunOutWithoutOverflow()
+{
+    // The largest id can be used, and then no id is left: add() refuses
+    // instead of computing max_program_id + 2. Run under UBSan, which reports
+    // a signed overflow.
+    ProgramStore store(path);
+    QCOMPARE(store.add(QStringLiteral("Last"), someProgram(), max_program_id),
+             std::optional<int>(max_program_id));
+    QVERIFY(!store.add(QStringLiteral("None left"), someProgram()).has_value());
+
+    // The same through a file whose nextId says no id is left.
+    QVERIFY(store.save().has_value());
+    ProgramStore loaded(path);
+    QVERIFY(loaded.load().has_value());
+    QVERIFY(!loaded.add(QStringLiteral("None left"), someProgram()).has_value());
+}
+
+void TestProgramStore::test_remove()
+{
+    ProgramStore store(path);
+    const int id = store.add(QStringLiteral("A"), someProgram()).value();
+    const QSignalSpy removed(&store, &ProgramStore::programRemoved);
+
+    QVERIFY(store.remove(id));
+    QCOMPARE(removed.count(), 1);
+    QCOMPARE(removed.at(0).at(0).toInt(), id);
+    QVERIFY(!store.remove(id));
+    QCOMPARE(removed.count(), 1);
+}
+
+void TestProgramStore::test_signalsComeBeforeAndAfterTheChange()
+{
+    // What a QAbstractItemModel needs: 'about to' while the data is still as
+    // before (beginInsertRows, beginRemoveRows, beginResetModel), the other
+    // signal once it has changed, and the row in programs().
+    ProgramStore store(path);
+    store.add(QStringLiteral("A"), someProgram());
+    const int b = store.add(QStringLiteral("B"), someProgram()).value();
+    QStringList seen;
+    const auto sizeAndB = [&] {
+        return QStringLiteral("size %1, B %2")
+                .arg(QString::number(store.programs().size()),
+                     hasProgram(store, b) ? QStringLiteral("present") : QStringLiteral("absent"));
+    };
+    connect(&store, &ProgramStore::programAboutToBeAdded, this, [&](int, int row) {
+        seen << QStringLiteral("about to add row %1: %2").arg(QString::number(row), sizeAndB());
+    });
+    connect(&store, &ProgramStore::programAdded, this, [&](int, int row) {
+        seen << QStringLiteral("added row %1: %2").arg(QString::number(row), sizeAndB());
+    });
+    connect(&store, &ProgramStore::programAboutToBeRemoved, this, [&](int id, int row) {
+        QCOMPARE(store.programs().at(row).id, id); // still there, at that row
+        seen << QStringLiteral("about to remove row %1: %2").arg(QString::number(row), sizeAndB());
+    });
+    connect(&store, &ProgramStore::programRemoved, this, [&](int, int row) {
+        seen << QStringLiteral("removed row %1: %2").arg(QString::number(row), sizeAndB());
+    });
+    connect(&store, &ProgramStore::programsAboutToBeReset, this, [&] {
+        seen << QStringLiteral("about to reset: %1").arg(sizeAndB());
+    });
+    connect(&store, &ProgramStore::programsReset, this, [&] {
+        seen << QStringLiteral("reset: %1").arg(sizeAndB());
+    });
+
+    store.add(QStringLiteral("C"), someProgram());
+    QVERIFY(store.remove(b));
+    QVERIFY(store.load().has_value()); // no file yet: an empty store
+
+    const QStringList expected{
+            "about to add row 2: size 2, B present",
+            "added row 2: size 3, B present",
+            "about to remove row 1: size 3, B present",
+            "removed row 1: size 2, B absent",
+            "about to reset: size 2, B absent",
+            "reset: size 0, B absent",
+    };
+    QCOMPARE(seen, expected);
+}
+
+void TestProgramStore::test_setProgramAndNameSignalSeparately()
+{
+    ProgramStore store(path);
+    store.add(QStringLiteral("First"), someProgram());
+    const int id = store.add(QStringLiteral("A"), someProgram()).value();
+    const QSignalSpy changed(&store, &ProgramStore::programChanged);
+    const QSignalSpy renamed(&store, &ProgramStore::nameChanged);
+
+    QVERIFY(store.setName(id, QStringLiteral("B")));
+    QCOMPARE(renamed.count(), 1);
+    QCOMPARE(renamed.at(0).at(1).toInt(), 1); // the row
+    QCOMPARE(changed.count(), 0);
+
+    QVERIFY(store.setProgram(id, someProgram(3)));
+    QCOMPARE(changed.count(), 1);
+    QCOMPARE(changed.at(0).at(1).toInt(), 1);
+    QCOMPARE(renamed.count(), 1);
+    QCOMPARE(store.find(id).value().program.channel, quint8(3));
+
+    Program invalid = someProgram();
+    invalid.pads[0].note = 200;
+    QVERIFY(!store.setProgram(id, invalid));
+    QVERIFY(!store.setProgram(id + 1, someProgram()));
+    QCOMPARE(changed.count(), 1);
+}
+
+void TestProgramStore::test_noOpSetsEmitNothing()
+{
+    ProgramStore store(path);
+    const int id = store.add(QStringLiteral("A"), someProgram()).value();
+    const QSignalSpy changed(&store, &ProgramStore::programChanged);
+    const QSignalSpy renamed(&store, &ProgramStore::nameChanged);
+
+    QVERIFY(store.setName(id, QStringLiteral("A")));
+    QVERIFY(store.setProgram(id, someProgram()));
+    QCOMPARE(changed.count(), 0);
+    QCOMPARE(renamed.count(), 0);
+}
+
+void TestProgramStore::test_idsAreNotReusedInASession()
+{
+    ProgramStore store(path);
+    store.add(QStringLiteral("A"), someProgram());
+    const int last = store.add(QStringLiteral("B"), someProgram()).value();
+    QVERIFY(store.remove(last));
+    QVERIFY(store.add(QStringLiteral("C"), someProgram()).value() != last);
+    // Undo can still restore the deleted program under its id.
+    QCOMPARE(store.add(QStringLiteral("B"), someProgram(), last), std::optional<int>(last));
+}
+
+void TestProgramStore::test_idsAreNotReusedAcrossSessions()
+{
+    int deleted = -1;
+    {
+        ProgramStore store(path);
+        store.add(QStringLiteral("A"), someProgram());
+        deleted = store.add(QStringLiteral("B"), someProgram()).value(); // the highest id
+        QVERIFY(store.remove(deleted));
+        QVERIFY(store.save().has_value());
+    }
+    ProgramStore store(path);
+    QVERIFY(store.load().has_value());
+    QVERIFY(store.add(QStringLiteral("C"), someProgram()).value() != deleted);
+}
+
+void TestProgramStore::test_handEditedNextIdCannotCollide()
+{
+    StoreContent content;
+    content.programs = {StoredProgram{.id = 5, .name = "A", .program = someProgram()}};
+    content.nextId = 2; // edited by hand: lower than an id in use
+    QCOMPARE(fromJson(toJson(content)).value().nextId, 6);
+}
+
+void TestProgramStore::test_saveAndLoadRoundTrip()
+{
+    ProgramStore store(path);
+    Program edited = someProgram(15);
+    edited.pads[2].toggle = true;
+    edited.knobs[7] = Knob{.controlChange = 1, .low = 10, .high = 100};
+    // Unicode names: accented, CJK, an emoji (outside the BMP: a surrogate
+    // pair in UTF-16) and right-to-left text.
+    for (const QString &name : {QStringLiteral("Café"),
+                                QStringLiteral("日本語"),
+                                QStringLiteral("Drums 🥁"),
+                                QStringLiteral("طبول")}) {
+        QVERIFY(store.add(name, edited).has_value());
+    }
+    QVERIFY(store.save().has_value());
+
+    ProgramStore loaded(path);
+    const QSignalSpy reset(&loaded, &ProgramStore::programsReset);
+    QVERIFY(loaded.load().has_value());
+    QCOMPARE(reset.count(), 1);
+    QCOMPARE(loaded.programs(), store.programs()); // ids, names and programs
+}
+
+void TestProgramStore::test_loadMissingFileIsEmpty()
+{
+    ProgramStore store(path);
+    const QSignalSpy aboutToReset(&store, &ProgramStore::programsAboutToBeReset);
+    const QSignalSpy reset(&store, &ProgramStore::programsReset);
+    QVERIFY(store.load().has_value());
+    QVERIFY(store.programs().isEmpty());
+    QVERIFY(store.isWritable());
+    // Already empty: nothing changed, so nothing is emitted.
+    QCOMPARE(aboutToReset.count(), 0);
+    QCOMPARE(reset.count(), 0);
+}
+
+void TestProgramStore::test_loadRejects_data()
+{
+    QTest::addColumn<QByteArray>("json");
+    QTest::addColumn<QString>("error");
+
+    StoreContent content;
+    content.programs = {StoredProgram{.id = 1, .name = "Drums", .program = someProgram()}};
+    const QByteArray valid = toJson(content);
+    const auto edited = [&valid](const QByteArray &from, const QByteArray &to) {
+        QByteArray json = valid;
+        Q_ASSERT(json.contains(from));
+        return json.replace(json.indexOf(from), from.size(), to);
+    };
+
+    QTest::newRow("Not JSON") << QByteArray("{ nope") << "not valid JSON";
+    QTest::newRow("Not an object") << QByteArray("[]") << "not an lpd8editor programs file";
+    QTest::newRow("No format") << edited(R"("format": 1)", R"("formats": 1)")
+                               << "no format version";
+    QTest::newRow("Newer format") << edited(R"("format": 1)", R"("format": 2)") << "newer version";
+    QTest::newRow("Huge format") << edited(R"("format": 1)", R"("format": 1e20)")
+                                 << "newer version";
+    QTest::newRow("Format 1.5") << edited(R"("format": 1)", R"("format": 1.5)") << "newer version";
+    QTest::newRow("Format 0.5") << edited(R"("format": 1)", R"("format": 0.5)")
+                                << "unknown format version 0.5";
+    QTest::newRow("Unknown root key") << edited(R"("nextId")", R"("next")") << "unknown key 'next'";
+    QTest::newRow("No nextId") << edited(R"("nextId": 1,)", "") << "'nextId' must be an integer";
+    QTest::newRow("nextId above the cap")
+            << edited(R"("nextId": 1)", R"("nextId": 2147483648)") << "'nextId' must be an integer";
+    QTest::newRow("Id at INT_MAX") << edited(R"("id": 1)", R"("id": 2147483647)")
+                                   << "'id' must be an integer from 1 to 2147483646";
+    QTest::newRow("Unknown program key")
+            << edited(R"("channel": 9)", R"("channel": 9, "colour": "red")")
+            << "unknown key 'colour'";
+    QTest::newRow("Typo in a pad key")
+            << edited(R"("toggle": false)", R"("toggle": false, "Toggle": true)")
+            << "pad 1: unknown key 'Toggle'";
+    QTest::newRow("Note 300")
+            << edited(R"("note": 36)", R"("note": 300)")
+            << "program 1 (Drums): pad 1: 'note' must be an integer from 0 to 127";
+    QTest::newRow("Note 36.5") << edited(R"("note": 36)", R"("note": 36.5)")
+                               << "'note' must be an integer";
+    QTest::newRow("Toggle not a boolean")
+            << edited(R"("toggle": false)", R"("toggle": 0)") << "'toggle' must be true or false";
+    QTest::newRow("Channel 16") << edited(R"("channel": 9)", R"("channel": 16)")
+                                << "'channel' must be an integer from 0 to 15";
+    QTest::newRow("Name not a string")
+            << edited(R"("name": "Drums")", R"("name": 3)") << "'name' must be a string";
+}
+
+void TestProgramStore::test_loadRejects()
+{
+    // NOLINTBEGIN(misc-const-correctness): QFETCH declares the variables
+    QFETCH(QByteArray, json);
+    QFETCH(QString, error);
+    // NOLINTEND(misc-const-correctness)
+
+    const auto read = fromJson(json);
+    QVERIFY(!read.has_value());
+    QVERIFY2(read.error().contains(error), qPrintable(read.error()));
+}
+
+void TestProgramStore::test_failedLoadKeepsStoreAndProtectsFile()
+{
+    writeAll(path, "{ this is not JSON");
+
+    ProgramStore store(path);
+    const int id = store.add(QStringLiteral("Unsaved"), someProgram()).value();
+    const QSignalSpy aboutToReset(&store, &ProgramStore::programsAboutToBeReset);
+    const QSignalSpy reset(&store, &ProgramStore::programsReset);
+
+    const auto loaded = store.load();
+    QVERIFY(!loaded.has_value());
+    QCOMPARE(aboutToReset.count(), 0);
+    QCOMPARE(reset.count(), 0);
+    QVERIFY(hasProgram(store, id)); // unchanged
+    QVERIFY(!store.isWritable());
+    QCOMPARE(store.loadError(), loaded.error());
+
+    // Never overwritten.
+    QVERIFY(!store.save().has_value());
+    QCOMPARE(readAll(path), QByteArray("{ this is not JSON"));
+}
+
+void TestProgramStore::test_unreadableFileStaysProtectedUntilReadable()
+{
+    // The protection belongs to the store's one file: loading again doesn't
+    // lift it while the file is still unreadable, and lifts it once the file
+    // is repaired.
+    writeAll(path, "{ broken");
+    ProgramStore store(path);
+    QVERIFY(!store.load().has_value());
+    QVERIFY(!store.load().has_value());
+    QVERIFY(!store.isWritable());
+    QVERIFY(!store.save().has_value());
+    QCOMPARE(readAll(path), QByteArray("{ broken"));
+
+    writeAll(path, toJson(StoreContent{}));
+    QVERIFY(store.load().has_value());
+    QVERIFY(store.isWritable());
+    QVERIFY(store.save().has_value());
+}
+
+void TestProgramStore::test_newerFormatIsNotOverwritten()
+{
+    const QByteArray newer = R"({"format": 2, "nextId": 1, "programs": [], "future": "data"})";
+    writeAll(path, newer);
+
+    ProgramStore store(path);
+    QVERIFY(!store.load().has_value());
+    QVERIFY(!store.save().has_value());
+    QCOMPARE(readAll(path), newer);
+}
+
+void TestProgramStore::test_tooLargeFileIsRefused()
+{
+    writeAll(path, QByteArray(max_store_file_size + 1, ' '));
+    ProgramStore store(path);
+    const auto loaded = store.load();
+    QVERIFY(!loaded.has_value());
+    QVERIFY2(loaded.error().contains("too large"), qPrintable(loaded.error()));
+    QVERIFY(!store.isWritable());
+}
+
+void TestProgramStore::test_setAsideKeepsTheBytes()
+{
+    const QByteArray corrupt = "{ hand-edited, broken";
+    writeAll(path, corrupt);
+
+    ProgramStore store(path);
+    QVERIFY(!store.load().has_value());
+    const QString aside = store.setAsideUnreadableFile().value();
+    QVERIFY(aside.startsWith(path + ".corrupt-"));
+    QCOMPARE(readAll(aside), corrupt); // the user's bytes, intact
+    QVERIFY(!QFile::exists(path));
+    QVERIFY(store.isWritable());
+    QVERIFY(store.loadError().isEmpty());
+    QVERIFY(store.save().has_value());
+
+    // Nothing left to set aside.
+    QVERIFY(!store.setAsideUnreadableFile().has_value());
+}
+
+void TestProgramStore::test_saveCreatesTheFolder()
+{
+    ProgramStore store(dir->filePath("not/yet/there/programs.json"));
+    store.add(QStringLiteral("A"), someProgram());
+    QVERIFY(store.save().has_value());
+    QVERIFY(QFile::exists(store.path()));
+}
+
+void TestProgramStore::test_saveReportsFailure()
+{
+    // The parent of the path is a regular file, so the save must fail, for
+    // root too (CI containers run as root, and root ignores permissions).
+    const QString notAFolder = dir->filePath("a-regular-file");
+    writeAll(notAFolder, "x");
+
+    ProgramStore store(notAFolder + "/programs.json");
+    store.add(QStringLiteral("A"), someProgram());
+    const auto saved = store.save();
+    QVERIFY(!saved.has_value());
+    QVERIFY2(saved.error().startsWith("Cannot"), qPrintable(saved.error()));
+}
+
+QTEST_GUILESS_MAIN(TestProgramStore)
+
+#include "programstore_test.moc"
