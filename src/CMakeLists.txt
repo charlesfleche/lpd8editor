@@ -22,6 +22,8 @@ add_library(${_lib}
     midinames.h
     midiconnectionsmodel.cpp
     midiconnectionsmodel.h
+    miditransport.cpp
+    miditransport.h
     midivaluedelegate.cpp
     midivaluedelegate.h
     parameterlocation.h
@@ -41,6 +43,8 @@ add_library(${_lib}
     exactinteger.h
     storecommands.cpp
     storecommands.h
+    sysexassembler.cpp
+    sysexassembler.h
     sysexhandler.cpp
     sysexhandler.h
     utils.cpp

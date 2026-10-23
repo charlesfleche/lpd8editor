@@ -252,15 +252,99 @@ that switches everything at once.
       the old undo commands and the storage helpers of `lpd8_sysex.cpp`.
       QtSql stays only for the migration. (Earlier text refers to this as
       "item 4.7".)
-- [ ] 4.8 A `MidiTransport` interface with an `AlsaSeqTransport`
-      implementation: SysEx in and out as `QByteArray`, a port list, and
-      hotplug. It replaces `IOMidi` and the ALSA code in
-      `MidiConnectionsModel`.
-- [ ] 4.9 A fake transport plus an LPD8 simulator, to test the device protocol
+Items 4.8a to 4.10b follow the lesson of 4.7: what can't coexist (two
+owners of one ALSA client, two paths for one MIDI menu) switches in one
+commit, after the new code is in place and tested on its own.
+
+- [ ] 4.8a A `MidiTransport` interface, a `SysexAssembler`, and a
+      `FakeTransport` for the tests. Nothing uses them yet.
+
+      - The interface carries messages, not events, and no ALSA type:
+        `ports()` (an opaque `QString` id, a name, the connection
+        directions), `connectTo(id)`, `disconnectAll()`, `connectedPort()`,
+        `externallyManaged()` (connections made by aconnect or qjackctl
+        count, as today), `sendSysex(message)`, and the signals
+        `sysexReceived(message, sourcePortId)`, `portsChanged()` and
+        `connectionChanged()`. The source port is in the signal so 4.10
+        can check it without changing the interface.
+      - Port ids (M1) are valid only until `portsChanged()` reports the
+        port gone: ALSA client numbers change when a device is replugged
+        (20, then 24). Nothing persists an id. The application doesn't
+        remember a device today (no setting, no auto-connect: the
+        connection state is read from the live subscriptions), so no stable
+        key is needed yet. A feature that remembers one must use the client
+        and port names, resolved again after each `portsChanged()`.
+      - `sendSysex()` (M3) takes one complete F0…F7 message and refuses
+        anything else. It returns false and sends nothing when no port is
+        connected. Otherwise it sends to the port's subscribers, as today:
+        whatever the port's subscriptions are, including ones made by
+        other tools. The ALSA backend documents its size limit (4.8b).
+      - `SysexAssembler` (M2) turns bytes from one source into complete
+        messages, per the MIDI spec. F0 starts a message, and a new F0
+        restarts it. F7 ends it. Real-time bytes (F8 to FF) inside a
+        message are skipped and don't end it. Any other status byte (80 to
+        F6) aborts the message. A message longer than a documented limit
+        (a few KB; an LPD8 message is 66 bytes) is dropped, so an F0 with
+        no F7 can't grow without bound, and that is reported once. A test
+        row for each case.
+      - `FakeTransport` (tests only): a port list the test edits, the sent
+        messages recorded, `receive(message, fromPort)` to inject one. It
+        is what the tests of `MidiConnectionsModel`, `SysexHandler`,
+        `MainWindow`, the simulator (4.9) and `Lpd8Device` (4.10) use.
+        Test (M1): the connected device disappears and comes back with a
+        new id. The connection state follows, and the source of what it
+        sends is its new id.
+- [ ] 4.8b The switch, in one commit: `AlsaSeqTransport` replaces `IOMidi`
+      and the ALSA code of `MidiConnectionsModel`.
+
+      - `IOMidi` becomes `AlsaSeqTransport` with `git mv`, so the history
+        follows (shown with `git diff -M --stat`). It alone owns the
+        sequencer handle and the socket notifiers, in the order of C1
+        (notifiers destroyed before the handle closes). A pimpl keeps
+        `asoundlib.h` out of every header, so `ALSA::ALSA` becomes a
+        PRIVATE link of the library.
+      - It reassembles received SysEx with `SysexAssembler`, per source.
+        It documents ALSA's limit for one outgoing SysEx event (the
+        client's output buffer, `snd_seq_get_output_buffer_size()`), and
+        the test sends a message larger than 66 bytes.
+      - `MidiConnectionsModel` becomes a plain list model over
+        `MidiTransport` (same rows, 'Disconnect' row, properties and
+        signals), and `SysexHandler` sends and receives through it.
+      - `MainWindow(ProgramsDocument &, MidiTransport *)`: nullptr turns
+        MIDI off, as when ALSA fails today. `main()` creates the transport
+        before the window, so it outlives it (the first half of 4.11's
+        'App owns the transport'). C2: `~MainWindow` deletes the objects
+        that connect into its lambdas while `ui` exists. The teardown test
+        fires the fake's signals during the destruction.
+      - `mainwindow_test` uses the fake, so its MIDI tests no longer depend
+        on the machine.
+      - `alsaseqtransport_test` replaces `iomidi_test` and is the only test
+        that needs `/dev/snd/seq`. Two transports: B appears in A's ports,
+        A connects to B, a SysEx goes each way with the right source id,
+        and the disconnection is signalled. Without a sequencer it skips
+        with a message saying why.
+      - CI (M4), a note for the first CI run (phase 2): try `sudo modprobe
+        snd-seq` (and `snd-seq-dummy`) as a non-fatal step on the Ubuntu
+        runner, so this test can run there. Print the skipped tests, and
+        fail if their count changes unexpectedly, so a skip is never
+        silent.
+      - No behaviour change: a program dump from any client still replaces
+        the selected program (that is 4.10).
+- [ ] 4.9 An LPD8 simulator over `FakeTransport`, answering like the device
+      (get program, send program, four slots), to test the device protocol
       without hardware.
-- [ ] 4.10 `Lpd8Device`: match each program reply to its request, with a
-      timeout. A reply goes where it was requested, and unsolicited dumps from
-      other local clients are ignored (the security finding).
+- [ ] 4.10a `Lpd8Device`, tested against the simulator: match each program
+      reply to its request, with a timeout. A reply goes where it was
+      requested. Unsolicited dumps, and dumps whose source is not the
+      connected device, are ignored (the security finding). The source is
+      compared with the connected port's *current* id, read again after
+      every `portsChanged()`, never a cached one (M1). Test: the device is
+      replugged under a new id, and its replies are still accepted, while
+      another client's are not. Nothing uses it yet.
+- [ ] 4.10b The switch of the MIDI menu to `Lpd8Device`, in one commit.
+      `SysexHandler` and what is left of `lpd8_sysex.*` are deleted, and
+      the 'program received' path goes through the device. This is a
+      behaviour change, for the release notes (5.3).
 - [ ] 4.11 Composition root: an `App` object owns and wires the store, the
       device, and the window, so `MainWindow` only displays things.
 
