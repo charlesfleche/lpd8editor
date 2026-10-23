@@ -6,7 +6,9 @@ can review the design without reading a diff.
 
 ## The problem with the current structure
 
-Today, knowledge about the LPD8 is spread across every layer:
+Before this rework (until item 4.7b removed the SQLite code), knowledge
+about the LPD8 was spread across every layer. This section keeps the
+description of that structure, since it explains the target:
 
 - The SysEx byte layout is implied by the **order of SQL columns**
   (`select note, pc, cc, toggle`), in `db.cpp`.
@@ -139,10 +141,10 @@ The store is a `QObject` that signals `programAdded`, `programRemoved` and
 `programChanged(id)`. The models listen to those signals instead of being reset.
 
 **Migration**: on the first start of the new version, if the JSON file doesn't
-exist but `db.sqlite3` does, its programs are read once (through the existing
-`db.cpp` and the new codec) and saved as JSON. The old file is renamed to
-`db.sqlite3.migrated` and kept as a backup. After that, QtSql is only needed for
-this migration.
+exist but `db.sqlite3` does, its programs are read once, read-only (by
+`migration.cpp`, which checks every value), and saved as JSON. The old file is
+renamed to `db.sqlite3.migrated` and kept as a backup, with the migration's
+report next to it. QtSql is only used by this migration.
 
 ### UI: models and undo
 

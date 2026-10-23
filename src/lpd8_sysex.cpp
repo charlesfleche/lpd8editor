@@ -13,8 +13,6 @@ constexpr char sysex_model_byte_1 = '\x7f';
 constexpr char sysex_model_byte_2 = '\x75';
 constexpr char sysex_end = '\xf7';
 
-constexpr int channel_offset = 8;
-
 constexpr int opcode_offset = 4;
 constexpr int program_offset = 7;
 
@@ -43,16 +41,6 @@ int programRequestSize()
     return sysex_set_program_req_size;
 }
 
-int padsCount()
-{
-    return 8;
-}
-
-int knobsCount()
-{
-    return 8;
-}
-
 namespace {
 
 // The caller makes sure that sysex is long enough to hold an opcode.
@@ -76,15 +64,6 @@ bool isLpd8SysEx(const QByteArray &sysex)
 
 } // namespace
 
-bool isProgram(const QByteArray &sysex)
-{
-    return isLpd8SysEx(sysex)
-            && (is(sysex, sysex_program_rep, sysex_program_rep_size)
-                || is(sysex, sysex_set_program_req, sysex_set_program_req_size)
-                // How this application stores programs (see programSysex())
-                || is(sysex, sysex_program_req, sysex_program_rep_size));
-}
-
 Type type(const QByteArray &sysex)
 {
     if (!isLpd8SysEx(sysex)) {
@@ -106,21 +85,12 @@ void addHeader(QByteArray &sysex)
     sysex += sysex_model_byte_2;
 }
 
-} // namespace
-
 void addFooter(QByteArray &sysex)
 {
     sysex += sysex_end;
 }
 
-void addProgramHeader(QByteArray &sysex, int programId)
-{
-    addHeader(sysex);
-    sysex += sysex_program_req[0];
-    sysex += sysex_program_req[1];
-    sysex += sysex_program_req[2];
-    sysex += static_cast<char>(programId);
-}
+} // namespace
 
 QByteArray getProgram(int programId)
 {
@@ -143,11 +113,6 @@ void makeSetProgramRequest(QByteArray &sysex, int programId)
     sysex[opcode_offset + 1] = sysex_set_program_req[1];
     sysex[opcode_offset + 2] = sysex_set_program_req[2];
     sysex[program_offset] = static_cast<char>(programId);
-}
-
-char channel(const QByteArray &sysex)
-{
-    return sysex[channel_offset];
 }
 
 } // namespace sysex

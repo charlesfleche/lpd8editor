@@ -14,7 +14,7 @@ namespace lpd8 {
 // and NULL values are refused.
 //
 // It has two uses, and both need this exactness:
-// - Values read from SQLite (db.cpp, migration.cpp). Tables created before
+// - Values read from SQLite (migration.cpp). Tables created before
 //   2018 have no CHECK constraints, so a column can hold anything. INTEGER
 //   column affinity stores 36.0 and '36' as the INTEGER 36, so a REAL or
 //   TEXT that is left is not an integer.

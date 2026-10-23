@@ -176,7 +176,7 @@ that switches everything at once.
       and changes made to the store directly (not through the model) that
       check the rows and the `dataChanged` ranges (one cell for a rename, the
       program's control cells for a program change). No window change yet.
-- [x] 4.7a The switch, in one commit: the window, the undo stack, MIDI send and
+- [x] 4.7a [`3824a69`](https://github.com/charlesfleche/lpd8editor/commit/3824a69b73697f40fe842d4be5c59a0c3af0bf8b) The switch, in one commit: the window, the undo stack, MIDI send and
       receive, and import/export move from SQLite to the store, the models of
       4.5 and the commands of 4.6.
 
@@ -248,7 +248,7 @@ that switches everything at once.
       the exact column counts of both views (4 visible fields for pads, 3 for
       knobs).
 
-- [ ] 4.7b Remove the SQLite schema, triggers, and `db.cpp`, `ProgramsModel`,
+- [x] 4.7b Remove the SQLite schema, triggers, and `db.cpp`, `ProgramsModel`,
       the old undo commands and the storage helpers of `lpd8_sysex.cpp`.
       QtSql stays only for the migration. (Earlier text refers to this as
       "item 4.7".)
@@ -317,3 +317,9 @@ that switches everything at once.
         a window at its minimum width about 28 pixels wider, once (the
         tables count their scroll bars for one layout pass). The old tables
         always had rows.
+- [ ] 5.4 Retire the migration from `db.sqlite3`, once no supported upgrade
+      path needs it (a release or two after the switch to the JSON store):
+      `migration.*`, its tests and `tests/sqlite_schema.h`, the `Qt::Sql`
+      link, and the `libqt6sql6-sqlite` package dependency in
+      `CMakeLists.txt` and `CONTRIBUTING.md`. The release notes say from
+      which version an old database is no longer read.

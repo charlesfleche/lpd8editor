@@ -25,7 +25,7 @@ QString tr(const char *text, int n = -1)
 }
 
 // The connection name used only by the migration, so it never touches the
-// default connection that db.cpp uses.
+// default connection, which other code may use.
 constexpr const char *connection_name = "lpd8editor-migration";
 
 using Error = std::unexpected<QString>;
@@ -44,8 +44,7 @@ QString shown(const QVariant &value)
 
 // An integer field from 0 to 'max'. Old databases have no CHECK constraints,
 // so a column can hold anything: exactInteger() takes only an INTEGER in range
-// (never a cast: 300 must not become 44, nor 4294967336 become 40), the same
-// rule as db.cpp.
+// (never a cast: 300 must not become 44, nor 4294967336 become 40).
 std::expected<int, QString> integerField(const QVariant &value, const char *name, int max)
 {
     const auto v = exactInteger(value, max);
@@ -152,7 +151,8 @@ std::expected<MigrationReport, QString> readInto(QSqlDatabase &db, ProgramStore 
 
     // In the order the old program list showed them: by id. The old list
     // showed the table's rows in rowid order, which is the id here, and
-    // never sorted them (checked: ProgramsModel has no setSort() or sort()).
+    // never sorted them (checked: the old ProgramsModel, deleted in item
+    // 4.7b, had no setSort() or sort()).
     // A NULL name, which v0.0.0 to v0.0.5 allowed, becomes an empty name: the
     // old list showed both the same way.
     QSqlQuery q(db);

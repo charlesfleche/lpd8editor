@@ -1,6 +1,6 @@
-# Valgrind makes the tests 20 to 50 times slower: programsmodel_test takes
-# 26 s under memcheck on a desktop, and a shared CI runner can be several
-# times slower than that. The valgrind preset raises the limit.
+# Valgrind makes the tests 20 to 50 times slower: mainwindow_test takes
+# about 7 s under memcheck on a desktop, and a shared CI runner can be
+# several times slower than that. The valgrind preset raises the limit.
 set(LPD8EDITOR_TEST_TIMEOUT 60 CACHE STRING "Time limit for each test, in seconds")
 
 function(_add_test _name)
@@ -28,8 +28,6 @@ function(_add_test _name)
     )
 endfunction()
 
-_add_test(commands)
-_add_test(db)
 _add_test(iomidi)
 _add_test(lpd8_sysex)
 _add_test(lpd8codec)
@@ -41,8 +39,11 @@ _add_test(program)
 _add_test(programfile)
 _add_test(programmodels)
 _add_test(programsdocument)
-_add_test(programsmodel)
 _add_test(programstore)
 _add_test(startup)
 _add_test(storecommands)
 _add_test(utils)
+
+# These tests build old SQLite databases for the migration to read.
+target_link_libraries(migration_test PRIVATE Qt::Sql)
+target_link_libraries(startup_test PRIVATE Qt::Sql)

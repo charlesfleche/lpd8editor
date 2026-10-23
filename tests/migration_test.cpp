@@ -1,7 +1,7 @@
-#include "db.h"
 #include "deviceprofile.h"
 #include "migration.h"
 #include "programstore.h"
+#include "sqlite_schema.h"
 
 #include <QDir>
 #include <QFile>
@@ -34,7 +34,7 @@ bool buildDatabase(const QString &path, const QStringList &statements, bool curr
         if (ok && currentSchema) {
             // The schema the application creates today: CHECK constraints,
             // and triggers that insert the default pads and knobs.
-            ok = !initDb(db).isValid();
+            ok = createLastSqliteSchema(db);
         }
         QSqlQuery q(db);
         for (const QString &statement : statements) {

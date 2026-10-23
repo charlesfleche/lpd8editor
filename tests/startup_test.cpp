@@ -1,8 +1,8 @@
-#include "db.h"
 #include "deviceprofile.h"
 #include "migration.h"
 #include "programsdocument.h"
 #include "programstore.h"
+#include "sqlite_schema.h"
 #include "startup.h"
 
 #include <QDir>
@@ -39,7 +39,7 @@ bool buildDatabase(const QString &path)
     {
         QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", "fixture");
         db.setDatabaseName(path);
-        ok = db.open() && !initDb(db).isValid();
+        ok = db.open() && createLastSqliteSchema(db);
         QSqlQuery q(db);
         for (const char *statement :
              {"insert into programs (programId, name, channel) values (3, 'Drums', 9)",

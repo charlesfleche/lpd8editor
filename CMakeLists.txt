@@ -115,8 +115,10 @@ set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_PACKAGE_SECTION sound)
 # Qt loads these as plugins at run time, so dpkg-shlibdeps can't find them
-# in the binary: the SQLite driver for the database, and the SVG image and
-# icon plugins for the window icon. CPack adds what dpkg-shlibdeps finds.
+# in the binary: the SQLite driver for the one-time migration from
+# db.sqlite3 (migration.cpp; without it, a user upgrading with an old
+# database gets a refusal to start, "Driver not loaded"), and the SVG image
+# and icon plugins for the window icon. CPack adds what dpkg-shlibdeps finds.
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt6sql6-sqlite, qt6-svg-plugins")
 
 # A package built on one distribution links against that distribution's

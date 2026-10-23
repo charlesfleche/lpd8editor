@@ -1,10 +1,7 @@
-#include "db.h"
 #include "deviceprofile.h"
 #include "programfile.h"
-#include "utils.h"
 
 #include <QFile>
-#include <QSqlDatabase>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -48,7 +45,6 @@ private slots:
 
     void test_importsTheFixture();
     void test_exportIsTheFixture();
-    void test_sameFileAsTheSqlitePath();
     void test_nameIsTheFileName();
     void test_notAProgramIsRefused();
     void test_valueOutOfRangeIsRefused();
@@ -81,36 +77,6 @@ void TestProgramFile::test_exportIsTheFixture()
     const QString path = dir->filePath("out.lpd8");
     QVERIFY(exportProgramFile(fixtureProgram(), path).has_value());
     QCOMPARE(readAll(path), readAll(fixture));
-}
-
-void TestProgramFile::test_sameFileAsTheSqlitePath()
-{
-    // While both exist (until item 4.7b): the old import and export, through
-    // the database, and the new ones give the same file.
-    QString oldPath;
-    {
-        QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-        db.setDatabaseName(QStringLiteral(":memory:"));
-        QVERIFY(db.open());
-        QVERIFY(!initDb(db).isValid());
-
-        const auto sysex = fromSysexTextFile(fixture);
-        QVERIFY(sysex.has_value());
-        const int id = createProgram(QStringLiteral("exported-program"));
-        QVERIFY(fromSysex(id, *sysex));
-        oldPath = dir->filePath("old.lpd8");
-        QVERIFY(writeProgramFile(programSysex(id), oldPath).has_value());
-        db.close();
-    }
-    QSqlDatabase::removeDatabase(QLatin1StringView(QSqlDatabase::defaultConnection));
-
-    const auto imported = importProgramFile(fixture);
-    QVERIFY(imported.has_value());
-    const QString newPath = dir->filePath("new.lpd8");
-    QVERIFY(exportProgramFile(imported->program, newPath).has_value());
-
-    QCOMPARE(readAll(newPath), readAll(oldPath));
-    QCOMPARE(readAll(newPath), readAll(fixture));
 }
 
 void TestProgramFile::test_nameIsTheFileName()

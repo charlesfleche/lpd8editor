@@ -3,20 +3,7 @@ configure_file(app_info.h.in ${CMAKE_CURRENT_BINARY_DIR}/app_info.h)
 set(_exe ${CMAKE_PROJECT_NAME})
 set(_lib ${CMAKE_PROJECT_NAME}-lib)
 
-qt_add_resources(_rcc_sources
-    sql.qrc
-)
-
 add_library(${_lib}
-    commands.cpp
-    commands.h
-    create_table_knobs.sql
-    create_table_pads.sql
-    create_table_programs.sql
-    create_trigger_add_program.sql
-    create_trigger_delete_program.sql
-    db.cpp
-    db.h
     deviceprofile.cpp
     deviceprofile.h
     enums.h
@@ -46,11 +33,8 @@ add_library(${_lib}
     programmodels.h
     programsdocument.cpp
     programsdocument.h
-    programsmodel.cpp
-    programsmodel.h
     programstore.cpp
     programstore.h
-    sql.qrc
     startup.cpp
     startup.h
     exactinteger.cpp
@@ -61,7 +45,6 @@ add_library(${_lib}
     sysexhandler.h
     utils.cpp
     utils.h
-    ${_rcc_sources}
 )
 
 # PUBLIC: everything linking the library (the app and the tests) is
@@ -71,7 +54,7 @@ target_compile_features(${_lib}
         cxx_std_23
 )
 
-# The tests include the library headers ("db.h", ...), so the source
+# The tests include the library headers ("programstore.h", ...), so the source
 # folder is a PUBLIC include directory.
 target_include_directories(${_lib}
     PUBLIC
@@ -81,8 +64,10 @@ target_include_directories(${_lib}
 target_link_libraries(${_lib}
     PRIVATE
         lpd8editor_warnings
-    PUBLIC
+        # Only for the one-time migration from db.sqlite3 (migration.cpp):
+        # no public header uses QtSql.
         Qt::Sql
+    PUBLIC
         Qt::Widgets
         # Imported target from FindALSA: include path and library together.
         # PUBLIC because public headers (iomidi.h, midiconnectionsmodel.h)
@@ -94,6 +79,16 @@ add_executable(${_exe}
     main.cpp
     app_info.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/app_info.h
+)
+
+# The window icon, ':/lpd8editor.svg'. A resource of the executable, not of
+# the static library: the linker keeps every object of an executable, but
+# drops a library's resource object that no code references, so a library
+# resource needs Q_INIT_RESOURCE().
+qt_add_resources(${_exe} icon
+    PREFIX "/"
+    BASE ${CMAKE_SOURCE_DIR}
+    FILES ${CMAKE_SOURCE_DIR}/lpd8editor.svg
 )
 
 target_include_directories(${_exe}

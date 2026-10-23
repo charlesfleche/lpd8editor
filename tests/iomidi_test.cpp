@@ -1,4 +1,3 @@
-#include "db.h"
 #include "iomidi.h"
 
 #include <QtTest>

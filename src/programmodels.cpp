@@ -370,8 +370,8 @@ Qt::ItemFlags ControlsModel::flags(const QModelIndex &index) const
         return Qt::NoItemFlags;
     }
     Qt::ItemFlags flags = Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemNeverHasChildren;
-    // As in the SQLite model: the toggle column is shown but not enabled
-    // (ProgramsModel::flags()). Changing that is an item of its own.
+    // As in the SQLite model before item 4.7b: the toggle column is shown
+    // but not enabled. Changing that is an item of its own.
     if (m_controls != Controls::Pads || index.column() != ToggleColumn) {
         flags |= Qt::ItemIsEnabled;
     }
