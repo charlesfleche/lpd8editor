@@ -96,10 +96,22 @@ keeps it next to the program's id. Value types are easy to reason about and to t
 undo step can simply keep the program as it was before the edit.
 
 The codec turns a `Program` into SysEx bytes and back. It is a set of pure
-functions with no I/O: `decode()` returns `std::expected<Program, DecodeError>`,
-so a caller can't forget that decoding can fail. All the byte offsets of
-`doc/SYSEX.md` live in this one file. Supporting another device means writing
-another codec, not editing the database code.
+functions with no I/O:
+
+- `decodeProgram()` returns `std::expected<DecodedProgram, DecodeError>`: the
+  program and the device slot named in the message, or the kind of error and
+  the position of the byte at fault, so the user can be told which value is
+  wrong. A caller can't forget that decoding can fail.
+- `encodeGetProgram()` and `encodeSendProgram()` build the messages that go to
+  the device, and refuse (`std::expected<QByteArray, EncodeError>`) an invalid
+  slot or program rather than send malformed MIDI.
+- `encodeStoredProgram()` builds the format the application stores and
+  exports (doc/SYSEX.md, "Storage format").
+
+The byte offsets of `doc/SYSEX.md` belong in this one file. The database layer
+already goes through it. The MIDI path's older helpers (`lpd8_sysex.cpp`) move
+to it in item 4.10, and then it is the only place. Supporting another device
+means writing another codec, not editing the database code.
 
 ### Storage: `ProgramStore`
 

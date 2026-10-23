@@ -22,6 +22,8 @@ add_library(${_lib}
     enums.h
     iomidi.cpp
     iomidi.h
+    lpd8codec.cpp
+    lpd8codec.h
     lpd8_sysex.cpp
     lpd8_sysex.h
     mainwindow.cpp
@@ -37,6 +39,8 @@ add_library(${_lib}
     programsmodel.cpp
     programsmodel.h
     sql.qrc
+    sqlvalue.cpp
+    sqlvalue.h
     sysexhandler.cpp
     sysexhandler.h
     utils.cpp

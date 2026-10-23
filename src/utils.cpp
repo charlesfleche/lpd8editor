@@ -77,8 +77,9 @@ std::expected<QByteArray, QString> fromSysexTextFile(const QString &path)
             return tooShort(i);
         }
         if (in.status() != QTextStream::Ok || c < 0 || c > 255) {
-            return std::unexpected(
-                    tr("%1 has an invalid value at position %2.").arg(file, QString::number(i)));
+            // Positions count from 1, as a person counts the values of the file.
+            return std::unexpected(tr("%1 has an invalid value at position %2.")
+                                           .arg(file, QString::number(i + 1)));
         }
         ret.append(static_cast<char>(c));
     }

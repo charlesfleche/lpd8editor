@@ -1,10 +1,12 @@
 #include "db.h"
 
-#include "lpd8_sysex.h"
+#include "lpd8codec.h"
+#include "sqlvalue.h"
 #include "utils.h"
 
 #include <array>
 #include <exception>
+#include <optional>
 
 #define GOTO_END_IF_FALSE(X)                                                                       \
     if (!X)                                                                                        \
@@ -88,86 +90,132 @@ end:
     return ret;
 }
 
+namespace {
+
+// The tables only have CHECK constraints (0-127, channel 0-15, toggle 0-1) in
+// databases created since 2018. Older ones (v0.0.0 to v0.0.5) have none, and
+// SQLite never adds constraints to an existing table, so a column can hold
+// anything. A value is therefore taken only if it is an INTEGER that fits in
+// a byte (sqlInteger(), which explains why QVariant::toInt() can't be used):
+// casting first would silently turn 300 into 44. Program::isValid() then
+// checks the ranges, as for a SysEx message.
+std::optional<quint8> byteValue(const QSqlQuery &q, int column)
+{
+    return lpd8::sqlInteger(q.value(column), 255).transform([](int v) {
+        return static_cast<quint8>(v);
+    });
+}
+
+// The codec's rule for the toggle byte: 0 or 1, nothing else.
+std::optional<bool> toggleValue(const QSqlQuery &q, int column)
+{
+    return lpd8::sqlInteger(q.value(column), 1).transform([](int v) { return v == 1; });
+}
+
+std::optional<lpd8::Pad> padFromRow(const QSqlQuery &q)
+{
+    const auto note = byteValue(q, 0);
+    const auto programChange = byteValue(q, 1);
+    const auto controlChange = byteValue(q, 2);
+    const auto toggle = toggleValue(q, 3);
+    if (!note || !programChange || !controlChange || !toggle) {
+        return std::nullopt;
+    }
+    return lpd8::Pad{.note = *note,
+                     .programChange = *programChange,
+                     .controlChange = *controlChange,
+                     .toggle = *toggle};
+}
+
+std::optional<lpd8::Knob> knobFromRow(const QSqlQuery &q)
+{
+    const auto controlChange = byteValue(q, 0);
+    const auto low = byteValue(q, 1);
+    const auto high = byteValue(q, 2);
+    if (!controlChange || !low || !high) {
+        return std::nullopt;
+    }
+    return lpd8::Knob{.controlChange = *controlChange, .low = *low, .high = *high};
+}
+
+// Runs 'sql', a select with one '?' for the program id.
+bool selectForProgram(QSqlQuery &q, const char *sql, int programId)
+{
+    if (!q.prepare(sql)) {
+        return false;
+    }
+    q.addBindValue(programId);
+    return q.exec();
+}
+
+// Reads one row per control of 'controls' from the current select, with
+// 'fromRow'. Returns what went wrong, or nothing.
+template<typename Control, std::size_t N, typename FromRow>
+std::optional<const char *>
+readControls(QSqlQuery &q, std::array<Control, N> &controls, const char *missing, FromRow fromRow)
+{
+    for (Control &control : controls) {
+        if (!q.next()) {
+            return missing;
+        }
+        const std::optional<Control> read = fromRow(q);
+        if (!read) {
+            return "invalid values";
+        }
+        control = *read;
+    }
+    return std::nullopt;
+}
+
+} // namespace
+
 QByteArray programSysex(int programId)
 {
-    QByteArray ret;
-
-    bool success = false;
-
-    sysex::addProgramHeader(ret, 1);
-
-    int count = 0;
-
+    // Read the program from its three tables, then encode it with the codec,
+    // which owns the byte layout.
+    lpd8::Program program;
     QSqlQuery q;
+    const auto failed = [&q, programId](const char *what) {
+        qWarning() << "Failed to read program" << programId << ":" << what
+                   << (q.lastError().isValid() ? errorText(q) : QString());
+        return QByteArray();
+    };
 
-    // channel
+    if (!selectForProgram(q, "select channel from programs where programId = ?", programId)) {
+        return failed("query");
+    }
+    if (!q.first()) {
+        return failed("no such program");
+    }
+    const auto channel = byteValue(q, 0);
+    if (!channel) {
+        return failed("invalid values");
+    }
+    program.channel = *channel;
 
-    GOTO_END_IF_FALSE(q.prepare("select channel from programs where programId = ?"));
-    q.addBindValue(programId);
-    GOTO_END_IF_FALSE(q.exec());
-
-    GOTO_END_IF_FALSE(q.first());
-    ret += q.value(0).value<char>();
-
-    {
-        // Call next() outside Q_ASSERT: in a release build the whole assert
-        // expression is removed, and a call inside it would not happen at
-        // all. The block ends the variable's scope, because a goto may not
-        // jump over an initialization into its scope.
-        [[maybe_unused]] const bool hasMoreRows = q.next();
-        Q_ASSERT(!hasMoreRows);
+    if (!selectForProgram(
+                q,
+                "select note, pc, cc, toggle from pads where programId = ? order by controlId",
+                programId)) {
+        return failed("query");
+    }
+    if (const auto error = readControls(q, program.pads, "missing pads", padFromRow)) {
+        return failed(*error);
     }
 
-    // pads
-
-    GOTO_END_IF_FALSE(q.prepare(
-            "select note, pc, cc, toggle from pads where programId = ? order by controlId"));
-    q.addBindValue(programId);
-    GOTO_END_IF_FALSE(q.exec());
-
-    count = 0;
-    while (q.next()) {
-        const QSqlRecord r = q.record();
-        for (int i = 0; i < r.count(); ++i) {
-            ret += r.value(i).value<char>();
-        }
-        ++count;
+    if (!selectForProgram(q,
+                          "select cc, low, high from knobs where programId = ? order by controlId",
+                          programId)) {
+        return failed("query");
+    }
+    if (const auto error = readControls(q, program.knobs, "missing knobs", knobFromRow)) {
+        return failed(*error);
     }
 
-    Q_ASSERT(count == sysex::padsCount());
-
-    // knobs
-
-    GOTO_END_IF_FALSE(
-            q.prepare("select cc, low, high from knobs where programId = ? order by controlId"));
-    q.addBindValue(programId);
-    GOTO_END_IF_FALSE(q.exec());
-
-    count = 0;
-    while (q.next()) {
-        const QSqlRecord r = q.record();
-        for (int i = 0; i < r.count(); ++i) {
-            ret += r.value(i).value<char>();
-        }
-        ++count;
+    if (!program.isValid()) {
+        return failed("invalid values");
     }
-
-    Q_ASSERT(count == sysex::knobsCount());
-
-    sysex::addFooter(ret);
-
-    success = true;
-
-end:
-    if (!success) {
-        qWarning() << "Failed to generate sysex for program" << programId;
-        return {};
-    }
-    if (error(q)) {
-        qWarning() << errorText(q);
-        return {};
-    }
-    return ret;
+    return lpd8::encodeStoredProgram(program);
 }
 
 namespace {
@@ -179,26 +227,16 @@ QString defaultProgramName(int programIds)
 
 bool updateProgramFromSysex(int programId, const QByteArray &sysex)
 {
-    // Message layout (doc/SYSEX.md): 8 header bytes, the MIDI channel, 4 bytes
-    // per pad (note, PC, CC, toggle), 3 per knob (CC, low, high), end byte.
-    constexpr qsizetype channel_offset = 8;
-    constexpr qsizetype pads_offset = 9;
-    constexpr qsizetype pad_size = 4;
-    constexpr qsizetype knob_size = 3;
-    const qsizetype knobs_offset = pads_offset + (pad_size * sysex::padsCount());
-
-    // Check the message once, before reading anything. Every path that
-    // stores a program goes through here (file import, device dump, undo),
-    // so this is where foreign or truncated data is stopped. A valid message
-    // has the right size, so every offset below is inside it.
-    if (!sysex::isProgram(sysex)) {
-        qWarning() << "Failed to update program from sysex: not an LPD8 program message" << sysex;
+    // Decode with the codec, which owns the byte layout and the validation.
+    // Every path that stores a program goes through here (file import,
+    // device dump, undo), so this is where foreign or invalid data stops.
+    const auto decoded = lpd8::decodeProgram(sysex);
+    if (!decoded) {
+        qWarning() << "Failed to update program from sysex:" << lpd8::describe(decoded.error())
+                   << sysex;
         return false;
     }
-
-    // Values are bound as int. A byte above 127 is negative as a char, and
-    // the CHECK constraints of the tables reject it.
-    const auto byte = [&sysex](qsizetype offset) { return static_cast<int>(sysex.at(offset)); };
+    const lpd8::Program &program = decoded->program;
 
     QSqlQuery q;
     const auto failed = [&q, &sysex] {
@@ -220,7 +258,7 @@ bool updateProgramFromSysex(int programId, const QByteArray &sysex)
     if (!q.prepare("update programs set channel = ? where programId = ?")) {
         return failed();
     }
-    q.addBindValue(byte(channel_offset));
+    q.addBindValue(program.channel);
     q.addBindValue(programId);
     if (!q.exec()) {
         return failed();
@@ -233,11 +271,13 @@ bool updateProgramFromSysex(int programId, const QByteArray &sysex)
                    "where programId = ? and controlId = ?")) {
         return failed();
     }
-    for (int controlId = 1; controlId <= sysex::padsCount(); ++controlId) {
-        const qsizetype offset = pads_offset + (pad_size * (controlId - 1));
-        for (qsizetype i = 0; i < pad_size; ++i) {
-            q.addBindValue(byte(offset + i));
-        }
+    int controlId = 0;
+    for (const lpd8::Pad &pad : program.pads) {
+        ++controlId; // 1-8
+        q.addBindValue(pad.note);
+        q.addBindValue(pad.programChange);
+        q.addBindValue(pad.controlChange);
+        q.addBindValue(pad.toggle ? 1 : 0);
         q.addBindValue(programId);
         q.addBindValue(controlId);
         if (!q.exec()) {
@@ -252,11 +292,12 @@ bool updateProgramFromSysex(int programId, const QByteArray &sysex)
                    "where programId = ? and controlId = ?")) {
         return failed();
     }
-    for (int controlId = 1; controlId <= sysex::knobsCount(); ++controlId) {
-        const qsizetype offset = knobs_offset + (knob_size * (controlId - 1));
-        for (qsizetype i = 0; i < knob_size; ++i) {
-            q.addBindValue(byte(offset + i));
-        }
+    controlId = 0;
+    for (const lpd8::Knob &knob : program.knobs) {
+        ++controlId; // 1-8
+        q.addBindValue(knob.controlChange);
+        q.addBindValue(knob.low);
+        q.addBindValue(knob.high);
         q.addBindValue(programId);
         q.addBindValue(controlId);
         if (!q.exec()) {

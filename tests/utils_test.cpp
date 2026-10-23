@@ -125,7 +125,7 @@ void TestUtils::test_sysexTextFileRejectsGarbage()
 
     const auto read = fromSysexTextFile(f.fileName());
     QVERIFY(!read.has_value());
-    QVERIFY2(read.error().contains("invalid value at position 65"), qPrintable(read.error()));
+    QVERIFY2(read.error().contains("invalid value at position 66"), qPrintable(read.error()));
 }
 
 void TestUtils::test_sysexTextFileRejectsTrailingText()

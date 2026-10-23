@@ -1,4 +1,6 @@
 #include "db.h"
+#include "deviceprofile.h"
+#include "lpd8codec.h"
 #include "utils.h"
 
 #include "test_sysex.h"
@@ -29,6 +31,10 @@ private slots:
     void test_failedCreateProgramLeavesNothing();
     void test_failedFromSysexChangesNothing();
     void test_fromSysexForMissingProgramFails();
+    void test_factoryProgramMatchesTheSqlTrigger();
+    void test_programSysexRejectsOldUnconstrainedValues_data();
+    void test_programSysexRejectsOldUnconstrainedValues();
+    void test_programSysexFailsOnMissingRows();
 
     void test_exportImportRoundTrip();
 
@@ -171,6 +177,91 @@ void TestDB::test_fromSysexForMissingProgramFails()
     // 'succeed' without changing anything.
     QVERIFY(programIds().isEmpty());
     QVERIFY(!fromSysex(42, default_sysex));
+}
+
+void TestDB::test_factoryProgramMatchesTheSqlTrigger()
+{
+    // A new program in the database gets its values from the SQL trigger
+    // (create_trigger_add_program.sql). lpd8::profile().defaultProgram must
+    // be the same program, compared on all 66 bytes of the stored message.
+    const int id = createProgram();
+    QCOMPARE(programSysex(id), lpd8::encodeStoredProgram(lpd8::profile().defaultProgram));
+}
+
+void TestDB::test_programSysexRejectsOldUnconstrainedValues_data()
+{
+    QTest::addColumn<QString>("update");
+
+    QTest::newRow("Note 300") << "update pads set note = 300 where controlId = 3";
+    QTest::newRow("Negative note") << "update pads set note = -128 where controlId = 3";
+    QTest::newRow("Toggle 2") << "update pads set toggle = 2 where controlId = 3";
+    QTest::newRow("Channel 16") << "update programs set channel = 16";
+    QTest::newRow("Knob high 128") << "update knobs set high = 128 where controlId = 8";
+    // QVariant::toInt() wraps or rounds these, and still says 'ok': 4294967336
+    // would become 40 and 36.5 would become 37, silently.
+    QTest::newRow("Note 2^32 + 40") << "update pads set note = 4294967336 where controlId = 3";
+    QTest::newRow("Note 1e12") << "update pads set note = 1e12 where controlId = 3";
+    QTest::newRow("Note 36.5") << "update pads set note = 36.5 where controlId = 3";
+    QTest::newRow("Note 'abc'") << "update pads set note = 'abc' where controlId = 3";
+    QTest::newRow("Toggle 4294967297") << "update pads set toggle = 4294967297 where controlId = 3";
+}
+
+void TestDB::test_programSysexRejectsOldUnconstrainedValues()
+{
+    // NOLINTNEXTLINE(misc-const-correctness): QFETCH declares the variable
+    QFETCH(QString, update);
+
+    // Databases created before 2018 (v0.0.0 to v0.0.5) have these tables
+    // without CHECK constraints (see 'git show v0.0.5:src/'), and SQLite
+    // never adds constraints to an existing table. Rebuild that schema, with
+    // one complete program, then plant a value the LPD8 can't take.
+    QSqlQuery q;
+    for (const char *statement : {
+                 "drop trigger aft_insert",
+                 "drop trigger aft_delete",
+                 "drop table knobs",
+                 "drop table pads",
+                 "drop table programs",
+                 "create table programs(programId integer primary key, name varchar, channel "
+                 "integer)",
+                 "create table pads(programId integer NOT NULL, controlId integer NOT NULL, "
+                 "note integer NOT NULL, pc integer NOT NULL, cc integer NOT NULL, "
+                 "toggle integer NOT NULL, PRIMARY KEY (programId, controlId))",
+                 "create table knobs(programId integer NOT NULL, controlId integer NOT NULL, "
+                 "cc integer NOT NULL, low integer NOT NULL, high integer NOT NULL, "
+                 "PRIMARY KEY (programId, controlId))",
+                 "insert into programs values (1, 'Old', 9)",
+         }) {
+        QVERIFY2(q.exec(statement), qPrintable(q.lastError().text()));
+    }
+    for (int controlId = 1; controlId <= 8; ++controlId) {
+        QVERIFY(q.exec(
+                QStringLiteral("insert into pads values (1, %1, 36, 1, 48, 0)").arg(controlId)));
+        QVERIFY(q.exec(
+                QStringLiteral("insert into knobs values (1, %1, 16, 0, 127)").arg(controlId)));
+    }
+    QVERIFY(!programSysex(1).isEmpty()); // valid as it is
+
+    QVERIFY2(q.exec(update), qPrintable(q.lastError().text()));
+    // Reported, not wrapped (300 would become 44) or normalized (toggle 2
+    // would become 'on').
+    QCOMPARE(programSysex(1), QByteArray());
+}
+
+void TestDB::test_programSysexFailsOnMissingRows()
+{
+    QCOMPARE(programSysex(42), QByteArray()); // no such program
+
+    const int id = createProgram();
+    QSqlQuery q;
+    QVERIFY(q.exec(
+            QStringLiteral("delete from pads where programId = %1 and controlId = 3").arg(id)));
+    QCOMPARE(programSysex(id), QByteArray());
+
+    const int other = createProgram();
+    QVERIFY(q.exec(
+            QStringLiteral("delete from knobs where programId = %1 and controlId = 8").arg(other)));
+    QCOMPARE(programSysex(other), QByteArray());
 }
 
 void TestDB::test_exportImportRoundTrip()

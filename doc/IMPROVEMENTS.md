@@ -139,12 +139,17 @@ The target design and the order of the steps are described in
       (device slots and factory program; the control counts are fixed by the
       `Program` type). Its test compares only part of the factory program
       with the old SQL trigger: 4.2 compares all of it, byte for byte.
-- [ ] 4.2 Pure SysEx codec: `decode` and `encode` with `std::expected` and
-      round-trip tests. It replaces the parsing spread across
-      `lpd8_sysex.cpp` and `db.cpp`.
+- [x] 4.2 Pure SysEx codec: `decodeProgram` and the encoders, with
+      `std::expected` and round-trip tests. It replaces the byte parsing of
+      `db.cpp`, which now reads and writes SysEx through it. The helpers in
+      `lpd8_sysex.cpp` still serve the MIDI path and the file checks: 4.10
+      moves those to the codec.
 - [ ] 4.3 `ProgramStore`: the program list in memory, saved as JSON with
       `QSaveFile` and a format version, with tests.
-- [ ] 4.4 One-time migration from `db.sqlite3` to the JSON store.
+- [ ] 4.4 One-time migration from `db.sqlite3` to the JSON store. It must
+      expect databases created before 2018 (v0.0.0 to v0.0.5), whose tables
+      have no CHECK constraints and can hold any integer: report bad rows
+      to the user, never wrap or drop them silently.
 - [ ] 4.5 New models: a programs list model and a controls table model for the
       selected program. They replace the tree of proxies and are checked with
       `QAbstractItemModelTester`.
