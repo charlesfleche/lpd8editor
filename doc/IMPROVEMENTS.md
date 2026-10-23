@@ -144,17 +144,73 @@ The target design and the order of the steps are described in
       `db.cpp`, which now reads and writes SysEx through it. The helpers in
       `lpd8_sysex.cpp` still serve the MIDI path and the file checks: 4.10
       moves those to the codec.
-- [x] 4.3 `ProgramStore`: the program list in memory, saved as JSON with
+- [x] 4.3 [`226a7f7`](https://github.com/charlesfleche/lpd8editor/commit/226a7f77a56fcc37016c7799b5b7f3387b4f9426) `ProgramStore`: the program list in memory, saved as JSON with
       `QSaveFile` and a format version, with tests.
-- [ ] 4.4 One-time migration from `db.sqlite3` to the JSON store. It must
+- [x] 4.4 [`aa2dc43`](https://github.com/charlesfleche/lpd8editor/commit/aa2dc43afdbff66e2b90c7cd24c24d531cc94e7a) One-time migration from `db.sqlite3` to the JSON store. It must
       expect databases created before 2018 (v0.0.0 to v0.0.5), whose tables
       have no CHECK constraints and can hold any integer: report bad rows
       to the user, never wrap or drop them silently.
-- [ ] 4.5 New models: a programs list model and a controls table model for the
-      selected program. They replace the tree of proxies and are checked with
-      `QAbstractItemModelTester`.
 
-      It must also fix two symptoms of the tree of proxies, found while
+Items 4.6, 4.5 and 4.7a are done in that order, as written below. The views
+can't show the JSON store while the edits, undo, MIDI and file paths still
+write to SQLite: there would be two sources of truth. So the store-based
+commands come first, then the models (used by nothing yet), then one commit
+that switches everything at once.
+
+
+- [ ] 4.6 Undo commands over `ProgramStore`, by program id: set a program,
+      rename, add, remove. Each holds ids and values, never rows or pointers.
+      An undo whose program is gone marks itself obsolete instead of
+      asserting. A command that changes nothing is not pushed. Repeated edits
+      of one value merge (`mergeWith()`) only if the current
+      `UpdateParameterCommand` does: keep today's behaviour. Undoing a removal
+      puts the program back *at its row*, so the store gets an insert-at-row,
+      whose signals carry that row. Tests: remove the middle program, undo,
+      and the order is the same (same id at the same row), then redo and undo
+      twice more without drift. Nothing uses the commands yet.
+- [ ] 4.5 New models: a programs list model and a controls table model for
+      one program. They are driven only by `ProgramStore`'s signals, and their
+      `setData()` pushes the commands of 4.6. They have exact column counts
+      and readable, translatable headers (no `pc`, `cc`, `toggle`). Tests:
+      `QAbstractItemModelTester` in Fatal mode on every model in every test,
+      and changes made to the store directly (not through the model) that
+      check the rows and the `dataChanged` ranges (one cell for a rename, the
+      program's control cells for a program change). No window change yet.
+- [ ] 4.7a The switch, in one commit: the window, the undo stack, MIDI send and
+      receive, and import/export move from SQLite to the store, the models of
+      4.5 and the commands of 4.6.
+
+      - Startup: `main()` creates the store, runs `migrateSqliteDatabase()`
+        and loads the store. Until the real messages of 4.11: if the
+        migration fails or the store can't be loaded, a message box names the
+        file and the reason, says that nothing was changed, and says what the
+        user can do (a newer format: use the newer lpd8editor; a damaged file:
+        its path, to repair or move it), and the application quits. Starting
+        empty instead would write the JSON file and strand the old programs.
+        Tests: a refusal leaves both files byte-identical. A migration report
+        (programs migrated, skipped and why, where the old database is) is
+        shown in a message box.
+      - Saving: after each change on the undo stack (`indexChanged`),
+        coalesced with a zero-millisecond single-shot timer so that many
+        changes in one event-loop turn make one write. A failed save is shown
+        to the user once, and remembered until a save succeeds again, not one
+        dialog per change and not only a log line. The application also saves
+        when it quits. Tests: N changes in one event-loop turn make one write,
+        and a failing save is reported once.
+      - No behaviour change: MIDI receive still applies a dump to the
+        selected program; import and export keep their file format byte for
+        byte (an export of the same program is identical before and after
+        the switch, tested against a fixture); the `default/sysex` setting
+        keeps working. A behaviour change gets an item of its own.
+      - Selection: a rename, and the removal of another program, keep the
+        selected program selected. Removing the selected program selects its
+        neighbour, or nothing if the list is empty. Tested on the real window.
+      - `ProgramIdSelectionRestorer` and the substitute header views are
+        deleted. The window is rendered offscreen (`QWidget::grab()`) before
+        and after, and the visual change is described.
+
+      It must also fix two symptoms of the tree of proxies (moved here from
+      4.5, since they are in the window), found while
       investigating a warning in `mainwindow_test`:
 
       - `QAbstractItemView::setRootIndex failed: index must be from the
@@ -176,9 +232,10 @@ The target design and the order of the steps are described in
       the exact column counts of both views (4 visible fields for pads, 3 for
       knobs).
 
-- [ ] 4.6 Undo commands work on `ProgramStore` by program id.
-- [ ] 4.7 Remove the SQLite schema, triggers, and `db.cpp`. QtSql stays only for
-      the migration.
+- [ ] 4.7b Remove the SQLite schema, triggers, and `db.cpp`, `ProgramsModel`,
+      the old undo commands and the storage helpers of `lpd8_sysex.cpp`.
+      QtSql stays only for the migration. (Earlier text refers to this as
+      "item 4.7".)
 - [ ] 4.8 A `MidiTransport` interface with an `AlsaSeqTransport`
       implementation: SysEx in and out as `QByteArray`, a port list, and
       hotplug. It replaces `IOMidi` and the ALSA code in
@@ -198,6 +255,15 @@ The target design and the order of the steps are described in
       deletes) happens only after asking the user. Until then the store
       refuses to save, so the user must also be told that changes can't be
       kept.
+
+      `App` also runs the migration (`migrateSqliteDatabase()`, item 4.4) at
+      startup, and must show its result at the first start after it ran:
+      how many programs were migrated, each skipped program with the reason,
+      and where the old database now is, because the skipped programs' data
+      only lives there. If the old database could not be renamed, say so. If
+      the migration fails (an unreadable database, for example one left with
+      a hot journal by a crash), tell the user at each start, since it will
+      be retried and fail the same way.
 
 ## Phase 5: packaging and documentation
 

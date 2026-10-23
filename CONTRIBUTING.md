@@ -135,6 +135,10 @@ below are the ones a tool can't check, or that need their reason explained.
   `bugprone-unchecked-optional-access` is off for the tests
   (`tests/.clang-tidy`), because it can't see through `QVERIFY`, so this rule
   is the safeguard.
+- Never write `QVERIFY2(x.has_value(), qPrintable(x.error()))`. QVERIFY2
+  builds its message even when the check passes, and `error()` on an
+  `expected` that holds a value is undefined behaviour. Write
+  `if (!x) { QFAIL(qPrintable(x.error())); }` instead.
 
 ## Commits
 

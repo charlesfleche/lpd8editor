@@ -29,6 +29,8 @@ add_library(${_lib}
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
+    migration.cpp
+    migration.h
     midiconnectionsmodel.cpp
     midiconnectionsmodel.h
     midivaluedelegate.cpp
