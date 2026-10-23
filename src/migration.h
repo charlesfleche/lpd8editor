@@ -16,7 +16,13 @@ struct MigrationReport
     QStringList skipped; // one line per program left out, saying why
     QString oldFileNowAt; // where db.sqlite3 was moved, or empty if it wasn't
     QString renameError; // why it couldn't be moved, if it couldn't
+    QString reportFileAt; // where this report was saved, or empty if it wasn't
+    QString reportFileError; // why it couldn't be saved, if it couldn't
 };
+
+// The report as text for the user: how many programs moved, those left out
+// and why, where the old database is now, and where this text is saved.
+QString describe(const MigrationReport &report);
 
 // One-time migration of the programs from the SQLite database used until
 // now (db.sqlite3) to the JSON file of ProgramStore. Item 4.4,
@@ -28,8 +34,12 @@ struct MigrationReport
 //   stopped before renaming the old file.
 // - Reads the database read-only, through its own named connection.
 // - Writes the JSON file atomically, and only after that renames the
-//   database to '<file>.migrated' (or '.migrated-<timestamp>' if that name
-//   is taken). It never deletes anything: if the program stops in between,
+//   database to '<file>.migrated' (or '.migrated-<timestamp>' if that name,
+//   or its report's, is taken). Just before the rename, it saves the report, describe()'d,
+//   next to the backup as '<backup>.txt': the report is shown once, but the
+//   skipped programs only live in the backup, so a crash before the user
+//   reads it must not lose the list. If the rename then fails, the file is
+//   written again to say so. It never deletes anything: if the program stops in between,
 //   the JSON file exists, so the next start doesn't migrate again, and the
 //   database is still there.
 // - Keeps each program's id, name and order. A program that can't be

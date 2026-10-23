@@ -168,7 +168,7 @@ that switches everything at once.
       whose signals carry that row. Tests: remove the middle program, undo,
       and the order is the same (same id at the same row), then redo and undo
       twice more without drift. Nothing uses the commands yet.
-- [x] 4.5 New models: a programs list model and a controls table model for
+- [x] 4.5 [`3a994a4`](https://github.com/charlesfleche/lpd8editor/commit/3a994a4952945d02d14a83d58bd5cfac2d4bf1ae) New models: a programs list model and a controls table model for
       one program. They are driven only by `ProgramStore`'s signals, and their
       `setData()` pushes the commands of 4.6. They have exact column counts
       and readable, translatable headers (no `pc`, `cc`, `toggle`). Tests:
@@ -176,7 +176,7 @@ that switches everything at once.
       and changes made to the store directly (not through the model) that
       check the rows and the `dataChanged` ranges (one cell for a rename, the
       program's control cells for a program change). No window change yet.
-- [ ] 4.7a The switch, in one commit: the window, the undo stack, MIDI send and
+- [x] 4.7a The switch, in one commit: the window, the undo stack, MIDI send and
       receive, and import/export move from SQLite to the store, the models of
       4.5 and the commands of 4.6.
 
@@ -190,13 +190,20 @@ that switches everything at once.
         Tests: a refusal leaves both files byte-identical. A migration report
         (programs migrated, skipped and why, where the old database is) is
         shown in a message box.
-      - Saving: after each change on the undo stack (`indexChanged`),
-        coalesced with a zero-millisecond single-shot timer so that many
-        changes in one event-loop turn make one write. A failed save is shown
-        to the user once, and remembered until a save succeeds again, not one
-        dialog per change and not only a log line. The application also saves
-        when it quits. Tests: N changes in one event-loop turn make one write,
-        and a failing save is reported once.
+      - Saving: after each change of the store (its `programAdded`,
+        `programRemoved`, `programChanged` and `nameChanged` signals, so a
+        change made without the undo stack is saved too), coalesced with a
+        zero-millisecond single-shot timer so that many changes in one
+        event-loop turn make one write. A failed save is shown to the user
+        once, and remembered until a save succeeds again, not one dialog per
+        change and not only a log line. The application also saves when it
+        quits, on every way out, since the document doesn't save when it is
+        destroyed: the Quit action, closing the window (`closeEvent`), and
+        the session manager (`QGuiApplication::commitDataRequest` /
+        `aboutToQuit`). Tests: N changes in one event-loop turn make one
+        write, a direct change of the store saves once, a failing save is
+        reported once, and `mainwindow_test` checks that closing the window
+        leaves the last edit in the file.
       - No behaviour change: MIDI receive still applies a dump to the
         selected program; import and export keep their file format byte for
         byte (an export of the same program is identical before and after
@@ -269,7 +276,11 @@ that switches everything at once.
       startup, and must show its result at the first start after it ran:
       how many programs were migrated, each skipped program with the reason,
       and where the old database now is, because the skipped programs' data
-      only lives there. If the old database could not be renamed, say so. If
+      only lives there. The same report is saved next to the backup
+      (`<backup>.txt`, written by the migration before the rename), so it
+      can still be found if the application stops before the user reads
+      it: the message names that file. If the old database could not be
+      renamed, say so. If
       the migration fails (an unreadable database, for example one left with
       a hot journal by a crash), tell the user at each start, since it will
       be retried and fail the same way.
@@ -280,3 +291,29 @@ that switches everything at once.
       validate them.
 - [ ] 5.2 Update `README.md` and `CLAUDE.md`: presets, tooling, supported
       platforms.
+- [ ] 5.3 Release notes for the next release: the changes users can notice
+      since v0.0.18 (the last tag). Each commit that changes behaviour adds
+      a line below, so none is found later as a regression. Items before
+      4.7a were not audited for this yet: that is part of this item.
+
+      - Importing a program file whose slot byte (the 8th value) is not 1
+        to 4 is refused as "not an LPD8 program" (since 691fb56, when the
+        import started going through the codec). Files exported by
+        lpd8editor always have slot 1, so only files from elsewhere are
+        affected.
+      - The same holds for the `default/sysex` setting, the template of new
+        programs: one with such a slot is ignored, with a warning, and the
+        factory program is used.
+      - The pads and knobs headers are readable names ("Note", "Program
+        change", "Control change", "Mode"; "Control change", "Low", "High")
+        instead of the database's column names ("note", "pc", "cc",
+        "toggle"; "cc", "low", "high").
+      - The programs are kept in `programs.json` instead of `db.sqlite3`,
+        which the first start migrates and keeps as
+        `db.sqlite3.migrated`, with a report next to it (item 4.7a).
+      - Quitting without an edit no longer writes the programs file.
+      - Known quirk, not a change to announce: the pads and knobs tables are
+        empty until a program is selected, so the first selection can make
+        a window at its minimum width about 28 pixels wider, once (the
+        tables count their scroll bars for one layout pass). The old tables
+        always had rows.

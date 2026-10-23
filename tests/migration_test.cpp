@@ -3,6 +3,7 @@
 #include "migration.h"
 #include "programstore.h"
 
+#include <QDir>
 #include <QFile>
 #include <QSqlDatabase>
 #include <QSqlError>
@@ -102,6 +103,8 @@ private slots:
     void test_unreadableDatabaseIsAnError();
     void test_failedJsonWriteKeepsTheDatabase();
     void test_doesNotReplaceAnEarlierMigratedFile();
+    void test_doesNotReplaceAnEarlierReport();
+    void test_describeReport();
 
 private:
     std::unique_ptr<QTemporaryDir> dir;
@@ -139,6 +142,8 @@ void TestMigration::test_migratesTheCurrentSchema()
     QVERIFY(report.skipped.isEmpty());
     QCOMPARE(report.oldFileNowAt, sqlitePath + ".migrated");
     QVERIFY(report.renameError.isEmpty());
+    QCOMPARE(report.reportFileAt, sqlitePath + ".migrated.txt");
+    QVERIFY(report.reportFileError.isEmpty());
 
     // The old file is moved, byte for byte, and nothing is deleted.
     QVERIFY(!QFile::exists(sqlitePath));
@@ -209,6 +214,15 @@ void TestMigration::test_reportsBadRowsOfAnUnconstrainedDatabase()
     };
     QCOMPARE(report.skipped, expected);
     QVERIFY(QFile::exists(report.oldFileNowAt));
+
+    // A2: the report is saved next to the backup, so the list of skipped
+    // programs survives a crash before the user reads it.
+    QCOMPARE(report.reportFileAt, report.oldFileNowAt + ".txt");
+    const QString saved = QString::fromUtf8(readAll(report.reportFileAt));
+    QCOMPARE(saved, describe(report) + '\n');
+    for (const QString &line : expected) {
+        QVERIFY(saved.contains(line));
+    }
 
     ProgramStore store(jsonPath);
     QVERIFY(store.load().has_value());
@@ -307,6 +321,71 @@ void TestMigration::test_doesNotReplaceAnEarlierMigratedFile()
     const MigrationReport report = result.value().value();
     QVERIFY(report.oldFileNowAt.startsWith(sqlitePath + ".migrated-"));
     QCOMPARE(readAll(sqlitePath + ".migrated"), QByteArray("an earlier migration"));
+    // The report follows the backup's name, and leaves the earlier one's
+    // place alone.
+    QCOMPARE(report.reportFileAt, report.oldFileNowAt + ".txt");
+    QVERIFY(QFile::exists(report.reportFileAt));
+    QVERIFY(!QFile::exists(sqlitePath + ".migrated.txt"));
+}
+
+void TestMigration::test_doesNotReplaceAnEarlierReport()
+{
+    // The backup of an earlier migration was deleted, but not its report:
+    // the report is kept, and the new backup gets a name of its own.
+    QVERIFY(buildDatabase(sqlitePath, oldSchema() + oldProgram(1, "Old"), false));
+    {
+        QFile f(sqlitePath + ".migrated.txt");
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("an earlier report");
+    }
+
+    const auto result = migrateSqliteDatabase(sqlitePath, jsonPath);
+    QVERIFY(result.has_value());
+    const MigrationReport report = result.value().value();
+    QVERIFY(report.oldFileNowAt.startsWith(sqlitePath + ".migrated-"));
+    QCOMPARE(report.reportFileAt, report.oldFileNowAt + ".txt");
+    QCOMPARE(readAll(sqlitePath + ".migrated.txt"), QByteArray("an earlier report"));
+    QVERIFY(!QFile::exists(sqlitePath + ".migrated"));
+}
+
+void TestMigration::test_describeReport()
+{
+    const MigrationReport full{.migrated = 1,
+                               .skipped = {QStringLiteral("program 4 (Bass): channel is 20")},
+                               .oldFileNowAt = QStringLiteral("/data/db.sqlite3.migrated"),
+                               .renameError = {},
+                               .reportFileAt = QStringLiteral("/data/db.sqlite3.migrated.txt"),
+                               .reportFileError = {}};
+    const QString text = describe(full);
+    QVERIFY(text.contains(QStringLiteral("1 program(s) moved")));
+    QVERIFY(text.contains(QStringLiteral("program 4 (Bass): channel is 20")));
+    QVERIFY(text.contains(QDir::toNativeSeparators(QStringLiteral("/data/db.sqlite3.migrated."))));
+    QVERIFY(text.contains(
+            QDir::toNativeSeparators(QStringLiteral("/data/db.sqlite3.migrated.txt."))));
+
+    const MigrationReport notRenamed{.migrated = 2,
+                                     .skipped = {},
+                                     .oldFileNowAt = {},
+                                     .renameError = QStringLiteral("Cannot rename a to b."),
+                                     .reportFileAt = {},
+                                     .reportFileError = QStringLiteral("Cannot save c.")};
+    const QString text2 = describe(notRenamed);
+    QVERIFY(text2.contains(QStringLiteral("Cannot rename a to b.")));
+    QVERIFY(text2.contains(QStringLiteral("won't be read again")));
+    QVERIFY(text2.contains(QStringLiteral("Cannot save c.")));
+
+    // An old database with no programs: still a notice, since the database
+    // was moved, but not "0 program(s) moved".
+    const MigrationReport empty{.migrated = 0,
+                                .skipped = {},
+                                .oldFileNowAt = QStringLiteral("/data/db.sqlite3.migrated"),
+                                .renameError = {},
+                                .reportFileAt = {},
+                                .reportFileError = {}};
+    const QString text3 = describe(empty);
+    QVERIFY(text3.contains(QStringLiteral("held no programs")));
+    QVERIFY(!text3.contains(QStringLiteral("0 program")));
+    QVERIFY(text3.contains(QDir::toNativeSeparators(QStringLiteral("/data/db.sqlite3.migrated"))));
 }
 
 QTEST_GUILESS_MAIN(TestMigration)

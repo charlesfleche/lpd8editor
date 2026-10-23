@@ -68,6 +68,8 @@ public:
     const StoredProgram *get(int id) const;
     // The row of program 'id' in programs(), if there is one.
     std::optional<int> rowOf(int id) const;
+    // The id the next add() without an id hands out (for a default name).
+    int nextId() const { return m_nextId; }
 
     // Adds a program at the end and returns its id: a new one, or 'id' if
     // it is given (to restore a deleted program). Returns nothing if 'id' is

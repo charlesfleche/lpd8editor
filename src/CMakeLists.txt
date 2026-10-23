@@ -40,13 +40,19 @@ add_library(${_lib}
     parameterlocation.h
     program.cpp
     program.h
+    programfile.cpp
+    programfile.h
     programmodels.cpp
     programmodels.h
+    programsdocument.cpp
+    programsdocument.h
     programsmodel.cpp
     programsmodel.h
     programstore.cpp
     programstore.h
     sql.qrc
+    startup.cpp
+    startup.h
     exactinteger.cpp
     exactinteger.h
     storecommands.cpp

@@ -11,6 +11,8 @@ QString readTextFile(const QString &path);
 // failure.
 std::expected<QByteArray, QString> fromSysexTextFile(const QString &path);
 QString defaultDbPath();
+// The programs file of ProgramStore, next to the old database.
+QString defaultStorePath();
 std::expected<void, QString> writeProgramFile(const QByteArray &sysex, const QString &path);
 
 #endif // UTILS_H

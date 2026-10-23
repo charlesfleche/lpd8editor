@@ -1,46 +1,61 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include "commands.h"
-#include "db.h"
+#include "deviceprofile.h"
 #include "iomidi.h"
-#include "lpd8_sysex.h"
+#include "lpd8codec.h"
 #include "midiconnectionsmodel.h"
 #include "midivaluedelegate.h"
-#include "programsmodel.h"
+#include "programfile.h"
+#include "programmodels.h"
+#include "programsdocument.h"
 #include "sysexhandler.h"
-#include "utils.h"
 
 #include <QApplication>
+#include <QCloseEvent>
 #include <QComboBox>
 #include <QDataWidgetMapper>
+#include <QDir>
 #include <QFileDialog>
-#include <QFileInfo>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSettings>
-#include <QStandardItemModel>
 #include <QStandardPaths>
 #include <QUndoStack>
 
 #include <QtDebug>
 
+using lpd8::ControlsModel;
+using lpd8::ProgramListModel;
+
 static const QString SETTINGS_KEY_DEFAULT_NAME = "default/name";
 static const QString SETTINGS_KEY_DEFAULT_SYSEX = "default/sysex";
 
-MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
+MainWindow::MainWindow(lpd8::ProgramsDocument &document, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , programsModel(new ProgramsModel(this, db))
+    , m_document(document)
+    , programsModel(new ProgramListModel(document.store(), document.undoStack(), this))
+    , padsModel(new ControlsModel(
+              document.store(), document.undoStack(), ControlsModel::Controls::Pads, this))
+    , knobsModel(new ControlsModel(
+              document.store(), document.undoStack(), ControlsModel::Controls::Knobs, this))
 {
-    // The database functions only work on the default connection (db.h).
-    Q_ASSERT(db.connectionName() == QLatin1StringView(QSqlDatabase::defaultConnection));
     ui->setupUi(this);
     setStatusBar(nullptr);
 
+    // A failed save is shown once (ProgramsDocument), with what it means.
+    m_document.setSaveFailureHandler([this](const QString &error) {
+        QMessageBox::warning(this,
+                             tr("Cannot save the programs"),
+                             tr("%1\n\nYour changes are not saved yet. lpd8editor will "
+                                "try again at the next change, and when it quits.")
+                                     .arg(error));
+    });
+
     // Undo
 
-    QUndoStack *stack = undoStack();
+    QUndoStack *stack = &m_document.undoStack();
 
     QAction *undoAction = stack->createUndoAction(this, tr("Undo"));
     undoAction->setShortcuts(QKeySequence::Undo);
@@ -62,36 +77,30 @@ MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
     ui->deleteProgramButton->setDefaultAction(ui->actionDeleteProgram);
 
     ui->programsView->setModel(programsModel);
-    ui->programsView->setModelColumn(ProgramColumn::Name);
+    ui->programsView->setModelColumn(ProgramListModel::NameColumn);
 
     auto *mapper = new QDataWidgetMapper(this);
     mapper->setModel(programsModel);
     mapper->setItemDelegate(new MidiValueDelegate(this));
-    mapper->addMapping(ui->channelSpinBox, ProgramColumn::Channel);
+    mapper->addMapping(ui->channelSpinBox, ProgramListModel::ChannelColumn);
 
+    // Each view has its own flat model, with its own headers: no root index,
+    // no hidden columns, and no substitute header views. The columns keep
+    // the header's default, interactive mode, as users saw them so far: the
+    // old code set 'Stretch' on the headers it then replaced, so it never
+    // took effect. Stretched columns would also make the tables ask for less
+    // room than their headers need.
     ui->padsView->setItemDelegate(new MidiValueDelegate(this));
-    ui->padsView->setModel(programsModel);
-    ui->padsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-
-    auto *headerView = new QHeaderView(Qt::Horizontal, this);
-    headerView->setModel(programsModel->padsHeaderModel());
-    ui->padsView->setHorizontalHeader(headerView);
-
-    ui->padsView->hideColumn(PadColumn::ProgramId);
-    ui->padsView->hideColumn(PadColumn::ControlId);
+    ui->padsView->setModel(padsModel);
 
     ui->knobsView->setItemDelegate(new MidiValueDelegate(this));
-    ui->knobsView->setModel(programsModel);
-    ui->knobsView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->knobsView->setModel(knobsModel);
 
-    headerView = new QHeaderView(Qt::Horizontal, this);
-    headerView->setModel(programsModel->knobsHeaderModel());
-    ui->knobsView->setHorizontalHeader(headerView);
-
-    ui->knobsView->hideColumn(KnobColumn::ProgramId);
-    ui->knobsView->hideColumn(KnobColumn::ControlId);
-
-    // Refresh action delete program
+    // Selection. The list model is never reset by an edit (only by a load),
+    // so the selection model keeps the selected program across renames and
+    // across insertions and removals of other rows by itself. When the
+    // selected program is removed, the view makes its neighbour current and
+    // selected, and the signals below show it (tested in mainwindow_test).
 
     QItemSelectionModel *sel = ui->programsView->selectionModel();
     connect(sel,
@@ -102,26 +111,12 @@ MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
             &QItemSelectionModel::currentRowChanged,
             mapper,
             &QDataWidgetMapper::setCurrentModelIndex);
-
-    connect(sel, &QItemSelectionModel::currentRowChanged, this, [this](const QModelIndex &current) {
-        ui->padsView->setRootIndex(programsModel->padsParentIndex(current));
-        ui->knobsView->setRootIndex(programsModel->knobsParentIndex(current));
-    });
+    connect(sel, &QItemSelectionModel::currentRowChanged, this, &MainWindow::showProgram);
 
     connect(programsModel,
             &QAbstractItemModel::modelReset,
             this,
             &MainWindow::refreshUiAccordingToSelection);
-
-    auto *restorer = new ProgramIdSelectionRestorer(ui->programsView->selectionModel(), this);
-    connect(programsModel,
-            &ProgramsModel::modelAboutToBeReset,
-            restorer,
-            &ProgramIdSelectionRestorer::store);
-    connect(programsModel,
-            &ProgramsModel::modelReset,
-            restorer,
-            &ProgramIdSelectionRestorer::restore);
 
     // Enable MIDI send / receive action when connected
 
@@ -195,21 +190,16 @@ MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
             connectionsModel,
             midiActionsSetEnabled);
 
-    connect(programsModel, &ProgramsModel::modelReset, connectionsModel, midiActionsSetEnabled);
+    connect(programsModel,
+            &QAbstractItemModel::modelReset,
+            connectionsModel,
+            midiActionsSetEnabled);
 
     // Sysex
 
     auto *sysexHandler = new SysexHandler(io);
 
-    connect(sysexHandler, &SysexHandler::programReceived, this, [this](const QByteArray &sysex) {
-        const int programId = currentSelectedProjectId();
-        if (programId == -1) {
-            Q_UNIMPLEMENTED();
-        } else {
-            auto *cmd = new UpdateProgramFromSysexCommand(programsModel, programId, sysex);
-            undoStack()->push(cmd);
-        }
-    });
+    connect(sysexHandler, &SysexHandler::programReceived, this, &MainWindow::applyProgramDump);
 
     for (int i = 0; i < getProgramActions.count(); ++i) {
         connect(getProgramActions[i], &QAction::triggered, sysexHandler, [sysexHandler, i]() {
@@ -222,9 +212,13 @@ MainWindow::MainWindow(const QSqlDatabase &db, QWidget *parent)
                 &QAction::triggered,
                 sysexHandler,
                 [this, sysexHandler, i]() {
-                    const QByteArray sysex =
-                            programsModel->programSysex(currentSelectedProjectId());
-                    sysexHandler->sendProgram(sysex, i + 1);
+                    const lpd8::StoredProgram *stored = m_document.store().get(currentProgramId());
+                    if (!stored) {
+                        return; // nothing selected (the actions are disabled then)
+                    }
+                    // The same bytes as before the switch: the storage
+                    // format, which sendProgram() turns into a request.
+                    sysexHandler->sendProgram(lpd8::encodeStoredProgram(stored->program), i + 1);
                 });
     }
 }
@@ -237,48 +231,86 @@ MainWindow::~MainWindow()
     // lambdas, which use 'ui'. So, while 'ui' still exists, remove every
     // object outside the window's widgets that connects into them:
     //
-    // - the MIDI objects (lambdas using 'ui' and programsModel)
-    // - the selection model's connections to this window (the
-    //   currentRowChanged lambda, refreshUiAccordingToSelection)
-    // - the programs model (modelReset -> refreshUiAccordingToSelection,
-    //   and the lambdas above)
+    // - the save failure handler, which shows a dialog over this window
+    // - the MIDI objects (lambdas using 'ui' and the store)
+    // - the selection model's connections to this window (showProgram,
+    //   refreshUiAccordingToSelection)
+    // - the models (modelReset -> refreshUiAccordingToSelection, which uses
+    //   'ui'). The views and the mapper let go of a model when it is
+    //   destroyed.
     //
     // tests/mainwindow_test.cpp makes signals fire during the teardown to
     // check this.
+    m_document.setSaveFailureHandler({});
     delete midi;
     midi = nullptr;
     ui->programsView->selectionModel()->disconnect(this);
     delete programsModel;
     programsModel = nullptr;
+    delete padsModel;
+    padsModel = nullptr;
+    delete knobsModel;
+    knobsModel = nullptr;
+}
+
+void MainWindow::applyProgramDump(const QByteArray &sysex)
+{
+    const int programId = currentProgramId();
+    if (programId == -1) {
+        Q_UNIMPLEMENTED();
+        return;
+    }
+    const auto decoded = lpd8::decodeProgram(sysex);
+    if (!decoded) {
+        qWarning() << "Ignoring a program dump:" << lpd8::describe(decoded.error());
+        return;
+    }
+    push(lpd8::makeSetProgramCommand(m_document.store(), programId, decoded->program),
+         "apply a program dump");
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    m_document.saveNow();
+    QMainWindow::closeEvent(event);
 }
 
 void MainWindow::on_actionNewProgram_triggered()
 {
     const QSettings settings;
     // An optional template for new programs. If it is not an LPD8 program,
-    // creating the program would fail without a word to the user, so it is
-    // ignored and the factory program is used.
-    QByteArray sysex = settings.value(SETTINGS_KEY_DEFAULT_SYSEX).toByteArray();
-    if (!sysex.isNull() && !sysex::isProgram(sysex)) {
-        qWarning() << "Ignoring the setting" << SETTINGS_KEY_DEFAULT_SYSEX
-                   << ": it is not an LPD8 program";
-        sysex = QByteArray();
+    // it is ignored and the factory program is used.
+    lpd8::Program program = lpd8::profile().defaultProgram;
+    const QByteArray sysex = settings.value(SETTINGS_KEY_DEFAULT_SYSEX).toByteArray();
+    if (!sysex.isNull()) {
+        if (const auto decoded = lpd8::decodeProgram(sysex)) {
+            program = decoded->program;
+        } else {
+            qWarning() << "Ignoring the setting" << SETTINGS_KEY_DEFAULT_SYSEX
+                       << ": it is not an LPD8 program";
+        }
     }
-    undoStack()->push(new CreateProgramCommand(
-            programsModel, settings.value(SETTINGS_KEY_DEFAULT_NAME).toString(), sysex));
+    // Without the setting, 'P' and the program's id, as before. A setting
+    // that is set, even empty, is used as it is.
+    QString name = settings.value(SETTINGS_KEY_DEFAULT_NAME).toString();
+    if (name.isNull()) {
+        name = QStringLiteral("P%1").arg(m_document.store().nextId());
+    }
+    push(lpd8::makeAddCommand(m_document.store(), name, program), "create a program");
 }
 
 void MainWindow::on_actionDeleteProgram_triggered()
 {
-    QItemSelectionModel *selection_model = ui->programsView->selectionModel();
-    Q_ASSERT(selection_model->currentIndex().row() > -1);
-
-    QUndoCommand *cmd = new DeleteProgramCommand(programsModel, selectedProgramId(selection_model));
-    undoStack()->push(cmd);
+    const int programId = currentProgramId();
+    if (programId == -1) {
+        return; // nothing selected (the action is disabled then)
+    }
+    push(lpd8::makeRemoveCommand(m_document.store(), programId), "delete a program");
 }
 
 void MainWindow::on_actionQuit_triggered()
 {
+    // QCoreApplication::aboutToQuit saves (main.cpp).
     qApp->quit();
 }
 
@@ -291,6 +323,24 @@ void MainWindow::refreshUiAccordingToSelection()
 
     QWidget *w = sel->currentIndex().row() != -1 ? ui->pageEditor : ui->pageDefault;
     ui->stackedWidget->setCurrentWidget(w);
+}
+
+void MainWindow::showProgram(const QModelIndex &current)
+{
+    const int id = programsModel->programId(current.row());
+    padsModel->setProgramId(id);
+    knobsModel->setProgramId(id);
+}
+
+void MainWindow::push(lpd8::CommandOrRefusal command, const char *what)
+{
+    if (!command) {
+        qWarning() << "Cannot" << what << ": the change was refused";
+        return;
+    }
+    if (*command) { // nullptr: the change changes nothing
+        m_document.undoStack().push(command->release());
+    }
 }
 
 QString MainWindow::programFileFilter() const
@@ -311,39 +361,28 @@ void MainWindow::on_actionImportProgram_triggered()
         return;
     }
 
-    const std::expected<QByteArray, QString> sysex = fromSysexTextFile(path);
-    if (!sysex) {
-        QMessageBox::warning(this, title, sysex.error());
+    const auto imported = lpd8::importProgramFile(path);
+    if (!imported) {
+        QMessageBox::warning(this, title, imported.error());
         return;
     }
-    if (!sysex::isProgram(*sysex)) {
-        QMessageBox::warning(
-                this, title, tr("%1 is not an LPD8 program.").arg(QDir::toNativeSeparators(path)));
-        return;
-    }
-
-    // 'Drums.lpd8' becomes the program 'Drums'.
-    const QString name = QFileInfo(path).completeBaseName();
-    undoStack()->push(new CreateProgramCommand(programsModel, name, *sysex));
+    push(lpd8::makeAddCommand(m_document.store(), imported->name, imported->program),
+         "import a program");
 }
 
 void MainWindow::on_actionExportProgram_triggered()
 {
     const QString title = tr("Export LPD8 program");
 
-    const int programId = currentSelectedProjectId();
-    if (!programsModel->programIndex(programId).isValid()) {
+    const lpd8::StoredProgram *stored = m_document.store().get(currentProgramId());
+    if (!stored) {
         return; // nothing selected (the action is disabled then)
     }
-    const QString name = programsModel->programName(programId);
-    const QByteArray sysex = programsModel->programSysex(programId);
-    if (sysex.isEmpty()) {
-        QMessageBox::warning(this, title, tr("Cannot read the program %1.").arg(name));
-        return;
-    }
+    // Copied: the dialog runs an event loop, in which the store may change.
+    const lpd8::StoredProgram program = *stored;
 
     const QDir defaultDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
-    const QString defaultPath = defaultDir.absoluteFilePath(name + QStringLiteral(".lpd8"));
+    const QString defaultPath = defaultDir.absoluteFilePath(program.name + QStringLiteral(".lpd8"));
 
     const QString path =
             QFileDialog::getSaveFileName(this, title, defaultPath, programFileFilter());
@@ -351,14 +390,14 @@ void MainWindow::on_actionExportProgram_triggered()
         return;
     }
 
-    if (const auto written = writeProgramFile(sysex, path); !written) {
+    if (const auto written = lpd8::exportProgramFile(program.program, path); !written) {
         QMessageBox::warning(this, title, written.error());
     }
 }
 
-int MainWindow::currentSelectedProjectId() const
+int MainWindow::currentProgramId() const
 {
-    return selectedProgramId(ui->programsView->selectionModel());
+    return programsModel->programId(ui->programsView->selectionModel()->currentIndex().row());
 }
 
 void MainWindow::on_actionAbout_triggered()

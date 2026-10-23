@@ -112,23 +112,4 @@ private:
     QHash<QString, QStringList> m_luts;
 };
 
-class ProgramIdSelectionRestorer : public QObject
-{
-    Q_OBJECT
-
-public:
-    explicit ProgramIdSelectionRestorer(QItemSelectionModel *model, QObject *parent = nullptr);
-
-public slots:
-    void store();
-    void restore();
-
-private:
-    int selectedProgramId() const;
-    void selectProgramId(int programId);
-
-    QItemSelectionModel *m_model;
-    int m_program_id{-1}; // -1: no program, as everywhere else
-};
-
 #endif // PROGRAMSMODEL_H

@@ -1,0 +1,3 @@
+# Fixtures are compared byte for byte: exported program files end with a
+# space, which is part of the format.
+tests/fixtures/*.lpd8 -whitespace

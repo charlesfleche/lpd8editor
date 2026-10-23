@@ -1,18 +1,69 @@
-#include "commands.h"
-#include "db.h"
+#include "deviceprofile.h"
+#include "lpd8codec.h"
 #include "mainwindow.h"
 #include "midiconnectionsmodel.h"
-#include "programsmodel.h"
+#include "programmodels.h"
+#include "programsdocument.h"
+#include "sysexhandler.h"
 
 #include <QAction>
 #include <QItemSelectionModel>
 #include <QListView>
 #include <QPointer>
 #include <QSettings>
-#include <QSqlDatabase>
+#include <QSpinBox>
+#include <QStackedWidget>
+#include <QTableView>
 #include <QTemporaryDir>
 #include <QUndoStack>
 #include <QtTest>
+
+using namespace lpd8;
+
+namespace {
+
+// Shows 'window'. The offscreen platform plugin, which the tests run on,
+// warns that it can't propagate size hints each time a window is shown.
+// That warning is the plugin's, not the window's, and only that exact
+// message is ignored: every other warning fails the test
+// (QTest::failOnWarning() in init()). It can't be filtered by category: it
+// is in the 'default' category, with the application's own warnings.
+void show(QWidget &window)
+{
+    if (QGuiApplication::platformName() == QLatin1StringView("offscreen")) {
+        QTest::ignoreMessage(QtWarningMsg, "This plugin does not support propagateSizeHints()");
+    }
+    window.show();
+}
+
+// A program dump as the device sends it: the storage format with the
+// 'program dump' opcode (63 00 3a, doc/SYSEX.md).
+QByteArray dumpOf(const Program &program)
+{
+    QByteArray sysex = encodeStoredProgram(program);
+    sysex[6] = '\x3a';
+    return sysex;
+}
+
+Program withChannel(quint8 channel)
+{
+    Program p = profile().defaultProgram;
+    p.channel = channel;
+    return p;
+}
+
+QAction *actionWithShortcut(const QWidget &window, QKeySequence::StandardKey key)
+{
+    const QKeySequence wanted(key);
+    for (QAction *action : window.findChildren<QAction *>()) {
+        if (action->shortcuts().contains(wanted)) {
+            return action;
+        }
+    }
+    return nullptr;
+}
+
+} // namespace
 
 class TestMainWindow : public QObject
 {
@@ -24,10 +75,26 @@ private slots:
     void cleanup();
 
     void test_destroyWithSelectedProgram();
+    void test_viewsHaveTheExactColumns();
+    void test_editUndoRedoThroughThePadsView();
+    void test_selectionFollowsRenamesAndRemovals();
+    void test_programDumpReplacesTheSelectedProgram();
+    void test_programDumpThroughTheSysexHandler();
+    void test_closingTheWindowSavesTheLastEdit();
+    void test_closeThenQuitReportsAFailureOnce();
+    void test_newProgramUsesTheDefaultSettings();
     void test_newProgramIgnoresInvalidDefaultSetting();
 
 private:
+    // A window over 'document', with 'count' new programs and the last one
+    // selected.
+    std::unique_ptr<MainWindow> windowWithPrograms(int count);
+    QListView *programsView(const MainWindow &window);
+
     QTemporaryDir configDir;
+    std::unique_ptr<QTemporaryDir> dataDir;
+    QString path;
+    std::unique_ptr<ProgramsDocument> document;
 };
 
 void TestMainWindow::initTestCase()
@@ -40,23 +107,37 @@ void TestMainWindow::initTestCase()
 
 void TestMainWindow::init()
 {
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(":memory:");
-    QVERIFY(db.open());
-    QVERIFY(!initDb(db).isValid());
+    QTest::failOnWarning();
+    dataDir = std::make_unique<QTemporaryDir>();
+    path = dataDir->filePath("programs.json");
+    document = std::make_unique<ProgramsDocument>(path);
+    QVERIFY(document->store().load().has_value());
 }
 
 void TestMainWindow::cleanup()
 {
-    // The undo stack is global (a child of qApp) and outlives this test
-    // function. Its commands point at the window's model, deleted with the window, so it must be
-    // emptied, or the next test function using it reaches a freed model.
-    undoStack()->clear();
-    QSqlDatabase::database().close();
-    // init() adds the default connection again: remove it, or Qt warns about
-    // a duplicate connection name. QSqlDatabase objects that refer to it
-    // must be gone first, hence no local QSqlDatabase here.
-    QSqlDatabase::removeDatabase(QLatin1StringView(QSqlDatabase::defaultConnection));
+    // Each test destroys its window first: the document outlives it.
+    document.reset();
+    QSettings().clear();
+}
+
+std::unique_ptr<MainWindow> TestMainWindow::windowWithPrograms(int count)
+{
+    auto window = std::make_unique<MainWindow>(*document);
+    auto *newProgram = window->findChild<QAction *>("actionNewProgram");
+    for (int i = 0; i < count; ++i) {
+        newProgram->trigger();
+    }
+    QListView *view = programsView(*window);
+    if (count > 0) {
+        view->setCurrentIndex(view->model()->index(count - 1, view->modelColumn()));
+    }
+    return window;
+}
+
+QListView *TestMainWindow::programsView(const MainWindow &window)
+{
+    return window.findChild<QListView *>("programsView");
 }
 
 void TestMainWindow::test_destroyWithSelectedProgram()
@@ -66,29 +147,19 @@ void TestMainWindow::test_destroyWithSelectedProgram()
     // MIDI objects). Signals emitted during that teardown must not reach
     // slots or lambdas that use 'ui'. With an ALSA sequencer, the MIDI
     // connections are made and exercised too. Run under ASan to check.
-    auto *window = new MainWindow(QSqlDatabase::database());
-    window->show();
-
-    auto *newProgram = window->findChild<QAction *>("actionNewProgram");
-    QVERIFY(newProgram);
-    newProgram->trigger();
-    newProgram->trigger();
-
-    auto *view = window->findChild<QListView *>("programsView");
-    QVERIFY(view);
+    auto window = windowWithPrograms(2);
+    show(*window);
+    QListView *view = programsView(*window);
     QCOMPARE(view->model()->rowCount(), 2);
-    view->setCurrentIndex(view->model()->index(1, view->modelColumn()));
     QVERIFY(view->currentIndex().isValid());
 
     // Make signals fire during the teardown, through the window's own
-    // connections. The programs model is the window's first child: unless
-    // ~MainWindow deletes it itself, it is deleted first in the children
-    // teardown, after 'ui' is gone, while the selection model and the MIDI
-    // model still exist. At that moment, emit what those objects can emit
-    // (Qt signals are public functions). Every slot or lambda of the window
-    // they reach must already be disconnected, or ASan reports the freed
-    // 'ui'. QPointer: each emitter may already be gone, which is fine.
-    auto *programs = window->findChild<ProgramsModel *>();
+    // connections: when the programs model is destroyed, emit what the
+    // selection model and the MIDI model can emit (Qt signals are public
+    // functions). Every slot or lambda of the window they reach must
+    // already be disconnected, or ASan reports the freed 'ui'. QPointer:
+    // each emitter may already be gone, which is fine.
+    auto *programs = window->findChild<ProgramListModel *>();
     QVERIFY(programs);
     const QPointer<QItemSelectionModel> selection = view->selectionModel();
     const QPointer<MidiConnectionsModel> connections = window->findChild<MidiConnectionsModel *>();
@@ -106,7 +177,203 @@ void TestMainWindow::test_destroyWithSelectedProgram()
         }
     });
 
-    delete window;
+    window.reset();
+    // The store outlives the window, and changing it now reaches nothing.
+    QVERIFY(document->store().add(QStringLiteral("After"), profile().defaultProgram));
+}
+
+void TestMainWindow::test_viewsHaveTheExactColumns()
+{
+    // No hidden id columns and no extra column: 4 fields for a pad, 3 for a
+    // knob, with readable headers (not 'pc', 'cc' or 'toggle').
+    const auto window = windowWithPrograms(1);
+    auto *pads = window->findChild<QTableView *>("padsView");
+    auto *knobs = window->findChild<QTableView *>("knobsView");
+    QVERIFY(pads && knobs);
+    QCOMPARE(pads->model()->columnCount(), 4);
+    QCOMPARE(knobs->model()->columnCount(), 3);
+    QCOMPARE(pads->model()->rowCount(), 8);
+    QCOMPARE(knobs->model()->rowCount(), 8);
+    QCOMPARE(pads->model()->headerData(1, Qt::Horizontal).toString(),
+             QStringLiteral("Program change"));
+    QCOMPARE(knobs->model()->headerData(0, Qt::Horizontal).toString(),
+             QStringLiteral("Control change"));
+}
+
+void TestMainWindow::test_editUndoRedoThroughThePadsView()
+{
+    const auto window = windowWithPrograms(1);
+    auto *pads = window->findChild<QTableView *>("padsView");
+    QAction *undo = actionWithShortcut(*window, QKeySequence::Undo);
+    QAction *redo = actionWithShortcut(*window, QKeySequence::Redo);
+    QVERIFY(pads && undo && redo);
+
+    const QModelIndex note = pads->model()->index(0, ControlsModel::NoteColumn);
+    QCOMPARE(note.data().toString(), QStringLiteral("36: C1"));
+
+    // An edit, as the delegate makes it.
+    QVERIFY(pads->model()->setData(note, 60, Qt::EditRole));
+    QCOMPARE(note.data().toString(), QStringLiteral("60: C3"));
+    const int id = document->store().programs().at(0).id;
+    QCOMPARE(document->store().get(id)->program.pads[0].note, 60);
+
+    undo->trigger();
+    QCOMPARE(note.data().toString(), QStringLiteral("36: C1"));
+    QCOMPARE(document->store().get(id)->program, profile().defaultProgram);
+
+    redo->trigger();
+    QCOMPARE(note.data().toString(), QStringLiteral("60: C3"));
+}
+
+void TestMainWindow::test_selectionFollowsRenamesAndRemovals()
+{
+    const auto window = windowWithPrograms(3);
+    QListView *view = programsView(*window);
+    QAbstractItemModel *model = view->model();
+    auto *deleteProgram = window->findChild<QAction *>("actionDeleteProgram");
+    auto *stacked = window->findChild<QStackedWidget *>("stackedWidget");
+    auto *pads = window->findChild<QTableView *>("padsView");
+    const auto selectedId = [view] {
+        return view->selectionModel()->isSelected(view->currentIndex())
+                ? view->currentIndex().data(ProgramListModel::IdRole).toInt()
+                : -1;
+    };
+    const auto shownId = [pads] {
+        return qobject_cast<ControlsModel *>(pads->model())->programId();
+    };
+    const int a = document->store().programs().at(0).id;
+    const int b = document->store().programs().at(1).id;
+    const int c = document->store().programs().at(2).id;
+
+    // Select B.
+    view->setCurrentIndex(model->index(1, 0));
+    QCOMPARE(selectedId(), b);
+    QCOMPARE(shownId(), b);
+
+    // A rename keeps it selected.
+    QVERIFY(model->setData(model->index(0, 0), QStringLiteral("Renamed A")));
+    QCOMPARE(selectedId(), b);
+
+    // The removal of another program keeps it selected.
+    QVERIFY(document->store().remove(a));
+    QCOMPARE(selectedId(), b);
+    QCOMPARE(shownId(), b);
+
+    // Deleting the selected program selects its neighbour, and shows it.
+    deleteProgram->trigger();
+    QCOMPARE(selectedId(), c);
+    QCOMPARE(shownId(), c);
+    QVERIFY(deleteProgram->isEnabled());
+
+    // Deleting the last one selects nothing, and shows the default page.
+    deleteProgram->trigger();
+    QCOMPARE(model->rowCount(), 0);
+    QVERIFY(!view->currentIndex().isValid());
+    QCOMPARE(shownId(), -1);
+    QVERIFY(!deleteProgram->isEnabled());
+    QCOMPARE(stacked->currentWidget()->objectName(), QStringLiteral("pageDefault"));
+}
+
+void TestMainWindow::test_programDumpReplacesTheSelectedProgram()
+{
+    const auto window = windowWithPrograms(2);
+    const int first = document->store().programs().at(0).id;
+    const int selected = document->store().programs().at(1).id;
+    auto *channel = window->findChild<QSpinBox *>("channelSpinBox");
+    QVERIFY(channel);
+
+    window->applyProgramDump(dumpOf(withChannel(5)));
+    QCOMPARE(document->store().get(selected)->program, withChannel(5));
+    QCOMPARE(document->store().get(first)->program, profile().defaultProgram);
+    QCOMPARE(document->undoStack().count(), 3); // two new programs, the dump
+
+    // Not a program: ignored, with a warning.
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("Ignoring a program dump"));
+    window->applyProgramDump(QByteArray("\xf0\xf7"));
+    QCOMPARE(document->undoStack().count(), 3);
+
+    // Nothing selected: nothing changes, as before the switch.
+    programsView(*window)->selectionModel()->clearCurrentIndex();
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression("Unimplemented code"));
+    window->applyProgramDump(dumpOf(withChannel(7)));
+    QCOMPARE(document->store().get(selected)->program, withChannel(5));
+}
+
+void TestMainWindow::test_programDumpThroughTheSysexHandler()
+{
+    // The wiring: a SysEx event, as ALSA delivers it, reaches the selected
+    // program through SysexHandler and MainWindow::applyProgramDump().
+    const auto window = windowWithPrograms(1);
+    auto *handler = window->findChild<SysexHandler *>();
+    if (!handler) {
+        QSKIP("No ALSA sequencer: the MIDI objects don't exist");
+    }
+    QByteArray sysex = dumpOf(withChannel(2));
+
+    snd_seq_event_t event;
+    snd_seq_ev_clear(&event);
+    event.type = SND_SEQ_EVENT_SYSEX;
+    event.data.ext.len = static_cast<unsigned int>(sysex.size());
+    event.data.ext.ptr = sysex.data();
+    handler->handleMidiEvent(&event);
+
+    QCOMPARE(document->store().programs().at(0).program, withChannel(2));
+}
+
+void TestMainWindow::test_closingTheWindowSavesTheLastEdit()
+{
+    // No event loop turn between the edit and the close: the pending save
+    // hasn't run, so only closeEvent() can have written the edit.
+    const auto window = windowWithPrograms(1);
+    show(*window);
+    window->applyProgramDump(dumpOf(withChannel(11)));
+    window->close();
+
+    ProgramStore written(path);
+    QVERIFY(written.load().has_value());
+    QCOMPARE(written.programs().size(), 1);
+    QCOMPARE(written.programs().at(0).program, withChannel(11));
+}
+
+void TestMainWindow::test_closeThenQuitReportsAFailureOnce()
+{
+    // B1: on a failing disk, closing the window and then quitting (main()
+    // connects aboutToQuit to saveNow()) show one report, not two.
+    // A regular file where the folder should be: saving fails, even as root.
+    {
+        QFile blocker(dataDir->filePath("blocked"));
+        QVERIFY(blocker.open(QIODevice::WriteOnly));
+    }
+    document = std::make_unique<ProgramsDocument>(dataDir->filePath("blocked/programs.json"));
+    const auto window = windowWithPrograms(1); // a change, its save pending
+    // Counted instead of the window's handler, which shows a modal dialog.
+    int reports = 0;
+    document->setSaveFailureHandler([&reports](const QString &) { ++reports; });
+    show(*window);
+
+    window->close();
+    QCOMPARE(reports, 1);
+    QVERIFY(!document->saveNow()); // what quitting does next
+    QCOMPARE(reports, 1);
+}
+
+void TestMainWindow::test_newProgramUsesTheDefaultSettings()
+{
+    // Without settings: the factory program, named 'P' and its id.
+    {
+        const auto window = windowWithPrograms(1);
+        const StoredProgram &created = document->store().programs().at(0);
+        QCOMPARE(created.name, QStringLiteral("P%1").arg(created.id));
+        QCOMPARE(created.program, profile().defaultProgram);
+    }
+
+    // With them: the template and the name.
+    QSettings().setValue("default/sysex", encodeStoredProgram(withChannel(5)));
+    QSettings().setValue("default/name", QStringLiteral("Mine"));
+    const auto window = windowWithPrograms(1);
+    const StoredProgram &created = document->store().programs().at(1);
+    QCOMPARE(created.name, QStringLiteral("Mine"));
+    QCOMPARE(created.program, withChannel(5));
 }
 
 void TestMainWindow::test_newProgramIgnoresInvalidDefaultSetting()
@@ -115,16 +382,10 @@ void TestMainWindow::test_newProgramIgnoresInvalidDefaultSetting()
     // not make 'New program' fail silently: the factory program is used.
     QSettings().setValue("default/sysex", QByteArray("not a program"));
 
-    const MainWindow window(QSqlDatabase::database());
-    auto *newProgram = window.findChild<QAction *>("actionNewProgram");
-    auto *view = window.findChild<QListView *>("programsView");
-    QVERIFY(newProgram && view);
-
     QTest::ignoreMessage(QtWarningMsg, QRegularExpression("Ignoring the setting"));
-    newProgram->trigger();
-    QCOMPARE(view->model()->rowCount(), 1);
-
-    QSettings().remove("default/sysex");
+    const auto window = windowWithPrograms(1);
+    QCOMPARE(document->store().programs().size(), 1);
+    QCOMPARE(document->store().programs().at(0).program, profile().defaultProgram);
 }
 
 QTEST_MAIN(TestMainWindow)

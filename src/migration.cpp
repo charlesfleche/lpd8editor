@@ -7,6 +7,7 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
+#include <QSaveFile>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
@@ -18,9 +19,9 @@ namespace lpd8 {
 
 namespace {
 
-QString tr(const char *text)
+QString tr(const char *text, int n = -1)
 {
-    return QCoreApplication::translate("Migration", text);
+    return QCoreApplication::translate("Migration", text, nullptr, n);
 }
 
 // The connection name used only by the migration, so it never touches the
@@ -207,7 +208,59 @@ std::expected<MigrationReport, QString> readInto(QSqlDatabase &db, ProgramStore 
     return report;
 }
 
+// Saves describe(report) to 'path', atomically. Records the outcome in the
+// report: describe() says where the text is, or why it isn't saved.
+void saveReport(MigrationReport &report, const QString &path)
+{
+    report.reportFileAt = path;
+    report.reportFileError.clear();
+    QSaveFile f(path);
+    if (f.open(QIODevice::WriteOnly | QIODevice::Text)
+        && f.write(describe(report).toUtf8() + '\n') >= 0 && f.commit()) {
+        return;
+    }
+    report.reportFileAt.clear();
+    report.reportFileError = tr("Cannot save this report to %1: %2")
+                                     .arg(QDir::toNativeSeparators(path), f.errorString());
+}
+
 } // namespace
+
+QString describe(const MigrationReport &report)
+{
+    QStringList parts;
+    if (report.migrated == 0 && report.skipped.isEmpty()) {
+        parts.append(tr("The old database held no programs, so the new programs file starts "
+                        "empty."));
+    } else {
+        parts.append(tr("Your programs were moved from the old database to a new file. %n "
+                        "program(s) moved.",
+                        report.migrated));
+    }
+    if (!report.skipped.isEmpty()) {
+        parts.append(tr("These programs could not be moved, and are still in the old "
+                        "database:\n%1")
+                             .arg(report.skipped.join(QLatin1Char('\n'))));
+    }
+    if (!report.oldFileNowAt.isEmpty()) {
+        parts.append(tr("The old database is kept as a backup, at %1.")
+                             .arg(QDir::toNativeSeparators(report.oldFileNowAt)));
+    }
+    if (!report.renameError.isEmpty()) {
+        // It is not read again: the new file exists, so the migration is
+        // done.
+        parts.append(tr("%1 The old database is kept where it was, and won't be read again.")
+                             .arg(report.renameError));
+    }
+    if (!report.reportFileAt.isEmpty()) {
+        parts.append(tr("This report is saved in %1.")
+                             .arg(QDir::toNativeSeparators(report.reportFileAt)));
+    }
+    if (!report.reportFileError.isEmpty()) {
+        parts.append(report.reportFileError);
+    }
+    return parts.join(QStringLiteral("\n\n"));
+}
 
 std::expected<std::optional<MigrationReport>, QString>
 migrateSqliteDatabase(const QString &sqlitePath, const QString &jsonPath)
@@ -245,17 +298,25 @@ migrateSqliteDatabase(const QString &sqlitePath, const QString &jsonPath)
 
     // ...then, and only then, move the old one aside. If this fails, the
     // migration still happened: the JSON file exists, so it won't run again.
+    // A name whose backup or report is left from an earlier migration is
+    // taken: neither is ever replaced.
     QString aside = sqlitePath + QStringLiteral(".migrated");
-    if (QFile::exists(aside)) {
+    if (QFile::exists(aside) || QFile::exists(aside + QStringLiteral(".txt"))) {
         aside += QStringLiteral("-")
                 + QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-hhmmss"));
     }
-    if (QFile::rename(sqlitePath, aside)) {
-        report->oldFileNowAt = aside;
-    } else {
+    // The report is saved first, saying where the backup will be: if the
+    // program stops right after the rename, the list of skipped programs is
+    // already next to them.
+    const QString reportPath = aside + QStringLiteral(".txt");
+    report->oldFileNowAt = aside;
+    saveReport(*report, reportPath);
+    if (!QFile::rename(sqlitePath, aside)) {
+        report->oldFileNowAt.clear();
         report->renameError =
                 tr("Cannot rename %1 to %2.")
                         .arg(QDir::toNativeSeparators(sqlitePath), QDir::toNativeSeparators(aside));
+        saveReport(*report, reportPath);
     }
     return *report;
 }

@@ -84,7 +84,11 @@ void TestProgramStore::test_addAndFind()
     ProgramStore store(path);
     const QSignalSpy added(&store, &ProgramStore::programAdded);
 
+    // nextId() says which id add() hands out.
+    const int expectedId = store.nextId();
     const int id = store.add(QStringLiteral("Drums"), someProgram()).value();
+    QCOMPARE(id, expectedId);
+    QCOMPARE(store.nextId(), id + 1);
     QCOMPARE(added.count(), 1);
     QCOMPARE(added.at(0).at(0).toInt(), id);
     QCOMPARE(added.at(0).at(1).toInt(), 0); // the row

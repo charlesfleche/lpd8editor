@@ -36,6 +36,11 @@ QString defaultDbPath()
     return dataDir().filePath("db.sqlite3");
 }
 
+QString defaultStorePath()
+{
+    return dataDir().filePath("programs.json");
+}
+
 namespace {
 
 QString tr(const char *text)
