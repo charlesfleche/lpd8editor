@@ -1,7 +1,7 @@
 #include "db.h"
 
+#include "exactinteger.h"
 #include "lpd8codec.h"
-#include "sqlvalue.h"
 #include "utils.h"
 
 #include <array>
@@ -96,12 +96,12 @@ namespace {
 // databases created since 2018. Older ones (v0.0.0 to v0.0.5) have none, and
 // SQLite never adds constraints to an existing table, so a column can hold
 // anything. A value is therefore taken only if it is an INTEGER that fits in
-// a byte (sqlInteger(), which explains why QVariant::toInt() can't be used):
+// a byte (exactInteger(), which explains why QVariant::toInt() can't be used):
 // casting first would silently turn 300 into 44. Program::isValid() then
 // checks the ranges, as for a SysEx message.
 std::optional<quint8> byteValue(const QSqlQuery &q, int column)
 {
-    return lpd8::sqlInteger(q.value(column), 255).transform([](int v) {
+    return lpd8::exactInteger(q.value(column), 255).transform([](int v) {
         return static_cast<quint8>(v);
     });
 }
@@ -109,7 +109,7 @@ std::optional<quint8> byteValue(const QSqlQuery &q, int column)
 // The codec's rule for the toggle byte: 0 or 1, nothing else.
 std::optional<bool> toggleValue(const QSqlQuery &q, int column)
 {
-    return lpd8::sqlInteger(q.value(column), 1).transform([](int v) { return v == 1; });
+    return lpd8::exactInteger(q.value(column), 1).transform([](int v) { return v == 1; });
 }
 
 std::optional<lpd8::Pad> padFromRow(const QSqlQuery &q)

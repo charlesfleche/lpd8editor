@@ -1,7 +1,7 @@
 #include "migration.h"
 
+#include "exactinteger.h"
 #include "programstore.h"
-#include "sqlvalue.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -42,12 +42,12 @@ QString shown(const QVariant &value)
 }
 
 // An integer field from 0 to 'max'. Old databases have no CHECK constraints,
-// so a column can hold anything: sqlInteger() takes only an INTEGER in range
+// so a column can hold anything: exactInteger() takes only an INTEGER in range
 // (never a cast: 300 must not become 44, nor 4294967336 become 40), the same
 // rule as db.cpp.
 std::expected<int, QString> integerField(const QVariant &value, const char *name, int max)
 {
-    const auto v = sqlInteger(value, max);
+    const auto v = exactInteger(value, max);
     if (!v) {
         return Error(tr("%1 is %2, not an integer from 0 to %3")
                              .arg(QString::fromLatin1(name), shown(value), QString::number(max)));
@@ -169,9 +169,9 @@ std::expected<MigrationReport, QString> readInto(QSqlDatabase &db, ProgramStore 
             report.skipped.append(tr("program %1 (%2): %3").arg(shown(old.id), old.name, why));
         };
 
-        // Through sqlInteger() too: an id above INT_MAX must not wrap onto
+        // Through exactInteger() too: an id above INT_MAX must not wrap onto
         // another program's id.
-        const auto id = sqlInteger(old.id, max_program_id);
+        const auto id = exactInteger(old.id, max_program_id);
         if (!id || *id < 1) {
             skip(tr("its id is not an integer from 1 to %1").arg(max_program_id));
             continue;

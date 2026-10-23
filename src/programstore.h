@@ -62,6 +62,10 @@ public:
     const QString &path() const { return m_path; }
     const QList<StoredProgram> &programs() const { return m_programs; }
     std::optional<StoredProgram> find(int id) const;
+    // The same without a copy, for code that reads often (a model's data()):
+    // nullptr if there is no such program. The pointer is valid until the
+    // store changes.
+    const StoredProgram *get(int id) const;
     // The row of program 'id' in programs(), if there is one.
     std::optional<int> rowOf(int id) const;
 

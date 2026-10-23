@@ -4,6 +4,7 @@
 #include "db.h"
 #include "enums.h"
 #include "lpd8_sysex.h"
+#include "midinames.h"
 #include "utils.h"
 
 #include <QSortFilterProxyModel>
@@ -23,9 +24,6 @@ static const QString toggle_field_name("toggle");
 static const QString pads_group_name = "pads";
 static const QString knobs_group_name = "knobs";
 
-static const QString momentary_label = "Momentary";
-static const QString toggle_label = "Toggle";
-
 // XXX those are kinda nasty, and not data driven...
 
 static const int control_type_pad = 0;
@@ -43,26 +41,12 @@ ProgramsModel::ProgramsModel(QObject *parent, const QSqlDatabase &db)
     // The database functions only work on the default connection (db.h).
     Q_ASSERT(db.connectionName() == QLatin1StringView(QSqlDatabase::defaultConnection));
 
-    // LUTs
+    // LUTs, shared with the new models (midinames.h).
 
-    const QStringList notes = {
-            "C", "C♯/D♭", "D", "D♯/E♭", "E", "F", "F♯/G♭", "G", "G♯/A♭", "A", "A♯/B♭", "B"};
-
-    for (int i = 0; i <= 127; ++i) {
-        m_lut_default << QString::number(i);
-
-        const QString &note = notes[i % notes.count()];
-        const int octave = (i / static_cast<int>(notes.count())) - 2;
-        m_lut_note << QStringLiteral("%1: %2%3")
-                              .arg(QString::number(i), note, QString::number(octave));
-    }
-
-    for (int i = 0; i <= 15; ++i) {
-        m_lut_channel << QString::number(i + 1);
-    }
-
-    m_lut_toggle << momentary_label;
-    m_lut_toggle << toggle_label;
+    m_lut_default = lpd8::midinames::values();
+    m_lut_note = lpd8::midinames::notes();
+    m_lut_channel = lpd8::midinames::channels();
+    m_lut_toggle = lpd8::midinames::toggleModes();
 
     m_luts[channel_field_name] = m_lut_channel;
     m_luts[note_field_name] = m_lut_note;

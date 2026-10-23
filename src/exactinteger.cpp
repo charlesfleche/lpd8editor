@@ -1,10 +1,10 @@
-#include "sqlvalue.h"
+#include "exactinteger.h"
 
 #include <QMetaType>
 
 namespace lpd8 {
 
-std::optional<int> sqlInteger(const QVariant &value, int max)
+std::optional<int> exactInteger(const QVariant &value, int max)
 {
     if (value.isNull()) {
         return std::nullopt;

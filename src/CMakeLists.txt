@@ -31,6 +31,8 @@ add_library(${_lib}
     mainwindow.ui
     migration.cpp
     migration.h
+    midinames.cpp
+    midinames.h
     midiconnectionsmodel.cpp
     midiconnectionsmodel.h
     midivaluedelegate.cpp
@@ -38,13 +40,15 @@ add_library(${_lib}
     parameterlocation.h
     program.cpp
     program.h
+    programmodels.cpp
+    programmodels.h
     programsmodel.cpp
     programsmodel.h
     programstore.cpp
     programstore.h
     sql.qrc
-    sqlvalue.cpp
-    sqlvalue.h
+    exactinteger.cpp
+    exactinteger.h
     storecommands.cpp
     storecommands.h
     sysexhandler.cpp

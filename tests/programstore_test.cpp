@@ -93,6 +93,8 @@ void TestProgramStore::test_addAndFind()
     QCOMPARE(found.name, QStringLiteral("Drums"));
     QCOMPARE(found.program, someProgram());
     QVERIFY(!hasProgram(store, id + 1));
+    QCOMPARE(store.get(id)->name, QStringLiteral("Drums"));
+    QCOMPARE(store.get(id + 1), nullptr);
 
     // Names are labels: duplicates are allowed.
     QVERIFY(store.add(QStringLiteral("Drums"), someProgram()).has_value());

@@ -158,7 +158,7 @@ commands come first, then the models (used by nothing yet), then one commit
 that switches everything at once.
 
 
-- [x] 4.6 Undo commands over `ProgramStore`, by program id: set a program,
+- [x] 4.6 [`0fd036d`](https://github.com/charlesfleche/lpd8editor/commit/0fd036da32659896430b4ad443cfcfc83f42bedb) Undo commands over `ProgramStore`, by program id: set a program,
       rename, add, remove. Each holds ids and values, never rows or pointers.
       An undo whose program is gone marks itself obsolete instead of
       asserting. A command that changes nothing is not pushed. Repeated edits
@@ -168,7 +168,7 @@ that switches everything at once.
       whose signals carry that row. Tests: remove the middle program, undo,
       and the order is the same (same id at the same row), then redo and undo
       twice more without drift. Nothing uses the commands yet.
-- [ ] 4.5 New models: a programs list model and a controls table model for
+- [x] 4.5 New models: a programs list model and a controls table model for
       one program. They are driven only by `ProgramStore`'s signals, and their
       `setData()` pushes the commands of 4.6. They have exact column counts
       and readable, translatable headers (no `pc`, `cc`, `toggle`). Tests:

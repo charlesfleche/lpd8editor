@@ -349,6 +349,12 @@ std::optional<StoredProgram> ProgramStore::find(int id) const
     return m_programs.at(i);
 }
 
+const StoredProgram *ProgramStore::get(int id) const
+{
+    const qsizetype i = indexOf(id);
+    return i < 0 ? nullptr : &m_programs.at(i);
+}
+
 std::optional<int> ProgramStore::rowOf(int id) const
 {
     const qsizetype i = indexOf(id);
