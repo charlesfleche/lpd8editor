@@ -4,11 +4,11 @@ set(_exe ${CMAKE_PROJECT_NAME})
 set(_lib ${CMAKE_PROJECT_NAME}-lib)
 
 add_library(${_lib}
+    alsaseqtransport.cpp
+    alsaseqtransport.h
     deviceprofile.cpp
     deviceprofile.h
     enums.h
-    iomidi.cpp
-    iomidi.h
     lpd8codec.cpp
     lpd8codec.h
     lpd8_sysex.cpp
@@ -71,12 +71,11 @@ target_link_libraries(${_lib}
         # Only for the one-time migration from db.sqlite3 (migration.cpp):
         # no public header uses QtSql.
         Qt::Sql
+        # Imported target from FindALSA: include path and library together.
+        # Only alsaseqtransport.cpp includes asoundlib.h: no header does.
+        ALSA::ALSA
     PUBLIC
         Qt::Widgets
-        # Imported target from FindALSA: include path and library together.
-        # PUBLIC because public headers (iomidi.h, midiconnectionsmodel.h)
-        # use ALSA types, so whatever includes them needs the include path.
-        ALSA::ALSA
 )
 
 add_executable(${_exe}

@@ -1,3 +1,4 @@
+#include "alsaseqtransport.h"
 #include "app_info.h"
 #include "mainwindow.h"
 #include "programsdocument.h"
@@ -8,8 +9,11 @@
 #include <QIcon>
 #include <QMessageBox>
 #include <QSessionManager>
+#include <QtDebug>
 
 #include <cstdlib>
+#include <memory>
+#include <stdexcept>
 
 int main(int argc, char *argv[])
 {
@@ -45,7 +49,16 @@ int main(int argc, char *argv[])
                      &document,
                      [&document](QSessionManager &) { document.saveNow(); });
 
-    MainWindow win(document);
+    // MIDI, declared before the window too. Without a sequencer (no
+    // /dev/snd/seq), the application still edits programs and files.
+    std::unique_ptr<lpd8::MidiTransport> midi;
+    try {
+        midi = std::make_unique<lpd8::AlsaSeqTransport>();
+    } catch (const std::runtime_error &e) {
+        qWarning() << "Disabling MIDI:" << e.what();
+    }
+
+    MainWindow win(document, midi.get());
     win.setWindowTitle(QApplication::applicationName());
     win.setWindowIcon(QIcon(":/lpd8editor.svg"));
     win.show();

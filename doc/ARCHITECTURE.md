@@ -165,8 +165,8 @@ being found through `qApp`.
 
 `MidiTransport` is an interface: send a SysEx message, receive SysEx messages,
 list the ports, connect to one, and be told when ports come and go.
-`AlsaSeqTransport` implements it with the ALSA sequencer (today's `IOMidi` and
-most of `MidiConnectionsModel`). PipeWire bridges ALSA sequencer clients, and
+`AlsaSeqTransport` implements it with the ALSA sequencer (what was `IOMidi`,
+and the ALSA half of `MidiConnectionsModel`, until item 4.8b). PipeWire bridges ALSA sequencer clients, and
 JACK sees them through pipewire-jack or a2jmidid, so this one backend reaches
 the usual Linux audio setups. Another backend can be added behind the same
 interface later.

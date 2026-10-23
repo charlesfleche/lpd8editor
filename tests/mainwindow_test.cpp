@@ -1,10 +1,10 @@
 #include "deviceprofile.h"
+#include "faketransport.h"
 #include "lpd8codec.h"
 #include "mainwindow.h"
 #include "midiconnectionsmodel.h"
 #include "programmodels.h"
 #include "programsdocument.h"
-#include "sysexhandler.h"
 
 #include <QAction>
 #include <QItemSelectionModel>
@@ -79,7 +79,9 @@ private slots:
     void test_editUndoRedoThroughThePadsView();
     void test_selectionFollowsRenamesAndRemovals();
     void test_programDumpReplacesTheSelectedProgram();
-    void test_programDumpThroughTheSysexHandler();
+    void test_programDumpThroughTheTransport();
+    void test_midiActionsGoThroughTheTransport();
+    void test_midiOff();
     void test_closingTheWindowSavesTheLastEdit();
     void test_closeThenQuitReportsAFailureOnce();
     void test_newProgramUsesTheDefaultSettings();
@@ -95,6 +97,9 @@ private:
     std::unique_ptr<QTemporaryDir> dataDir;
     QString path;
     std::unique_ptr<ProgramsDocument> document;
+    // The window's MIDI: a fake with one device, so no test depends on the
+    // machine's sequencer. Declared after the document, reset before it.
+    std::unique_ptr<FakeTransport> transport;
 };
 
 void TestMainWindow::initTestCase()
@@ -112,18 +117,22 @@ void TestMainWindow::init()
     path = dataDir->filePath("programs.json");
     document = std::make_unique<ProgramsDocument>(path);
     QVERIFY(document->store().load().has_value());
+    transport = std::make_unique<FakeTransport>();
+    transport->addPort("20:0", "LPD8");
 }
 
 void TestMainWindow::cleanup()
 {
-    // Each test destroys its window first: the document outlives it.
+    // Each test destroys its window first: the transport and the document
+    // outlive it.
+    transport.reset();
     document.reset();
     QSettings().clear();
 }
 
 std::unique_ptr<MainWindow> TestMainWindow::windowWithPrograms(int count)
 {
-    auto window = std::make_unique<MainWindow>(*document);
+    auto window = std::make_unique<MainWindow>(*document, transport.get());
     auto *newProgram = window->findChild<QAction *>("actionNewProgram");
     for (int i = 0; i < count; ++i) {
         newProgram->trigger();
@@ -145,28 +154,31 @@ void TestMainWindow::test_destroyWithSelectedProgram()
     // Destroying the window runs ~MainWindow, which destroys 'ui', and then
     // the base class destructors, which delete the children (models, views,
     // MIDI objects). Signals emitted during that teardown must not reach
-    // slots or lambdas that use 'ui'. With an ALSA sequencer, the MIDI
-    // connections are made and exercised too. Run under ASan to check.
+    // slots or lambdas that use 'ui'. Run under ASan to check.
     auto window = windowWithPrograms(2);
+    QVERIFY(transport->connectTo("20:0"));
     show(*window);
     QListView *view = programsView(*window);
     QCOMPARE(view->model()->rowCount(), 2);
     QVERIFY(view->currentIndex().isValid());
 
     // Make signals fire during the teardown, through the window's own
-    // connections: when the programs model is destroyed, emit what the
-    // selection model and the MIDI model can emit (Qt signals are public
-    // functions). Every slot or lambda of the window they reach must
-    // already be disconnected, or ASan reports the freed 'ui'. QPointer:
-    // each emitter may already be gone, which is fine.
+    // connections, at two moments: when the programs model is destroyed,
+    // and when the central widget is, in the children teardown, after 'ui'
+    // is gone. Emit what the selection model, the MIDI model and the
+    // transport can emit (Qt signals are public functions). Every slot or
+    // lambda of the window they reach must already be disconnected, or ASan
+    // reports the freed 'ui'. QPointer: each emitter may already be gone,
+    // which is fine. The transport outlives the window, so it always emits.
     auto *programs = window->findChild<ProgramListModel *>();
-    QVERIFY(programs);
+    auto *central = window->findChild<QWidget *>("centralwidget");
+    QVERIFY(programs && central);
     const QPointer<QItemSelectionModel> selection = view->selectionModel();
     const QPointer<MidiConnectionsModel> connections = window->findChild<MidiConnectionsModel *>();
-    if (!connections) {
-        qInfo("No ALSA sequencer: the MIDI connections are not exercised");
-    }
-    connect(programs, &QObject::destroyed, this, [selection, connections] {
+    QVERIFY(connections);
+    FakeTransport *midi = transport.get();
+    const QByteArray dump = dumpOf(withChannel(3));
+    const auto fire = [selection, connections, midi, dump] {
         if (selection) {
             emit selection->currentRowChanged({}, {});
             emit selection->selectionChanged({}, {});
@@ -175,7 +187,12 @@ void TestMainWindow::test_destroyWithSelectedProgram()
             emit connections->connectedChanged(true);
             emit connections->connectedPortChanged({});
         }
-    });
+        emit midi->portsChanged();
+        emit midi->connectionChanged();
+        midi->receive(dump, "20:0");
+    };
+    connect(programs, &QObject::destroyed, this, fire);
+    connect(central, &QObject::destroyed, this, fire);
 
     window.reset();
     // The store outlives the window, and changing it now reaches nothing.
@@ -299,25 +316,57 @@ void TestMainWindow::test_programDumpReplacesTheSelectedProgram()
     QCOMPARE(document->store().get(selected)->program, withChannel(5));
 }
 
-void TestMainWindow::test_programDumpThroughTheSysexHandler()
+void TestMainWindow::test_programDumpThroughTheTransport()
 {
-    // The wiring: a SysEx event, as ALSA delivers it, reaches the selected
-    // program through SysexHandler and MainWindow::applyProgramDump().
+    // The wiring: a SysEx message from the device reaches the selected
+    // program through the transport, SysexHandler and applyProgramDump().
     const auto window = windowWithPrograms(1);
-    auto *handler = window->findChild<SysexHandler *>();
-    if (!handler) {
-        QSKIP("No ALSA sequencer: the MIDI objects don't exist");
-    }
-    QByteArray sysex = dumpOf(withChannel(2));
-
-    snd_seq_event_t event;
-    snd_seq_ev_clear(&event);
-    event.type = SND_SEQ_EVENT_SYSEX;
-    event.data.ext.len = static_cast<unsigned int>(sysex.size());
-    event.data.ext.ptr = sysex.data();
-    handler->handleMidiEvent(&event);
-
+    QVERIFY(transport->connectTo("20:0"));
+    transport->receive(dumpOf(withChannel(2)), "20:0");
     QCOMPARE(document->store().programs().at(0).program, withChannel(2));
+
+    // A message that is not a program dump is not handed on.
+    transport->receive(encodeGetProgram(1).value(), "20:0");
+    QCOMPARE(document->undoStack().count(), 2); // the new program, the dump
+}
+
+void TestMainWindow::test_midiActionsGoThroughTheTransport()
+{
+    const auto window = windowWithPrograms(1);
+    auto *send = window->findChild<QAction *>("actionSendToProgram2");
+    auto *get = window->findChild<QAction *>("actionGetProgram3");
+    QVERIFY(send && get);
+    // Not connected: the actions are off.
+    QVERIFY(!send->isEnabled());
+    QVERIFY(!get->isEnabled());
+
+    QVERIFY(transport->connectTo("20:0"));
+    QVERIFY(send->isEnabled());
+    QVERIFY(get->isEnabled());
+
+    // The same bytes as the codec's: the old helpers and it agree.
+    send->trigger();
+    get->trigger();
+    const Program &selected = document->store().programs().at(0).program;
+    QCOMPARE(transport->sent(),
+             (QList<QByteArray>{encodeSendProgram(selected, 2).value(),
+                                encodeGetProgram(3).value()}));
+
+    // The device goes away: the actions are off again.
+    transport->removePort("20:0");
+    QVERIFY(!send->isEnabled());
+}
+
+void TestMainWindow::test_midiOff()
+{
+    // Without a sequencer, the window still edits programs, and the MIDI
+    // actions stay off.
+    const MainWindow window(*document, nullptr);
+    window.findChild<QAction *>("actionNewProgram")->trigger();
+    QCOMPARE(document->store().programs().size(), 1);
+    programsView(window)->setCurrentIndex(programsView(window)->model()->index(0, 0));
+    QVERIFY(!window.findChild<QAction *>("actionSendToProgram1")->isEnabled());
+    QVERIFY(!window.findChild<MidiConnectionsModel *>());
 }
 
 void TestMainWindow::test_closingTheWindowSavesTheLastEdit()

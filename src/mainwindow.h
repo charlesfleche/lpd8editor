@@ -7,11 +7,13 @@
 
 #include <memory>
 
-class IOMidi;
+class MidiConnectionsModel;
 class QModelIndex;
+class SysexHandler;
 
 namespace lpd8 {
 class ControlsModel;
+class MidiTransport;
 class ProgramListModel;
 class ProgramsDocument;
 } // namespace lpd8
@@ -27,9 +29,12 @@ class MainWindow : public QMainWindow
 
 public:
     // 'document' holds the user's programs, already loaded (see
-    // openPrograms()). It must outlive the window: its owner declares it
-    // before the window.
-    explicit MainWindow(lpd8::ProgramsDocument &document, QWidget *parent = nullptr);
+    // openPrograms()). 'midi' is how the window talks to the device, or
+    // nullptr to turn MIDI off (no sequencer). Both must outlive the window:
+    // their owner declares them before it.
+    MainWindow(lpd8::ProgramsDocument &document,
+               lpd8::MidiTransport *midi,
+               QWidget *parent = nullptr);
     ~MainWindow() override;
 
 public slots:
@@ -76,10 +81,10 @@ private:
     lpd8::ProgramListModel *programsModel{nullptr};
     lpd8::ControlsModel *padsModel{nullptr};
     lpd8::ControlsModel *knobsModel{nullptr};
-    // The MIDI objects (the connections model and the sysex handler are its
-    // children), or nullptr when MIDI is not available. Kept so that the
-    // destructor can delete them in the right order.
-    IOMidi *midi{nullptr};
+    // The MIDI objects, children of the window, or nullptr when MIDI is
+    // off. Kept so that the destructor can delete them in the right order.
+    MidiConnectionsModel *connectionsModel{nullptr};
+    SysexHandler *sysexHandler{nullptr};
 };
 
 #endif // MAINWINDOW_H

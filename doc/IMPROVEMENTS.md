@@ -256,7 +256,7 @@ Items 4.8a to 4.10b follow the lesson of 4.7: what can't coexist (two
 owners of one ALSA client, two paths for one MIDI menu) switches in one
 commit, after the new code is in place and tested on its own.
 
-- [ ] 4.8a A `MidiTransport` interface, a `SysexAssembler`, and a
+- [x] 4.8a [`11abd91`](https://github.com/charlesfleche/lpd8editor/commit/11abd91d2bfc0ccc2fe0f180f23fd7f4bd87ca07) A `MidiTransport` interface, a `SysexAssembler`, and a
       `FakeTransport` for the tests. Nothing uses them yet.
 
       - The interface carries messages, not events, and no ALSA type:
@@ -294,7 +294,7 @@ commit, after the new code is in place and tested on its own.
         Test (M1): the connected device disappears and comes back with a
         new id. The connection state follows, and the source of what it
         sends is its new id.
-- [ ] 4.8b The switch, in one commit: `AlsaSeqTransport` replaces `IOMidi`
+- [x] 4.8b The switch, in one commit: `AlsaSeqTransport` replaces `IOMidi`
       and the ALSA code of `MidiConnectionsModel`.
 
       - `IOMidi` becomes `AlsaSeqTransport` with `git mv`, so the history
@@ -396,6 +396,14 @@ commit, after the new code is in place and tested on its own.
         which the first start migrates and keeps as
         `db.sqlite3.migrated`, with a report next to it (item 4.7a).
       - Quitting without an edit no longer writes the programs file.
+      - Devices plugged in or out are seen after using the connection menu
+        too. Until the fix, connecting or choosing 'Disconnect' also
+        dropped the subscription to ALSA's announcements, so the list
+        stopped following hotplug (checked against 3824a69).
+      - 'Send to program N' and 'Get program N' send nothing when nothing
+        receives from the application's port; before, the message went to
+        no one, with the same effect. The menu is disabled then
+        anyway, unless another tool connected one way only.
       - Known quirk, not a change to announce: the pads and knobs tables are
         empty until a program is selected, so the first selection can make
         a window at its minimum width about 28 pixels wider, once (the

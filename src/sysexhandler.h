@@ -3,29 +3,30 @@
 
 #include <QObject>
 
-#include <alsa/asoundlib.h>
+namespace lpd8 {
+class MidiTransport;
+}
 
-class IOMidi;
-
+// The LPD8 requests of the MIDI menu, over a MidiTransport. Replaced by
+// Lpd8Device in item 4.10.
 class SysexHandler : public QObject
 {
     Q_OBJECT
 public:
-    explicit SysexHandler(IOMidi *io);
+    // 'transport' must outlive the handler.
+    explicit SysexHandler(lpd8::MidiTransport &transport, QObject *parent = nullptr);
 
     void getProgram(int deviceProgramId) const;
     void sendProgram(const QByteArray &sysex, int deviceProgramId) const;
 
 signals:
+    // A program dump, from any source: checking it is item 4.10's job.
     void programReceived(QByteArray) const;
 
-public slots:
-    void handleMidiEvent(const snd_seq_event_t *ev) const;
-
 private:
-    void sendSysex(const QByteArray &sysex) const;
+    void handleSysex(const QByteArray &sysex) const;
 
-    IOMidi *m_io;
+    lpd8::MidiTransport &m_transport;
 };
 
 #endif // SYSEXHANDLER_H

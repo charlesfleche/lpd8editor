@@ -2,9 +2,9 @@
 #include "ui_mainwindow.h"
 
 #include "deviceprofile.h"
-#include "iomidi.h"
 #include "lpd8codec.h"
 #include "midiconnectionsmodel.h"
+#include "miditransport.h"
 #include "midivaluedelegate.h"
 #include "programfile.h"
 #include "programmodels.h"
@@ -31,7 +31,7 @@ using lpd8::ProgramListModel;
 static const QString SETTINGS_KEY_DEFAULT_NAME = "default/name";
 static const QString SETTINGS_KEY_DEFAULT_SYSEX = "default/sysex";
 
-MainWindow::MainWindow(lpd8::ProgramsDocument &document, QWidget *parent)
+MainWindow::MainWindow(lpd8::ProgramsDocument &document, lpd8::MidiTransport *midi, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , m_document(document)
@@ -120,18 +120,13 @@ MainWindow::MainWindow(lpd8::ProgramsDocument &document, QWidget *parent)
 
     // Enable MIDI send / receive action when connected
 
-    IOMidi *io = nullptr;
-    try {
-        io = new IOMidi(this);
-        midi = io;
-    } catch (const std::runtime_error &e) {
-        qWarning() << "Disabling MIDI: " << e.what();
-        return;
+    if (!midi) {
+        return; // MIDI is off: the MIDI actions stay disabled
     }
 
     // MIDI connections
 
-    auto *connectionsModel = new MidiConnectionsModel(io);
+    connectionsModel = new MidiConnectionsModel(*midi, this);
 
     clientComboBox->setModel(connectionsModel);
     Q_ASSERT(clientComboBox->count() > 0);
@@ -146,7 +141,7 @@ MainWindow::MainWindow(lpd8::ProgramsDocument &document, QWidget *parent)
                 }
             });
 
-    connect(clientComboBox, &QComboBox::activated, connectionsModel, [connectionsModel](int row) {
+    connect(clientComboBox, &QComboBox::activated, connectionsModel, [this](int row) {
         connectionsModel->connectPort(connectionsModel->index(row));
     });
 
@@ -168,10 +163,10 @@ MainWindow::MainWindow(lpd8::ProgramsDocument &document, QWidget *parent)
 
     const QList<QAction *> midiActions = getProgramActions + sendProgramActions;
 
-    // Connected below with connectionsModel as the context: it is the
-    // shortest-lived object the lambda uses (a child of 'io'), so the
-    // connections end when it is destroyed.
-    auto midiActionsSetEnabled = [this, midiActions, connectionsModel]() {
+    // Connected below with connectionsModel as the context: ~MainWindow
+    // deletes it first, while 'ui' still exists, so the connections end
+    // before anything the lambda uses is gone.
+    auto midiActionsSetEnabled = [this, midiActions]() {
         for (QAction *a : midiActions) {
             a->setEnabled(connectionsModel->connected()
                           && ui->programsView->selectionModel()->currentIndex().row() != -1);
@@ -197,29 +192,26 @@ MainWindow::MainWindow(lpd8::ProgramsDocument &document, QWidget *parent)
 
     // Sysex
 
-    auto *sysexHandler = new SysexHandler(io);
+    sysexHandler = new SysexHandler(*midi, this);
 
     connect(sysexHandler, &SysexHandler::programReceived, this, &MainWindow::applyProgramDump);
 
     for (int i = 0; i < getProgramActions.count(); ++i) {
-        connect(getProgramActions[i], &QAction::triggered, sysexHandler, [sysexHandler, i]() {
+        connect(getProgramActions[i], &QAction::triggered, sysexHandler, [this, i]() {
             sysexHandler->getProgram(i + 1);
         });
     }
 
     for (int i = 0; i < sendProgramActions.count(); ++i) {
-        connect(sendProgramActions[i],
-                &QAction::triggered,
-                sysexHandler,
-                [this, sysexHandler, i]() {
-                    const lpd8::StoredProgram *stored = m_document.store().get(currentProgramId());
-                    if (!stored) {
-                        return; // nothing selected (the actions are disabled then)
-                    }
-                    // The same bytes as before the switch: the storage
-                    // format, which sendProgram() turns into a request.
-                    sysexHandler->sendProgram(lpd8::encodeStoredProgram(stored->program), i + 1);
-                });
+        connect(sendProgramActions[i], &QAction::triggered, sysexHandler, [this, i]() {
+            const lpd8::StoredProgram *stored = m_document.store().get(currentProgramId());
+            if (!stored) {
+                return; // nothing selected (the actions are disabled then)
+            }
+            // The same bytes as before the switch: the storage
+            // format, which sendProgram() turns into a request.
+            sysexHandler->sendProgram(lpd8::encodeStoredProgram(stored->program), i + 1);
+        });
     }
 }
 
@@ -232,7 +224,9 @@ MainWindow::~MainWindow()
     // object outside the window's widgets that connects into them:
     //
     // - the save failure handler, which shows a dialog over this window
-    // - the MIDI objects (lambdas using 'ui' and the store)
+    // - the MIDI objects (lambdas using 'ui' and the store). The transport
+    //   outlives the window, so its connections into them end only when
+    //   they are deleted, here.
     // - the selection model's connections to this window (showProgram,
     //   refreshUiAccordingToSelection)
     // - the models (modelReset -> refreshUiAccordingToSelection, which uses
@@ -242,8 +236,10 @@ MainWindow::~MainWindow()
     // tests/mainwindow_test.cpp makes signals fire during the teardown to
     // check this.
     m_document.setSaveFailureHandler({});
-    delete midi;
-    midi = nullptr;
+    delete sysexHandler;
+    sysexHandler = nullptr;
+    delete connectionsModel;
+    connectionsModel = nullptr;
     ui->programsView->selectionModel()->disconnect(this);
     delete programsModel;
     programsModel = nullptr;
