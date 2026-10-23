@@ -8,6 +8,8 @@
 #include <QString>
 
 #include <algorithm>
+#include <functional>
+#include <utility>
 
 // A MidiTransport for tests, with no MIDI at all (doc/IMPROVEMENTS.md, item
 // 4.8a). The test plays the rest of the system: it adds and removes ports
@@ -90,10 +92,24 @@ public:
     // Every message sent, in order.
     const QList<QByteArray> &sent() const { return m_sent; }
 
+    // Called with each message sent, after it is recorded: how a simulated
+    // device (tests/lpd8simulator.h) hears the application. There is one
+    // hook, so one simulator per fake: setting a second one while the first
+    // is there is a mistake (it would silently take the first one's
+    // traffic), and asserts. An empty function removes it.
+    void setSendHook(std::function<void(const QByteArray &)> hook)
+    {
+        Q_ASSERT(!hook || !m_sendHook);
+        m_sendHook = std::move(hook);
+    }
+
 protected:
     bool sendCheckedSysex(QByteArrayView message) override
     {
         m_sent.append(message.toByteArray());
+        if (m_sendHook) {
+            m_sendHook(m_sent.last());
+        }
         return true;
     }
 
@@ -105,6 +121,7 @@ private:
 
     QList<MidiPort> m_ports;
     QList<QByteArray> m_sent;
+    std::function<void(const QByteArray &)> m_sendHook;
 };
 
 #endif // FAKETRANSPORT_H

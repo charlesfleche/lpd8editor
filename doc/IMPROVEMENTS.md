@@ -294,7 +294,7 @@ commit, after the new code is in place and tested on its own.
         Test (M1): the connected device disappears and comes back with a
         new id. The connection state follows, and the source of what it
         sends is its new id.
-- [x] 4.8b The switch, in one commit: `AlsaSeqTransport` replaces `IOMidi`
+- [x] 4.8b [`4f423ec`](https://github.com/charlesfleche/lpd8editor/commit/4f423ecba92818b88066d954e64ca6a662de8fbf) The switch, in one commit: `AlsaSeqTransport` replaces `IOMidi`
       and the ALSA code of `MidiConnectionsModel`.
 
       - `IOMidi` becomes `AlsaSeqTransport` with `git mv`, so the history
@@ -330,7 +330,7 @@ commit, after the new code is in place and tested on its own.
         silent.
       - No behaviour change: a program dump from any client still replaces
         the selected program (that is 4.10).
-- [ ] 4.9 An LPD8 simulator over `FakeTransport`, answering like the device
+- [x] 4.9 An LPD8 simulator over `FakeTransport`, answering like the device
       (get program, send program, four slots), to test the device protocol
       without hardware.
 - [ ] 4.10a `Lpd8Device`, tested against the simulator: match each program
