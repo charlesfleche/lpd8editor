@@ -35,6 +35,8 @@ jobs:
         run: apt-get update && apt-get install --yes --no-install-recommends ca-certificates git
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Install dependencies
         run: tools/ci/install-dependencies.sh clang-format
       - name: Check formatting
@@ -51,6 +53,8 @@ jobs:
         run: apt-get update && apt-get install --yes --no-install-recommends ca-certificates git
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Install dependencies
         run: tools/ci/install-dependencies.sh clang-tidy
       - name: Configure and build
@@ -71,6 +75,8 @@ jobs:
         run: apt-get update && apt-get install --yes --no-install-recommends ca-certificates git
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Install dependencies
         run: tools/ci/install-dependencies.sh cppcheck
       - name: Configure and build
@@ -92,6 +98,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Install dependencies
         run: tools/ci/install-dependencies.sh
       - name: Reduce address space randomization
@@ -100,7 +108,11 @@ jobs:
         # can make ASan crash at startup ('DEADLYSIGNAL'). 28 bits is the
         # usual value, and still random.
         run: sudo sysctl vm.mmap_rnd_bits=28
+      - name: Enable the ALSA sequencer
+        run: tools/ci/enable-alsa-sequencer.sh
       - name: Build and test with ASan and UBSan
+        env:
+          LPD8EDITOR_REQUIRE_ALSA: 1
         run: |
           cmake --preset ${{ matrix.compiler }}-asan -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
           cmake --build --preset ${{ matrix.compiler }}-asan
@@ -114,6 +126,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Install dependencies
         run: tools/ci/install-dependencies.sh
       - name: Reduce address space randomization
@@ -155,6 +169,8 @@ jobs:
         run: apt-get update && apt-get install --yes --no-install-recommends ca-certificates git
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Install dependencies
         run: tools/ci/install-dependencies.sh valgrind
       - name: Build

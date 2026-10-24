@@ -43,7 +43,12 @@ jobs:
       - name: Checkout
         # Actions are pinned to a commit SHA: a tag can be moved to other
         # code, a SHA cannot. Dependabot keeps them up to date.
+        # persist-credentials: false, in every workflow: by default the
+        # checkout leaves the job's token in .git/config, where every later
+        # step (and any build script) can read it.
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install dependencies
         run: tools/ci/install-dependencies.sh
@@ -68,6 +73,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install dependencies
         run: tools/ci/install-dependencies.sh
@@ -78,7 +85,16 @@ jobs:
       - name: Build
         run: cmake --build --preset ${{ matrix.compiler }}-release
 
+      # The runner can load the sequencer module, unlike the trixie
+      # container, so the ALSA tests (alsaseqtransport_test, among them
+      # those of what another local client can do to lpd8editor) run here,
+      # and must not skip.
+      - name: Enable the ALSA sequencer
+        run: tools/ci/enable-alsa-sequencer.sh
+
       - name: Test
+        env:
+          LPD8EDITOR_REQUIRE_ALSA: 1
         run: ctest --preset ${{ matrix.compiler }}-release
 
       - name: Install

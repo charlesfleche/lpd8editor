@@ -1,3 +1,4 @@
+#include "alsa_required.h"
 #include "alsaseqtransport.h"
 #include "deviceprofile.h"
 #include "lpd8codec.h"
@@ -167,6 +168,9 @@ void TestAlsaSeqTransport::initTestCase()
 void TestAlsaSeqTransport::init()
 {
     if (!skipReason.isEmpty()) {
+        if (alsaRequired()) {
+            QFAIL(skipReason.constData()); // LPD8EDITOR_REQUIRE_ALSA is set
+        }
         QSKIP(skipReason.constData());
     }
     a = std::make_unique<AlsaSeqTransport>();
