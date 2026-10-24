@@ -47,6 +47,9 @@ _add_test(storecommands)
 _add_test(sysexassembler)
 _add_test(utils)
 
+# This test plays other ALSA clients, which send events of their choice.
+target_link_libraries(alsaseqtransport_test PRIVATE ALSA::ALSA)
+
 # These tests build old SQLite databases for the migration to read.
 target_link_libraries(migration_test PRIVATE Qt::Sql)
 target_link_libraries(app_test PRIVATE Qt::Sql)

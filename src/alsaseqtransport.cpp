@@ -10,6 +10,7 @@
 
 #include <alsa/asoundlib.h>
 
+#include <algorithm>
 #include <cerrno>
 #include <stdexcept>
 #include <vector>
@@ -31,6 +32,33 @@ namespace {
 QString idOf(const snd_seq_addr_t &addr)
 {
     return QStringLiteral("%1:%2").arg(QString::number(addr.client), QString::number(addr.port));
+}
+
+// How many events readEvents() handles before it returns to the event loop.
+// Any local client can send to the application's port: without a limit, a
+// client that sends as fast as we read (or answers each message with a new
+// one) would keep readEvents() looping, and the window would freeze.
+constexpr int max_events_per_read = 256;
+
+// Whether the payload of 'ev' can be read. Any local client can send any
+// event to the application's port, without a subscription, and the kernel
+// only checks the length type of a variable-length payload:
+// - VARIABLE: the bytes travel with the event, and ext.ptr points into
+//   alsa-lib's input buffer, in this process.
+// - VARUSR ('user variable length'): the kernel passes ext.ptr on
+//   unchanged, so it points into the memory of the process that *sent*
+//   the event, at an address of its choice. Reading it crashes, or reads
+//   this process's memory where the sender chose. Never read it.
+bool hasReadablePayload(const snd_seq_event_t &ev)
+{
+    switch (ev.flags & SND_SEQ_EVENT_LENGTH_MASK) {
+    case SND_SEQ_EVENT_LENGTH_FIXED:
+        return true;
+    case SND_SEQ_EVENT_LENGTH_VARIABLE:
+        return ev.data.ext.ptr != nullptr || ev.data.ext.len == 0;
+    default: // SND_SEQ_EVENT_LENGTH_VARUSR, or a value that doesn't exist
+        return false;
+    }
 }
 
 } // namespace
@@ -87,8 +115,23 @@ struct AlsaSeqTransport::Private
 
     // The ports listed, in the order they appeared.
     QList<snd_seq_addr_t> addrs;
-    // One per source: the bytes of two sources must never be mixed.
-    QHash<QString, SysexAssembler> assemblers;
+    // Feeds a SysEx piece from 'source' to its assembler (see below).
+    SysexAssembler::Result feedSysex(const QString &source, QByteArrayView bytes);
+
+    // One assembler per source: the bytes of two sources must never be
+    // mixed. Only sources with an unfinished message have one, and at most
+    // max_unfinished_sources: a source is a port, and any client can create
+    // up to 254 ports, so a map with one assembler per source ever seen,
+    // each holding up to 4 KB of a message that never ends, grew to the
+    // attacker's liking. 'lastFed' orders them, to evict the least
+    // recently fed when the map is full.
+    struct Source
+    {
+        SysexAssembler assembler{SysexAssembler::default_max_size};
+        quint64 lastFed{0};
+    };
+    QHash<QString, Source> assemblers;
+    quint64 feeds{0};
 };
 
 AlsaSeqTransport::AlsaSeqTransport(QObject *parent)
@@ -168,6 +211,14 @@ AlsaSeqTransport::~AlsaSeqTransport()
 QString AlsaSeqTransport::ownPortId() const
 {
     return idOf(d->ownAddr());
+}
+
+qsizetype AlsaSeqTransport::bufferedSysexBytes() const
+{
+    return std::ranges::fold_left(
+            d->assemblers, qsizetype{0}, [](qsizetype total, const Private::Source &source) {
+                return total + source.assembler.buffered();
+            });
 }
 
 bool AlsaSeqTransport::Private::acceptAddress(const snd_seq_addr_t &addr) const
@@ -307,7 +358,15 @@ void AlsaSeqTransport::disconnectAll()
 
 void AlsaSeqTransport::readEvents()
 {
-    while (snd_seq_event_input_pending(d->handle(), 1) > 0) {
+    for (int count = 0; snd_seq_event_input_pending(d->handle(), 1) > 0; ++count) {
+        if (count == max_events_per_read) {
+            // Come back in a later turn of the event loop, after the rest
+            // of the application. Explicitly: the remaining events may
+            // already be in alsa-lib's buffer rather than the kernel's, and
+            // then the socket notifier would not fire again for them.
+            QMetaObject::invokeMethod(this, &AlsaSeqTransport::readEvents, Qt::QueuedConnection);
+            return;
+        }
         snd_seq_event_t *ev = nullptr;
         const int res = snd_seq_event_input(d->handle(), &ev);
         if (res == -ENOSPC) {
@@ -325,20 +384,39 @@ void AlsaSeqTransport::readEvents()
             return;
         }
 
+        if (!hasReadablePayload(*ev)) {
+            qWarning() << "Ignoring a MIDI event with a foreign payload from client"
+                       << ev->source.client;
+            continue;
+        }
         d->handle(*ev);
     }
 }
 
 void AlsaSeqTransport::Private::handle(const snd_seq_event_t &ev)
 {
+    // Port and subscription announcements come from the system client.
+    // Any other client can send events of the same types to our port, but
+    // the kernel writes the sender's client id itself, so a forged one is
+    // recognized here. Nothing else in an event is to be trusted: the
+    // source port, the type and the content are the sender's choice.
+    if (ev.type != SND_SEQ_EVENT_SYSEX && ev.source.client != SND_SEQ_CLIENT_SYSTEM) {
+        return;
+    }
     switch (ev.type) {
     case SND_SEQ_EVENT_SYSEX: {
-        // The event's data is only valid until the next input: it is
-        // copied by the assembler, or into the messages it returns.
+        // A variable-length payload: readEvents() checked that it is in
+        // alsa-lib's buffer (hasReadablePayload()). It is only valid until
+        // the next input: it is copied by the assembler, or into the
+        // messages it returns. A SysEx event of a fixed length has no
+        // bytes to read.
+        if ((ev.flags & SND_SEQ_EVENT_LENGTH_MASK) != SND_SEQ_EVENT_LENGTH_VARIABLE) {
+            break;
+        }
         const QString source = idOf(ev.source);
         const QByteArrayView bytes(static_cast<const char *>(ev.data.ext.ptr),
                                    static_cast<qsizetype>(ev.data.ext.len));
-        const SysexAssembler::Result result = assemblers[source].feed(bytes);
+        const SysexAssembler::Result result = feedSysex(source, bytes);
         if (result.tooLongReported) {
             qWarning() << "Ignoring a SysEx message from" << source << "longer than"
                        << SysexAssembler::default_max_size << "bytes";
@@ -378,6 +456,42 @@ void AlsaSeqTransport::Private::handle(const snd_seq_event_t &ev)
     default:
         break;
     }
+}
+
+SysexAssembler::Result AlsaSeqTransport::Private::feedSysex(const QString &source,
+                                                            QByteArrayView bytes)
+{
+    auto it = assemblers.find(source);
+    if (it == assemblers.end()) {
+        // Nothing unfinished from this source. An idle assembler ignores
+        // everything until an F0, so without one there is nothing to do.
+        if (!bytes.contains('\xf0')) {
+            return {};
+        }
+        if (assemblers.size() >= max_unfinished_sources) {
+            // Full: the least recently fed message goes. A real device
+            // sends its message in quick succession, so it is not that one,
+            // unless a flood is going on, which would disturb it anyway.
+            auto oldest = assemblers.begin();
+            for (auto i = assemblers.begin(); i != assemblers.end(); ++i) {
+                if (i->lastFed < oldest->lastFed) {
+                    oldest = i;
+                }
+            }
+            // Silently: under a flood, a warning per event would flood the
+            // log too.
+            assemblers.erase(oldest);
+        }
+        it = assemblers.insert(source, Source{});
+    }
+    it->lastFed = ++feeds;
+    SysexAssembler::Result result = it->assembler.feed(bytes);
+    if (it->assembler.buffered() == 0) {
+        // Idle again (or skipping the rest of a message too long, which a
+        // new assembler skips too): nothing to keep.
+        assemblers.erase(it);
+    }
+    return result;
 }
 
 bool AlsaSeqTransport::sendCheckedSysex(QByteArrayView message)

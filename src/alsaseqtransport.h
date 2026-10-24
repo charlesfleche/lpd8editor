@@ -43,6 +43,14 @@ public:
     // The id other transports list this one's port under.
     QString ownPortId() const;
 
+    // At most this many sources have an unfinished SysEx message kept for
+    // reassembly at a time. A source is a port id, and the port of an event
+    // is the sender's choice: without a cap, one client could pose as 256
+    // ports, each holding an unfinished message (see the .cpp file).
+    static constexpr qsizetype max_unfinished_sources = 16;
+    // The bytes of unfinished messages held now, for every source.
+    qsizetype bufferedSysexBytes() const;
+
 protected:
     bool sendCheckedSysex(QByteArrayView message) override;
 

@@ -530,7 +530,7 @@ commit, after the new code is in place and tested on its own.
       platforms. `CLAUDE.md`'s architecture map describes `App`, the store
       and document, the models, the transport and the device, and the
       warnings-as-errors flag is `CMAKE_COMPILE_WARNING_AS_ERROR`.
-- [x] 5.3 Release notes for the next release: the changes users can notice
+- [x] 5.3 [`8df1620`](https://github.com/charlesfleche/lpd8editor/commit/8df162047eb5835e1107d76fced4507cfdf26897) Release notes for the next release: the changes users can notice
       since v0.0.18 (the last tag). Each commit that changes behaviour adds
       a line below, so none is found later as a regression. The list below
       is the source; `doc/RELEASE-NOTES.md` is the same for users, grouped
