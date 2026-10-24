@@ -106,6 +106,46 @@ jobs:
           cmake --build --preset ${{ matrix.compiler }}-asan
           ctest --preset ${{ matrix.compiler }}-asan
 
+  fuzz:
+    name: Fuzzing
+    # On the runner, not in the trixie container: ASan needs the sysctl
+    # below, which a container can't change.
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install dependencies
+        run: tools/ci/install-dependencies.sh
+      - name: Reduce address space randomization
+        # See the sanitizers job.
+        run: sudo sysctl vm.mmap_rnd_bits=28
+      - name: Build the fuzzers
+        run: |
+          cmake --preset clang-fuzz -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+          cmake --build --preset clang-fuzz
+      - name: Run the seeds
+        run: ctest --preset clang-fuzz -R '^fuzz_'
+      - name: Fuzz each target for two minutes
+        # Each fuzzer starts from a copy of its seeds. A failing input is
+        # written to artifacts/<fuzzer>/, and the step fails.
+        run: |
+          status=0
+          for fuzzer in codec migration program_store program_text sysex_assembler; do
+            mkdir -p "$RUNNER_TEMP/corpus/$fuzzer" "artifacts/$fuzzer"
+            cp fuzz/corpus/$fuzzer/* "$RUNNER_TEMP/corpus/$fuzzer/"
+            QT_QPA_PLATFORM=offscreen "build/clang-fuzz/fuzz/${fuzzer}_fuzzer" \
+              "$RUNNER_TEMP/corpus/$fuzzer" \
+              -max_total_time=120 -print_final_stats=1 \
+              -artifact_prefix="artifacts/$fuzzer/" || status=1
+          done
+          exit $status
+      - name: Keep the failing inputs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: fuzz-failures
+          path: artifacts/
+
   valgrind:
     name: Valgrind memcheck
     runs-on: ubuntu-26.04

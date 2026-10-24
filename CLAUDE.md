@@ -35,6 +35,8 @@ Add `-DCMAKE_COMPILE_WARNING_AS_ERROR=ON` to treat warnings as errors (CI does).
 
 Tests live in `tests/` and are registered in `tests/CMakeLists.txt` with `_add_test(<name>)`, which builds `<name>_test.cpp` and links it against the `lpd8editor-lib` static library. Adding a test means creating `tests/<name>_test.cpp` and adding one `_add_test` line. Tests run with `QT_QPA_PLATFORM=offscreen`; widget tests use `QTest::failOnWarning()`, so the offscreen plugin's "propagateSizeHints" warning must be expected each time a window or box is shown. `alsaseqtransport_test` opens real ALSA sequencer clients and skips without `/dev/snd/seq`; every other MIDI test uses `FakeTransport` and `Lpd8Simulator` (`tests/`). The `.desktop` and AppStream files in `data/` are validated by tests that are skipped when `desktop-file-validate` or `appstreamcli` is missing (CI configures with `-DLPD8EDITOR_REQUIRE_VALIDATORS=ON`, which makes them fail instead). On a release tag, `metainfo_release_version` checks that the metainfo's newest `<release>` is the tagged version.
 
+Fuzzers for the parsers of outside input are in `fuzz/` (see `fuzz/README.md`); `ctest` replays their seeds as `fuzz_<name>`.
+
 The version comes from `git describe` (tags like `vx.y.z`), or else from the source folder name (`lpd8editor-x.y.z`). It is written into the generated `app_info.h`.
 
 ## Architecture

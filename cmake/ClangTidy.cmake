@@ -46,8 +46,8 @@ endif()
 # folders). These command-line filters override HeaderFilterRegex from
 # .clang-tidy, whose looser pattern is for editors.
 string(REGEX REPLACE "([][.*+?^$(){}|\\])" "\\\\\\1" _source_regex "${CMAKE_SOURCE_DIR}")
-set(_tidy_header_filter "^${_source_regex}/(src|tests)/[^/]*\\.h$")
-set(_tidy_file_filter "^${_source_regex}/(src|tests)/[^/]*\\.cpp$")
+set(_tidy_header_filter "^${_source_regex}/(src|tests|fuzz)/[^/]*\\.h$")
+set(_tidy_file_filter "^${_source_regex}/(src|tests|fuzz)/[^/]*\\.cpp$")
 
 if (LPD8EDITOR_CLANG_TIDY)
     if (NOT CLANG_TIDY_EXECUTABLE)

@@ -34,6 +34,8 @@ file(GLOB_RECURSE _format_sources CONFIGURE_DEPENDS
     "${CMAKE_SOURCE_DIR}/src/*.h"
     "${CMAKE_SOURCE_DIR}/tests/*.cpp"
     "${CMAKE_SOURCE_DIR}/tests/*.h"
+    "${CMAKE_SOURCE_DIR}/fuzz/*.cpp"
+    "${CMAKE_SOURCE_DIR}/fuzz/*.h"
 )
 
 add_custom_target(format

@@ -30,6 +30,7 @@ add_custom_target(cppcheck
         # <source>/build/<preset>/src/... files.
         --file-filter=${CMAKE_SOURCE_DIR}/src/*
         --file-filter=${CMAKE_SOURCE_DIR}/tests/*
+        --file-filter=${CMAKE_SOURCE_DIR}/fuzz/*
         --error-exitcode=1
         --quiet
         -j 4

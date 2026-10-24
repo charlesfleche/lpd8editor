@@ -67,6 +67,16 @@
       "cacheVariables": { "LPD8EDITOR_SANITIZERS": "address;undefined" }
     },
     {
+      "name": "clang-fuzz",
+      "displayName": "Clang, libFuzzer fuzzers with ASan + UBSan (see fuzz/README.md)",
+      "inherits": ["clang", "debug"],
+      "cacheVariables": {
+        "LPD8EDITOR_SANITIZERS": "address;undefined",
+        "LPD8EDITOR_FUZZ": "ON",
+        "CMAKE_CXX_FLAGS": "-O1"
+      }
+    },
+    {
       "name": "valgrind",
       "displayName": "GCC, debug, for valgrind: ctest --test-dir build/valgrind -T memcheck (no sanitizers: they don't mix)",
       "inherits": ["gcc", "debug"],
@@ -80,6 +90,7 @@
     { "name": "clang-release", "configurePreset": "clang-release" },
     { "name": "gcc-asan", "configurePreset": "gcc-asan" },
     { "name": "clang-asan", "configurePreset": "clang-asan" },
+    { "name": "clang-fuzz", "configurePreset": "clang-fuzz" },
     { "name": "valgrind", "configurePreset": "valgrind" }
   ],
   "testPresets": [
@@ -94,7 +105,8 @@
     { "name": "clang-debug", "inherits": "base", "configurePreset": "clang-debug" },
     { "name": "clang-release", "inherits": "base", "configurePreset": "clang-release" },
     { "name": "gcc-asan", "inherits": "base", "configurePreset": "gcc-asan" },
-    { "name": "clang-asan", "inherits": "base", "configurePreset": "clang-asan" }
+    { "name": "clang-asan", "inherits": "base", "configurePreset": "clang-asan" },
+    { "name": "clang-fuzz", "inherits": "base", "configurePreset": "clang-fuzz" }
   ],
   "workflowPresets": [
     {

@@ -1,0 +1,103 @@
+{
+    "format": 1,
+    "nextId": 2,
+    "programs": [
+        {
+            "id": 1,
+            "name": "Drums",
+            "channel": 9,
+            "pads": [
+                {
+                    "note": 128,
+                    "programChange": 1,
+                    "controlChange": 48,
+                    "toggle": false
+                },
+                {
+                    "note": 37,
+                    "programChange": 2,
+                    "controlChange": 49,
+                    "toggle": false
+                },
+                {
+                    "note": 38,
+                    "programChange": 3,
+                    "controlChange": 50,
+                    "toggle": false
+                },
+                {
+                    "note": 39,
+                    "programChange": 4,
+                    "controlChange": 51,
+                    "toggle": false
+                },
+                {
+                    "note": 40,
+                    "programChange": 5,
+                    "controlChange": 16,
+                    "toggle": false
+                },
+                {
+                    "note": 41,
+                    "programChange": 6,
+                    "controlChange": 17,
+                    "toggle": false
+                },
+                {
+                    "note": 42,
+                    "programChange": 7,
+                    "controlChange": 18,
+                    "toggle": false
+                },
+                {
+                    "note": 43,
+                    "programChange": 8,
+                    "controlChange": 19,
+                    "toggle": false
+                }
+            ],
+            "knobs": [
+                {
+                    "controlChange": 16,
+                    "low": 0,
+                    "high": 127
+                },
+                {
+                    "controlChange": 17,
+                    "low": 0,
+                    "high": 127
+                },
+                {
+                    "controlChange": 18,
+                    "low": 0,
+                    "high": 127
+                },
+                {
+                    "controlChange": 19,
+                    "low": 0,
+                    "high": 127
+                },
+                {
+                    "controlChange": 48,
+                    "low": 0,
+                    "high": 127
+                },
+                {
+                    "controlChange": 49,
+                    "low": 0,
+                    "high": 127
+                },
+                {
+                    "controlChange": 50,
+                    "low": 0,
+                    "high": 127
+                },
+                {
+                    "controlChange": 51,
+                    "low": 0,
+                    "high": 127
+                }
+            ]
+        }
+    ]
+}

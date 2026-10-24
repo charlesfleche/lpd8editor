@@ -1,0 +1,9 @@
+# clang-tidy settings for the fuzzers: the project's settings, with one
+# change, as for the tests (tests/.clang-tidy).
+InheritParentConfig: true
+Checks:
+  # check(x.has_value()) aborts when x is empty, but through a function
+  # call, so this check can't see it and reports every later access. The
+  # fuzzers read optionals with .value(), which throws on an empty one: an
+  # uncaught exception, which libFuzzer reports, never undefined behaviour.
+  - -bugprone-unchecked-optional-access
