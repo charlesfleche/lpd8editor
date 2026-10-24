@@ -52,7 +52,7 @@ QString describe(const MigrationReport &report);
 //   left with a 'hot journal' (db.sqlite3-journal, after a crash during a
 //   write): a read-only connection can't roll it back, so SQLite refuses it.
 //   The next start then fails the same way, so the user must be told
-//   (doc/IMPROVEMENTS.md, item 4.11).
+//   (doc/IMPROVEMENTS.md, item 4.11b).
 std::expected<std::optional<MigrationReport>, QString>
 migrateSqliteDatabase(const QString &sqlitePath, const QString &jsonPath);
 

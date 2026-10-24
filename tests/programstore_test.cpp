@@ -2,9 +2,13 @@
 #include "programstore.h"
 
 #include <QFile>
+#include <QScopeGuard>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest>
+
+#include <sys/stat.h>
+#include <unistd.h>
 
 using namespace lpd8;
 
@@ -64,6 +68,10 @@ private slots:
     void test_newerFormatIsNotOverwritten();
     void test_tooLargeFileIsRefused();
     void test_setAsideKeepsTheBytes();
+    void test_aDirectoryCannotBeRead();
+    void test_aFifoDoesNotBlock();
+    void test_aFolderThatCannotBeEnteredIsNotAFirstStart();
+    void test_setAsideRefusesATakenName();
     void test_saveCreatesTheFolder();
     void test_saveReportsFailure();
 
@@ -340,6 +348,10 @@ void TestProgramStore::test_loadRejects_data()
 {
     QTest::addColumn<QByteArray>("json");
     QTest::addColumn<QString>("error");
+    QTest::addColumn<LoadError::Kind>("kind");
+
+    constexpr auto damaged = LoadError::Kind::Damaged;
+    constexpr auto newer = LoadError::Kind::NewerFormat;
 
     StoreContent content;
     content.programs = {StoredProgram{.id = 1, .name = "Drums", .program = someProgram()}};
@@ -350,39 +362,44 @@ void TestProgramStore::test_loadRejects_data()
         return json.replace(json.indexOf(from), from.size(), to);
     };
 
-    QTest::newRow("Not JSON") << QByteArray("{ nope") << "not valid JSON";
-    QTest::newRow("Not an object") << QByteArray("[]") << "not an lpd8editor programs file";
-    QTest::newRow("No format") << edited(R"("format": 1)", R"("formats": 1)")
-                               << "no format version";
-    QTest::newRow("Newer format") << edited(R"("format": 1)", R"("format": 2)") << "newer version";
-    QTest::newRow("Huge format") << edited(R"("format": 1)", R"("format": 1e20)")
-                                 << "newer version";
-    QTest::newRow("Format 1.5") << edited(R"("format": 1)", R"("format": 1.5)") << "newer version";
+    QTest::newRow("Not JSON") << QByteArray("{ nope") << "not valid JSON" << damaged;
+    QTest::newRow("Not an object")
+            << QByteArray("[]") << "not an lpd8editor programs file" << damaged;
+    QTest::newRow("No format") << edited(R"("format": 1)", R"("formats": 1)") << "no format version"
+                               << damaged;
+    QTest::newRow("Newer format") << edited(R"("format": 1)", R"("format": 2)") << "newer version"
+                                  << newer;
+    QTest::newRow("Huge format") << edited(R"("format": 1)", R"("format": 1e20)") << "newer version"
+                                 << newer;
+    QTest::newRow("Format 1.5") << edited(R"("format": 1)", R"("format": 1.5)") << "newer version"
+                                << newer;
     QTest::newRow("Format 0.5") << edited(R"("format": 1)", R"("format": 0.5)")
-                                << "unknown format version 0.5";
-    QTest::newRow("Unknown root key") << edited(R"("nextId")", R"("next")") << "unknown key 'next'";
-    QTest::newRow("No nextId") << edited(R"("nextId": 1,)", "") << "'nextId' must be an integer";
-    QTest::newRow("nextId above the cap")
-            << edited(R"("nextId": 1)", R"("nextId": 2147483648)") << "'nextId' must be an integer";
+                                << "unknown format version 0.5" << damaged;
+    QTest::newRow("Unknown root key")
+            << edited(R"("nextId")", R"("next")") << "unknown key 'next'" << damaged;
+    QTest::newRow("No nextId") << edited(R"("nextId": 1,)", "") << "'nextId' must be an integer"
+                               << damaged;
+    QTest::newRow("nextId above the cap") << edited(R"("nextId": 1)", R"("nextId": 2147483648)")
+                                          << "'nextId' must be an integer" << damaged;
     QTest::newRow("Id at INT_MAX") << edited(R"("id": 1)", R"("id": 2147483647)")
-                                   << "'id' must be an integer from 1 to 2147483646";
+                                   << "'id' must be an integer from 1 to 2147483646" << damaged;
     QTest::newRow("Unknown program key")
             << edited(R"("channel": 9)", R"("channel": 9, "colour": "red")")
-            << "unknown key 'colour'";
+            << "unknown key 'colour'" << damaged;
     QTest::newRow("Typo in a pad key")
             << edited(R"("toggle": false)", R"("toggle": false, "Toggle": true)")
-            << "pad 1: unknown key 'Toggle'";
-    QTest::newRow("Note 300")
-            << edited(R"("note": 36)", R"("note": 300)")
-            << "program 1 (Drums): pad 1: 'note' must be an integer from 0 to 127";
+            << "pad 1: unknown key 'Toggle'" << damaged;
+    QTest::newRow("Note 300") << edited(R"("note": 36)", R"("note": 300)")
+                              << "program 1 (Drums): pad 1: 'note' must be an integer from 0 to 127"
+                              << damaged;
     QTest::newRow("Note 36.5") << edited(R"("note": 36)", R"("note": 36.5)")
-                               << "'note' must be an integer";
-    QTest::newRow("Toggle not a boolean")
-            << edited(R"("toggle": false)", R"("toggle": 0)") << "'toggle' must be true or false";
+                               << "'note' must be an integer" << damaged;
+    QTest::newRow("Toggle not a boolean") << edited(R"("toggle": false)", R"("toggle": 0)")
+                                          << "'toggle' must be true or false" << damaged;
     QTest::newRow("Channel 16") << edited(R"("channel": 9)", R"("channel": 16)")
-                                << "'channel' must be an integer from 0 to 15";
+                                << "'channel' must be an integer from 0 to 15" << damaged;
     QTest::newRow("Name not a string")
-            << edited(R"("name": "Drums")", R"("name": 3)") << "'name' must be a string";
+            << edited(R"("name": "Drums")", R"("name": 3)") << "'name' must be a string" << damaged;
 }
 
 void TestProgramStore::test_loadRejects()
@@ -390,11 +407,13 @@ void TestProgramStore::test_loadRejects()
     // NOLINTBEGIN(misc-const-correctness): QFETCH declares the variables
     QFETCH(QByteArray, json);
     QFETCH(QString, error);
+    QFETCH(LoadError::Kind, kind);
     // NOLINTEND(misc-const-correctness)
 
     const auto read = fromJson(json);
     QVERIFY(!read.has_value());
-    QVERIFY2(read.error().contains(error), qPrintable(read.error()));
+    QVERIFY2(read.error().message.contains(error), qPrintable(read.error().message));
+    QCOMPARE(read.error().kind, kind);
 }
 
 void TestProgramStore::test_failedLoadKeepsStoreAndProtectsFile()
@@ -412,7 +431,9 @@ void TestProgramStore::test_failedLoadKeepsStoreAndProtectsFile()
     QCOMPARE(reset.count(), 0);
     QVERIFY(hasProgram(store, id)); // unchanged
     QVERIFY(!store.isWritable());
-    QCOMPARE(store.loadError(), loaded.error());
+    QCOMPARE(store.loadError().value().message, loaded.error().message);
+    QCOMPARE(store.loadError().value().kind, LoadError::Kind::Damaged);
+    QCOMPARE(loaded.error().kind, LoadError::Kind::Damaged);
 
     // Never overwritten.
     QVERIFY(!store.save().has_value());
@@ -444,8 +465,12 @@ void TestProgramStore::test_newerFormatIsNotOverwritten()
     writeAll(path, newer);
 
     ProgramStore store(path);
-    QVERIFY(!store.load().has_value());
+    const auto loaded = store.load();
+    QVERIFY(!loaded.has_value());
+    QCOMPARE(loaded.error().kind, LoadError::Kind::NewerFormat);
     QVERIFY(!store.save().has_value());
+    // Not damaged: it stays where the newer version will look for it.
+    QVERIFY(!store.setAsideUnreadableFile().has_value());
     QCOMPARE(readAll(path), newer);
 }
 
@@ -455,7 +480,8 @@ void TestProgramStore::test_tooLargeFileIsRefused()
     ProgramStore store(path);
     const auto loaded = store.load();
     QVERIFY(!loaded.has_value());
-    QVERIFY2(loaded.error().contains("too large"), qPrintable(loaded.error()));
+    QVERIFY2(loaded.error().message.contains("too large"), qPrintable(loaded.error().message));
+    QCOMPARE(loaded.error().kind, LoadError::Kind::Damaged);
     QVERIFY(!store.isWritable());
 }
 
@@ -471,11 +497,105 @@ void TestProgramStore::test_setAsideKeepsTheBytes()
     QCOMPARE(readAll(aside), corrupt); // the user's bytes, intact
     QVERIFY(!QFile::exists(path));
     QVERIFY(store.isWritable());
-    QVERIFY(store.loadError().isEmpty());
+    QVERIFY(!store.loadError().has_value());
     QVERIFY(store.save().has_value());
 
     // Nothing left to set aside.
     QVERIFY(!store.setAsideUnreadableFile().has_value());
+}
+
+void TestProgramStore::test_aDirectoryCannotBeRead()
+{
+    // G1: a directory where the file should be: CannotRead (nothing to set
+    // aside), not Damaged. It fails the same way for root, so CI tests it.
+    QVERIFY(QDir().mkpath(path));
+    ProgramStore store(path);
+    const auto loaded = store.load();
+    QVERIFY(!loaded.has_value());
+    QCOMPARE(loaded.error().kind, LoadError::Kind::CannotRead);
+    QVERIFY(!store.isWritable());
+    QVERIFY(!store.save().has_value());
+    QVERIFY(QFileInfo(path).isDir());
+
+    // R2: not Damaged, so it is not set aside: nothing is renamed.
+    const QDateTime when(QDate(2026, 1, 2), QTime(3, 4, 5));
+    QVERIFY(!store.setAsideUnreadableFile(when).has_value());
+    QVERIFY(QFileInfo(path).isDir());
+    QVERIFY(!QFileInfo::exists(path + ".corrupt-20260102-030405"));
+    QVERIFY(!store.isWritable());
+}
+
+void TestProgramStore::test_aFifoDoesNotBlock()
+{
+    // Opening a FIFO for reading blocks until a writer comes: the store
+    // must not even try. CannotRead, at once.
+    QVERIFY(QDir().mkpath(QFileInfo(path).absolutePath()));
+    QCOMPARE(::mkfifo(QFile::encodeName(path).constData(), 0600), 0);
+    ProgramStore store(path);
+    const auto loaded = store.load();
+    QVERIFY(!loaded.has_value());
+    QCOMPARE(loaded.error().kind, LoadError::Kind::CannotRead);
+    QVERIFY(!store.isWritable());
+    QVERIFY(!store.save().has_value());
+    QVERIFY(!store.setAsideUnreadableFile().has_value());
+    // Still the FIFO, not renamed.
+    QVERIFY(QFileInfo::exists(path));
+    QVERIFY(!QFileInfo(path).isFile());
+}
+
+void TestProgramStore::test_aFolderThatCannotBeEnteredIsNotAFirstStart()
+{
+    // R6: stat() fails with EACCES, not ENOENT. Taking that for a missing
+    // file would start empty and, at the first save attempt, report a
+    // confusing error, or worse, write elsewhere. Root ignores permissions,
+    // so there the file is simply read and this test can't provoke the
+    // error.
+    if (::geteuid() == 0) {
+        QSKIP("root can enter any folder");
+    }
+    const QString locked = dir->filePath("locked");
+    QVERIFY(QDir().mkpath(locked));
+    const QString inside = locked + "/programs.json";
+    writeAll(inside, toJson(StoreContent{}));
+    QVERIFY(QFile::setPermissions(locked, QFileDevice::Permissions{}));
+    // Restored even if a check fails, so QTemporaryDir can remove it.
+    const auto restore = qScopeGuard([&locked] {
+        QFile::setPermissions(
+                locked, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
+    });
+
+    ProgramStore store(inside);
+    const auto loaded = store.load();
+    QVERIFY(!loaded.has_value());
+    QCOMPARE(loaded.error().kind, LoadError::Kind::CannotRead);
+    QVERIFY(!store.isWritable());
+    QVERIFY(!store.setAsideUnreadableFile().has_value());
+}
+
+void TestProgramStore::test_setAsideRefusesATakenName()
+{
+    // G1: QFile::rename() never replaces an existing file. With the
+    // timestamp fixed, the target name can be taken in advance: the rename
+    // fails, for root too, and nothing is lost.
+    const QByteArray corrupt = "{ broken";
+    writeAll(path, corrupt);
+    const QDateTime when(QDate(2026, 1, 2), QTime(3, 4, 5));
+    const QString taken = path + ".corrupt-20260102-030405";
+    writeAll(taken, "an earlier one");
+
+    ProgramStore store(path);
+    QVERIFY(!store.load().has_value());
+    const auto aside = store.setAsideUnreadableFile(when);
+    QVERIFY(!aside.has_value());
+    QVERIFY(aside.error().contains(QDir::toNativeSeparators(taken)));
+    QCOMPARE(readAll(path), corrupt);
+    QCOMPARE(readAll(taken), QByteArray("an earlier one"));
+    QVERIFY(!store.isWritable());
+
+    // A second later, the name is free.
+    const QString moved = store.setAsideUnreadableFile(when.addSecs(1)).value();
+    QCOMPARE(moved, path + ".corrupt-20260102-030406");
+    QCOMPARE(readAll(moved), corrupt);
 }
 
 void TestProgramStore::test_saveCreatesTheFolder()

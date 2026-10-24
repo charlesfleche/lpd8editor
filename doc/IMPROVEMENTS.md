@@ -380,7 +380,7 @@ commit, after the new code is in place and tested on its own.
         own send hook on the fake, test-only: real backends never do this),
         and the answer is accepted, since the request's state is set before
         the message is sent (L1).
-- [x] 4.10b The switch of the MIDI menu to `Lpd8Device`, in one commit.
+- [x] 4.10b [`b893d16`](https://github.com/charlesfleche/lpd8editor/commit/b893d16e27c33b341b89d63e9f2f1ef8ef1091c2) The switch of the MIDI menu to `Lpd8Device`, in one commit.
       `SysexHandler` and what is left of `lpd8_sysex.*` are deleted, and
       the 'program received' path goes through the device. This is a
       behaviour change, for the release notes (5.3): only answers to the
@@ -402,29 +402,103 @@ commit, after the new code is in place and tested on its own.
         one message, not one each.
       - The old `Q_UNIMPLEMENTED()` for "nothing selected" goes: Get is
         disabled with no selection, and the target is fixed at request time.
-- [ ] 4.11 Composition root: an `App` object owns and wires the store, the
-      device, and the window, so `MainWindow` only displays things.
+- [x] 4.11a The programs file's load error gets a kind (`LoadError`):
+      `CannotRead` (permissions, I/O, not a regular file), `Damaged`, and
+      `NewerFormat`, so the startup can offer what fits (4.11b): only a
+      damaged file may be set aside. `setAsideUnreadableFile()` takes the
+      time that names the file, so a test can make the rename fail. Both
+      error paths are tested in ways that work for root too (G1): a
+      directory and a FIFO named `programs.json`, and a set-aside whose
+      target name is taken. The store keeps the kind, and
+      `setAsideUnreadableFile()` refuses unless the last load failed as
+      `Damaged` (a directory, then a set-aside: refused, nothing renamed).
+      A `LoadError` built without a kind is `CannotRead`, the strictest. The
+      file is read with a bound (the limit plus one byte), not checked for
+      size and then read whole. A `stat` that fails with anything but
+      "not found" (`EACCES` on a folder above the file) is `CannotRead`, not
+      a first start; its test is skipped as root, which can enter any
+      folder. The read-error path itself (an I/O error mid-read) is not
+      tested: it can't be provoked without a faulty device.
+- [ ] 4.11b Composition root: an `App` object runs the startup and owns the
+      document, the transport and the window, in that order (so they are
+      destroyed window first). `main()` becomes: `QApplication`, `App`,
+      `exec()`. `startup.*` folds into it. For a load failing right after
+      a migration, the part that reports the migration (its report in the
+      refusal, and no "nothing was changed") is kept word for word; the old
+      generic advice ("use the newer version, or move it elsewhere") goes,
+      replaced by the advice of each kind below. The save at quit
+      (`aboutToQuit` and `commitDataRequest`, connected in `main()` today)
+      moves into `App` too.
 
-      If the programs file can't be read at startup (`ProgramStore::load()`
-      fails: corrupt, or written by a newer version), `App` must tell the
-      user why, and must not save over it. Setting the file aside
-      (`ProgramStore::setAsideUnreadableFile()`, which renames and never
-      deletes) happens only after asking the user. Until then the store
-      refuses to save, so the user must also be told that changes can't be
-      kept.
+      The startup questions go through a `StartupDialogs` interface,
+      implemented with modal message boxes, used only before the event
+      loop, and faked in the tests. Quit is the default button and Escape
+      everywhere. Apart from the migration itself, nothing is written unless
+      the user picks an action that writes, and setting a file aside is the
+      only one. `App` takes the clock (the time that names a set-aside file)
+      as a parameter, so a test can pick the target name and take it in
+      advance.
 
-      `App` also runs the migration (`migrateSqliteDatabase()`, item 4.4) at
-      startup, and must show its result at the first start after it ran:
-      how many programs were migrated, each skipped program with the reason,
-      and where the old database now is, because the skipped programs' data
-      only lives there. The same report is saved next to the backup
-      (`<backup>.txt`, written by the migration before the rename), so it
-      can still be found if the application stops before the user reads
-      it: the message names that file. If the old database could not be
-      renamed, say so. If
-      the migration fails (an unreadable database, for example one left with
-      a hot journal by a crash), tell the user at each start, since it will
-      be retried and fail the same way.
+      - The migration fails: Quit or Retry. Never "start without
+        migrating", which would write the programs file and strand the old
+        programs. The question says what to do before retrying (close the
+        other program using the database; for a hot journal, where the
+        `-journal` file is). To tell a hot journal apart, the migration's
+        error becomes structured: `migrateSqliteDatabase()` returns a
+        `MigrationError` (a kind, `HotJournal` or `Other`, the message, and
+        the journal's path) instead of a `QString`. Test: a database with a
+        `-journal` file next to it fails as `HotJournal`, with that path.
+      - The programs file can't be loaded: `Damaged` offers Quit or Set
+        aside (rename, never delete, then say where the file went, and
+        start with no programs). `NewerFormat` and `CannotRead` offer Quit
+        only: use the newer lpd8editor, or check the file's permissions.
+        A format above 1 that is not an integer (1.5), or that doesn't fit
+        in an int (1e20), counts as `NewerFormat` on purpose: the
+        conservative choice, Quit only, since such a file may come from a
+        version that doesn't exist yet. If the set-aside fails (the rename is refused), the error
+        is shown, and then Quit is the only choice.
+        There is no read-only mode: quitting would have to ask whether to
+        lose the changes, and the session manager may forbid asking
+        (`commitDataRequest` without interaction), so it couldn't be made
+        honest.
+      - The migration report, if any, is shown after the window, with the
+        window as its parent. It names the report file next to the backup.
+      - Tests, each branch through `App`, with both files byte-identical
+        after every Quit: a first start; a migration and its notice
+        (parented to the window); a migration failure, Quit, then Retry
+        that succeeds; a damaged file, Quit, then Set aside (renamed,
+        content intact, started empty, and the next start is a first start
+        that leaves the set-aside file untouched); a newer format (no
+        set-aside offered); a directory (`CannotRead`); a failed set-aside
+        (the target name taken: the error, then Quit only, both files
+        intact); and a load failing after a migration.
+- [ ] 4.11c `App` owns the device too, and the window only displays what it
+      is given: `MainWindow(document, transport, device)` uses them and owns
+      none. The selection-bound logic stays in the window, as view state
+      (the target program of a request, the actions off while busy).
+
+      - The document's save-failure handler moves to `App`. Every runtime
+        problem, MIDI or save, goes to the window's one non-modal box
+        (`MainWindow::showProblem()`). A problem that comes while the box
+        is shown is added to its text, unless it is already there: none is
+        lost, and none stacks (G2). Test: a MIDI failure, then a save
+        failure while the box is up, give one box with both.
+      - A save failing while the session manager ends the session (G3):
+        with no interaction allowed, it is logged with `qCritical`, and
+        nothing is shown. With interaction allowed, it is asked for
+        (`QSessionManager::allowsInteraction()`), shown, then released.
+        Tested through the dialog fake.
+      - The final save, when the window closes (`closeEvent`) or the
+        application quits (`aboutToQuit`), can't use the non-modal box: the
+        window is going away, and the box with it. A failed final save is
+        shown modally instead (a `QMessageBox` with no parent window,
+        through the same dialog interface), so it is seen before the
+        application ends. Test: a final save that fails shows one modal
+        message, through the fake.
+      - C2: the device now outlives the window, so `~MainWindow` disconnects
+        it in its body, and the teardown test fires its signals too.
+      - `doc/ARCHITECTURE.md`'s App section matches the code. One line in
+        5.3: a damaged programs file can be set aside at startup.
 
 ## Phase 5: packaging and documentation
 

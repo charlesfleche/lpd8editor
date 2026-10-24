@@ -13,7 +13,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
 #include <initializer_list>
+#include <system_error>
 #include <utility>
 
 using namespace Qt::StringLiterals; // "..."_L1
@@ -256,22 +258,25 @@ QByteArray toJson(const StoreContent &content)
     return QJsonDocument(root).toJson(QJsonDocument::Indented);
 }
 
-std::expected<StoreContent, QString> fromJson(const QByteArray &json)
+std::expected<StoreContent, LoadError> fromJson(const QByteArray &json)
 {
+    const auto damaged = [](const QString &why) {
+        return std::unexpected(LoadError{.kind = LoadError::Kind::Damaged, .message = why});
+    };
     QJsonParseError parseError{};
     const QJsonDocument document = QJsonDocument::fromJson(json, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
-        return Error(tr("not valid JSON (%1 at offset %2)")
-                             .arg(parseError.errorString(), QString::number(parseError.offset)));
+        return damaged(tr("not valid JSON (%1 at offset %2)")
+                               .arg(parseError.errorString(), QString::number(parseError.offset)));
     }
     if (!document.isObject()) {
-        return Error(tr("not an lpd8editor programs file"));
+        return damaged(tr("not an lpd8editor programs file"));
     }
     const QJsonObject root = document.object();
 
     const QJsonValue formatValue = root.value("format"_L1);
     if (!formatValue.isDouble()) {
-        return Error(tr("not an lpd8editor programs file (no format version)"));
+        return damaged(tr("not an lpd8editor programs file (no format version)"));
     }
     // Compared as a number: a version that is not an integer, or doesn't fit
     // in an int, must not be read as 0.
@@ -279,41 +284,44 @@ std::expected<StoreContent, QString> fromJson(const QByteArray &json)
     if (format > store_format_version) {
         // Never half-read a newer format: saving it back would lose what this
         // version doesn't know about.
-        return Error(tr("written by a newer version of lpd8editor (format %1, this version reads "
-                        "up to %2)")
-                             .arg(QString::number(format), QString::number(store_format_version)));
+        return std::unexpected(LoadError{
+                .kind = LoadError::Kind::NewerFormat,
+                .message = tr("written by a newer version of lpd8editor (format %1, this version "
+                              "reads up to %2)")
+                                   .arg(QString::number(format),
+                                        QString::number(store_format_version))});
     }
     if (format != store_format_version) {
-        return Error(tr("unknown format version %1").arg(QString::number(format)));
+        return damaged(tr("unknown format version %1").arg(QString::number(format)));
     }
     if (const auto unknown = unknownKey(root, {"format"_L1, "nextId"_L1, "programs"_L1})) {
-        return Error(*unknown);
+        return damaged(*unknown);
     }
 
     // nextId may be max_program_id + 1: then no id is left to hand out.
     const auto nextId = wholeNumber(root.value("nextId"_L1));
     if (!nextId || *nextId < 1 || *nextId > max_program_id + 1.0) {
-        return Error(tr("'nextId' must be an integer from 1 to %1").arg(max_program_id + 1));
+        return damaged(tr("'nextId' must be an integer from 1 to %1").arg(max_program_id + 1));
     }
 
     const QJsonValue programsValue = root.value("programs"_L1);
     if (!programsValue.isArray()) {
-        return Error(tr("'programs' must be a list"));
+        return damaged(tr("'programs' must be a list"));
     }
 
     QList<StoredProgram> programs;
     for (const QJsonValue value : programsValue.toArray()) {
         if (!value.isObject()) {
-            return Error(tr("each program must be an object"));
+            return damaged(tr("each program must be an object"));
         }
         auto stored = programFromJson(value.toObject());
         if (!stored) {
-            return Error(stored.error());
+            return damaged(stored.error());
         }
         const bool duplicate = std::ranges::any_of(
                 programs, [&](const StoredProgram &p) { return p.id == stored->id; });
         if (duplicate) {
-            return Error(tr("two programs have the id %1").arg(stored->id));
+            return damaged(tr("two programs have the id %1").arg(stored->id));
         }
         programs.append(std::move(*stored));
     }
@@ -433,7 +441,7 @@ bool ProgramStore::setName(int id, const QString &name)
     return true;
 }
 
-std::expected<void, QString> ProgramStore::load()
+std::expected<void, LoadError> ProgramStore::load()
 {
     const QString file = QDir::toNativeSeparators(m_path);
     const auto replaceWith = [this](StoreContent content) {
@@ -441,33 +449,57 @@ std::expected<void, QString> ProgramStore::load()
         m_programs = std::move(content.programs);
         // Also above any id handed out earlier in this session.
         m_nextId = std::max(m_nextId, content.nextId);
-        m_loadError.clear();
+        m_loadError.reset();
         emit programsReset();
     };
 
-    QFile f(m_path);
-    if (!f.exists()) {
+    // std::filesystem tells "not there" (ENOENT, ENOTDIR) apart from "can't
+    // look" (EACCES on a folder above it, an I/O error): QFile::exists()
+    // returns false for both, and a programs file behind a folder the user
+    // can't enter would be taken for a first start.
+    std::error_code statError;
+    const auto status = std::filesystem::status(QFile::encodeName(m_path).toStdString(), statError);
+    if (status.type() == std::filesystem::file_type::not_found) {
         // The first start: no programs yet. An empty store stays as it is,
         // without signals: a change that changes nothing emits nothing.
-        m_loadError.clear();
+        m_loadError.reset();
         if (!m_programs.isEmpty()) {
             replaceWith(StoreContent{.programs = {}, .nextId = 1});
         }
         return {};
     }
-    const auto unreadable = [this, &file](const QString &why) {
-        m_loadError = tr("Cannot read the programs file %1: %2").arg(file, why);
-        return Error(m_loadError);
+    const auto unreadable = [this, &file](LoadError::Kind kind, const QString &why) {
+        m_loadError = LoadError{
+                .kind = kind, .message = tr("Cannot read the programs file %1: %2").arg(file, why)};
+        return std::unexpected(*m_loadError);
     };
-    if (f.size() > max_store_file_size) {
-        return unreadable(tr("too large to be a programs file"));
+    if (statError) {
+        return unreadable(LoadError::Kind::CannotRead, QString::fromLocal8Bit(statError.message()));
     }
+    // Anything but a regular file can't be read as one. QFile::open()
+    // already refuses a directory, but opening a FIFO would block until
+    // something writes to it: the application would hang at startup.
+    if (status.type() != std::filesystem::file_type::regular) {
+        return unreadable(LoadError::Kind::CannotRead, tr("not a regular file"));
+    }
+    QFile f(m_path);
     if (!f.open(QIODevice::ReadOnly)) {
-        return unreadable(f.errorString());
+        return unreadable(LoadError::Kind::CannotRead, f.errorString());
     }
-    auto content = fromJson(f.readAll());
+    // At most one byte more than the limit, never readAll(): the size is
+    // judged on what was actually read. Checking size() first and then
+    // reading all would let a file that grows in between (or a special file
+    // that reports no size) be read without bound.
+    const QByteArray json = f.read(max_store_file_size + 1);
+    if (f.error() != QFileDevice::NoError) {
+        return unreadable(LoadError::Kind::CannotRead, f.errorString());
+    }
+    if (json.size() > max_store_file_size) {
+        return unreadable(LoadError::Kind::Damaged, tr("too large to be a programs file"));
+    }
+    auto content = fromJson(json);
     if (!content) {
-        return unreadable(content.error());
+        return unreadable(content.error().kind, content.error().message);
     }
     replaceWith(std::move(*content));
     return {};
@@ -497,13 +529,20 @@ std::expected<void, QString> ProgramStore::save() const
     return {};
 }
 
-std::expected<QString, QString> ProgramStore::setAsideUnreadableFile()
+std::expected<QString, QString> ProgramStore::setAsideUnreadableFile(const QDateTime &now)
 {
-    if (isWritable()) {
+    if (!m_loadError) {
         return Error(tr("There is no unreadable programs file to set aside."));
     }
-    QString aside = m_path + QStringLiteral(".corrupt-")
-            + QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-hhmmss"));
+    // Only a file that was read and found damaged: renaming a directory, a
+    // FIFO, a file this user can't read, or a newer format would move away
+    // something that may be fine.
+    if (m_loadError->kind != LoadError::Kind::Damaged) {
+        return Error(tr("%1 is not a damaged programs file, so it is not set aside.")
+                             .arg(QDir::toNativeSeparators(m_path)));
+    }
+    QString aside =
+            m_path + QStringLiteral(".corrupt-") + now.toString(QStringLiteral("yyyyMMdd-hhmmss"));
     // QFile::rename() never replaces an existing file, so nothing can be lost
     // even if two set-asides happen in the same second (the second fails).
     if (!QFile::rename(m_path, aside)) {
@@ -511,7 +550,7 @@ std::expected<QString, QString> ProgramStore::setAsideUnreadableFile()
                 tr("Cannot rename %1 to %2.")
                         .arg(QDir::toNativeSeparators(m_path), QDir::toNativeSeparators(aside)));
     }
-    m_loadError.clear();
+    m_loadError.reset();
     return aside;
 }
 

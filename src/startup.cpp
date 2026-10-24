@@ -49,13 +49,14 @@ loadPrograms(ProgramsDocument &document, const std::optional<MigrationReport> &m
                    "editor, or move it elsewhere to start with no programs. It is at %1.")
                         .arg(native(document.store().path()));
         if (!migration) {
-            return std::unexpected(tr("%1\n\nNothing was changed. %2").arg(loaded.error(), advice));
+            return std::unexpected(
+                    tr("%1\n\nNothing was changed. %2").arg(loaded.error().message, advice));
         }
         // The migration did write that file, and moved the old database:
         // say so, with its report, which no later start will show again.
         return std::unexpected(tr("%1\n\nThis file was just created from your old "
                                   "database:\n\n%2\n\n%3")
-                                       .arg(loaded.error(), describe(*migration), advice));
+                                       .arg(loaded.error().message, describe(*migration), advice));
     }
 
     if (migration) {

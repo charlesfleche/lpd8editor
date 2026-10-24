@@ -3,6 +3,7 @@
 
 #include "program.h"
 
+#include <QDateTime>
 #include <QList>
 #include <QObject>
 #include <QString>
@@ -22,6 +23,30 @@ struct StoredProgram
     Program program;
 
     bool operator==(const StoredProgram &) const = default;
+};
+
+// Why the programs file couldn't be loaded. The kind decides what the user
+// can be offered (doc/IMPROVEMENTS.md, item 4.11b): only a damaged file may be
+// set aside.
+struct LoadError
+{
+    enum class Kind {
+        // The file can't be read: permissions (on it or on a folder above
+        // it), an I/O error, or not a regular file (a directory). It may be
+        // fine.
+        CannotRead,
+        // Read, but not a programs file this version accepts: not JSON, too
+        // large, unknown keys, values out of range.
+        Damaged,
+        // Written by a newer lpd8editor: never read half of it, nor replace
+        // it.
+        NewerFormat,
+    };
+
+    // The default is the strictest kind: an error built without a kind
+    // must never offer to set a file aside.
+    Kind kind{Kind::CannotRead};
+    QString message; // for the user
 };
 
 // Ids go from 1 to max_program_id. The cap leaves room for 'id + 1' (the
@@ -91,21 +116,25 @@ public:
     // refuses to write until setAsideUnreadableFile(): the file may hold the
     // user's programs in a form this version can't read (a newer format, a
     // hand edit), and must not be replaced.
-    std::expected<void, QString> load();
+    std::expected<void, LoadError> load();
     // Writes the programs atomically (QSaveFile), creating the folder if
     // needed: on failure, the previous file is intact.
     std::expected<void, QString> save() const;
 
-    // After a failed load(): the reason, for the user, or an empty string.
-    const QString &loadError() const { return m_loadError; }
+    // After a failed load(): why, or nothing.
+    const std::optional<LoadError> &loadError() const { return m_loadError; }
     // False after a failed load(), until setAsideUnreadableFile().
-    bool isWritable() const { return m_loadError.isEmpty(); }
-    // Renames the file that load() could not read to
+    bool isWritable() const { return !m_loadError.has_value(); }
+    // Renames the file that load() found Damaged to
     // '<file>.corrupt-<yyyyMMdd-hhmmss>', next to it, so the store can be
     // saved again, with the programs it holds now (a failed load left them
     // unchanged). It never deletes anything. Returns the new name. The UI
-    // must tell the user and ask first (doc/IMPROVEMENTS.md, item 4.11).
-    std::expected<QString, QString> setAsideUnreadableFile();
+    // must tell the user and ask first (doc/IMPROVEMENTS.md, item 4.11b).
+    // It refuses after any other load error: a directory, a FIFO or a file
+    // it can't read may be fine, and a newer format certainly is.
+    // 'now' names the file: a test can pick it, to make the rename fail.
+    std::expected<QString, QString>
+    setAsideUnreadableFile(const QDateTime &now = QDateTime::currentDateTime());
 
 signals:
     void programAboutToBeAdded(int id, int row);
@@ -125,7 +154,7 @@ private:
     QList<StoredProgram> m_programs;
     int m_nextId{1};
     // Set when load() fails: the file must not be overwritten.
-    QString m_loadError;
+    std::optional<LoadError> m_loadError;
 };
 
 // The JSON format, version 1. Separate from the file I/O so it can be tested
@@ -149,7 +178,8 @@ struct StoreContent
 };
 
 QByteArray toJson(const StoreContent &content);
-std::expected<StoreContent, QString> fromJson(const QByteArray &json);
+// The error is Damaged, or NewerFormat. Its message has no file name.
+std::expected<StoreContent, LoadError> fromJson(const QByteArray &json);
 
 } // namespace lpd8
 
