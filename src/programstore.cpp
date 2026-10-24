@@ -486,6 +486,12 @@ std::expected<void, LoadError> ProgramStore::load()
     if (!f.open(QIODevice::ReadOnly)) {
         return unreadable(LoadError::Kind::CannotRead, f.errorString());
     }
+    // The path may have changed since status(). A character device (a tty,
+    // /dev/input/*) opens at once, then blocks in read(), however little is
+    // asked for: the bound below doesn't help.
+    if (f.isSequential()) {
+        return unreadable(LoadError::Kind::CannotRead, tr("not a regular file"));
+    }
     // At most one byte more than the limit, never readAll(): the size is
     // judged on what was actually read. Checking size() first and then
     // reading all would let a file that grows in between (or a special file
@@ -513,6 +519,15 @@ std::expected<void, QString> ProgramStore::save() const
                         "that would be lost.")
                              .arg(file));
     }
+    // load() refuses a file above max_store_file_size, and names have no
+    // length limit: a file that large would lock the user out at the next
+    // start (unreadable, so not overwritten either). Never write one.
+    const QByteArray json = toJson(StoreContent{.programs = m_programs, .nextId = m_nextId});
+    if (json.size() > max_store_file_size) {
+        return Error(tr("The programs are too large to be saved in %1: a name is probably far "
+                        "too long.")
+                             .arg(file));
+    }
     // On a first start, the application data folder doesn't exist yet.
     const QString folder = QFileInfo(m_path).absolutePath();
     if (!QDir().mkpath(folder)) {
@@ -522,7 +537,7 @@ std::expected<void, QString> ProgramStore::save() const
     if (!f.open(QIODevice::WriteOnly)) {
         return Error(tr("Cannot write the programs file %1: %2").arg(file, f.errorString()));
     }
-    f.write(toJson(StoreContent{.programs = m_programs, .nextId = m_nextId}));
+    f.write(json);
     if (!f.commit()) {
         return Error(tr("Cannot write the programs file %1: %2").arg(file, f.errorString()));
     }

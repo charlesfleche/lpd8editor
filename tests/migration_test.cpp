@@ -11,6 +11,8 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#include <sys/stat.h>
+
 using namespace lpd8;
 
 namespace {
@@ -103,6 +105,8 @@ private slots:
     void test_unreadableDatabaseIsAnError();
     void test_hotJournalIsRecognised();
     void test_journalOfALiveWriteIsNotAHotJournal();
+    void test_whatIsNotAFileIsAnError();
+    void test_aJournalThatIsNotAFileIsAnError();
     void test_failedJsonWriteKeepsTheDatabase();
     void test_doesNotReplaceAnEarlierMigratedFile();
     void test_doesNotReplaceAnEarlierReport();
@@ -336,6 +340,49 @@ void TestMigration::test_journalOfALiveWriteIsNotAHotJournal()
     QCOMPARE(result.error().kind, MigrationError::Kind::Other);
     QVERIFY(result.error().journalPath.isEmpty());
     QVERIFY(!QFile::exists(jsonPath));
+}
+
+void TestMigration::test_whatIsNotAFileIsAnError()
+{
+    // A FIFO where the old database should be. SQLite opens the path with
+    // open(), which waits for a writer forever on a FIFO: the application
+    // hung at start-up, before showing anything (this test hung before the
+    // fix). It must be refused, with nothing written.
+    QCOMPARE(::mkfifo(QFile::encodeName(sqlitePath).constData(), 0600), 0);
+    auto result = migrateSqliteDatabase(sqlitePath, jsonPath);
+    QVERIFY(!result.has_value());
+    QCOMPARE(result.error().kind, MigrationError::Kind::Other);
+    QVERIFY2(result.error().message.contains("not a file"), qPrintable(result.error().message));
+    QVERIFY(!QFile::exists(jsonPath));
+
+    // A folder.
+    QVERIFY(QFile::remove(sqlitePath));
+    QVERIFY(QDir().mkdir(sqlitePath));
+    result = migrateSqliteDatabase(sqlitePath, jsonPath);
+    QVERIFY(!result.has_value());
+    QVERIFY(!QFile::exists(jsonPath));
+}
+
+void TestMigration::test_aJournalThatIsNotAFileIsAnError()
+{
+    // A valid database, with a FIFO named like its rollback journal. Before
+    // the first read, SQLite looks for a hot journal and opens
+    // '<file>-journal' if it exists: on a FIFO, that open() waits for a
+    // writer forever, and the start-up hung (this test hung before the
+    // fix). The WAL files ('-wal', '-shm') are opened the same way.
+    QVERIFY(buildDatabase(sqlitePath, oldSchema() + oldProgram(1, "Old"), false));
+    const QByteArray bytes = readAll(sqlitePath);
+    for (const char *suffix : {"-journal", "-wal", "-shm"}) {
+        const QString companion = sqlitePath + QLatin1String(suffix);
+        QCOMPARE(::mkfifo(QFile::encodeName(companion).constData(), 0600), 0);
+        const auto result = migrateSqliteDatabase(sqlitePath, jsonPath);
+        QVERIFY(!result.has_value());
+        QVERIFY2(result.error().message.contains(QDir::toNativeSeparators(companion)),
+                 qPrintable(result.error().message));
+        QVERIFY(!QFile::exists(jsonPath));
+        QCOMPARE(readAll(sqlitePath), bytes); // untouched, not renamed
+        QVERIFY(QFile::remove(companion));
+    }
 }
 
 void TestMigration::test_failedJsonWriteKeepsTheDatabase()

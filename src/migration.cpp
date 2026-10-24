@@ -7,6 +7,7 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QSaveFile>
 #include <QSqlDatabase>
 #include <QSqlError>
@@ -274,6 +275,31 @@ migrateSqliteDatabase(const QString &sqlitePath, const QString &jsonPath)
     // Nothing to do, or already done: touch nothing.
     if (QFile::exists(jsonPath) || !QFile::exists(sqlitePath)) {
         return std::nullopt;
+    }
+    // Only a regular file. SQLite opens the path with open(), which waits
+    // forever for a writer on a FIFO: the application would hang at
+    // start-up, before showing anything.
+    if (!QFileInfo(sqlitePath).isFile()) {
+        return std::unexpected(
+                MigrationError{.kind = MigrationError::Kind::Other,
+                               .message = tr("Cannot read the old programs database %1: not a file")
+                                                  .arg(QDir::toNativeSeparators(sqlitePath)),
+                               .journalPath = {}});
+    }
+    // The same for the files SQLite opens next to it: it looks for a hot
+    // journal ('-journal') before the first read, and a database in WAL
+    // mode has '-wal' and '-shm'. Absent is fine; anything but a regular
+    // file (a FIFO) would block in open() just the same.
+    for (const char *suffix : {"-journal", "-wal", "-shm"}) {
+        const QFileInfo companion(sqlitePath + QLatin1String(suffix));
+        if ((companion.exists() || companion.isSymLink()) && !companion.isFile()) {
+            return std::unexpected(MigrationError{
+                    .kind = MigrationError::Kind::Other,
+                    .message = tr("Cannot read the old programs database %1: %2 is not a file")
+                                       .arg(QDir::toNativeSeparators(sqlitePath),
+                                            QDir::toNativeSeparators(companion.filePath())),
+                    .journalPath = {}});
+        }
     }
 
     ProgramStore store(jsonPath);

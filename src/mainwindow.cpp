@@ -10,6 +10,7 @@
 #include "programfile.h"
 #include "programmodels.h"
 #include "programsdocument.h"
+#include "utils.h"
 
 #include <QApplication>
 #include <QCloseEvent>
@@ -451,7 +452,13 @@ void MainWindow::on_actionExportProgram_triggered()
     const lpd8::StoredProgram program = *stored;
 
     const QDir defaultDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
-    const QString defaultPath = defaultDir.absoluteFilePath(program.name + QStringLiteral(".lpd8"));
+    // The name comes from the user, an imported file or an old database: it
+    // must not move the suggested file out of the folder ('../../.bashrc').
+    QString fileName = fileNameFor(program.name);
+    if (fileName.isEmpty()) {
+        fileName = tr("program");
+    }
+    const QString defaultPath = defaultDir.absoluteFilePath(fileName + QStringLiteral(".lpd8"));
 
     const QString path =
             QFileDialog::getSaveFileName(this, title, defaultPath, programFileFilter());

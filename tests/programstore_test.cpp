@@ -67,6 +67,7 @@ private slots:
     void test_unreadableFileStaysProtectedUntilReadable();
     void test_newerFormatIsNotOverwritten();
     void test_tooLargeFileIsRefused();
+    void test_saveNeverWritesWhatLoadRefuses();
     void test_setAsideKeepsTheBytes();
     void test_aDirectoryCannotBeRead();
     void test_aFifoDoesNotBlock();
@@ -483,6 +484,28 @@ void TestProgramStore::test_tooLargeFileIsRefused()
     QVERIFY2(loaded.error().message.contains("too large"), qPrintable(loaded.error().message));
     QCOMPARE(loaded.error().kind, LoadError::Kind::Damaged);
     QVERIFY(!store.isWritable());
+}
+
+void TestProgramStore::test_saveNeverWritesWhatLoadRefuses()
+{
+    // load() refuses a file larger than max_store_file_size, and names have
+    // no length limit. A store whose file would be larger must not be saved:
+    // the next start could not read it, and would then refuse to save over
+    // it, locking the user out of all their programs.
+    ProgramStore store(path);
+    QVERIFY(store.add(QStringLiteral("Drums"), someProgram()).has_value());
+    QVERIFY(store.save().has_value());
+    const QByteArray saved = readAll(path);
+
+    const QString huge(static_cast<qsizetype>(max_store_file_size), u'x');
+    QVERIFY(store.add(huge, someProgram()).has_value());
+    const auto written = store.save();
+    QVERIFY(!written.has_value());
+    QCOMPARE(readAll(path), saved); // the previous file is intact
+
+    // What was saved can always be loaded.
+    ProgramStore loaded(path);
+    QVERIFY(loaded.load().has_value());
 }
 
 void TestProgramStore::test_setAsideKeepsTheBytes()
