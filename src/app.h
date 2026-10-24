@@ -18,13 +18,17 @@ class QWidget;
 
 namespace lpd8 {
 
+class Lpd8Device;
 class MidiTransport;
 
-// The questions the startup asks, before the event loop runs
-// (doc/IMPROVEMENTS.md, item 4.11b). An interface, so the tests answer
-// them with a fake and check what was asked. The application's
-// implementation is MessageBoxStartupDialogs.
-class StartupDialogs
+// App's modal questions and messages (doc/IMPROVEMENTS.md, items 4.11b
+// and 4.11c). Modal, so they are only used when nothing non-modal can be
+// shown: before the event loop runs (the startup), and when the window
+// closes or the application quits (the final save). Every other problem
+// goes to the window's non-modal box (MainWindow::showProblem()). An
+// interface, so the tests answer with a fake and check what was asked.
+// The application's implementation is MessageBoxDialogs.
+class AppDialogs
 {
 public:
     enum class Answer {
@@ -33,12 +37,12 @@ public:
         SetAside, // rename the damaged programs file, then start empty
     };
 
-    StartupDialogs() = default;
-    virtual ~StartupDialogs() = default;
-    StartupDialogs(const StartupDialogs &) = delete;
-    StartupDialogs &operator=(const StartupDialogs &) = delete;
-    StartupDialogs(StartupDialogs &&) = delete;
-    StartupDialogs &operator=(StartupDialogs &&) = delete;
+    AppDialogs() = default;
+    virtual ~AppDialogs() = default;
+    AppDialogs(const AppDialogs &) = delete;
+    AppDialogs &operator=(const AppDialogs &) = delete;
+    AppDialogs(AppDialogs &&) = delete;
+    AppDialogs &operator=(AppDialogs &&) = delete;
 
     // Asks the user, with Quit and the answers in 'offered' (which never
     // holds Quit). Quit is the default button, and what Escape picks: a
@@ -47,14 +51,19 @@ public:
     // Tells the user something, over 'parent' (nullptr before the window
     // exists). Only one button: there is nothing to choose.
     virtual void tell(QWidget *parent, const QString &text) = 0;
+    // The window is closing and the changes can't be saved: true to close
+    // without saving, false to cancel the close. Cancel is the default
+    // button, and what Escape picks: the safe choice keeps the changes.
+    virtual bool confirmCloseWithoutSaving(QWidget *parent, const QString &text) = 0;
 };
 
-// The StartupDialogs of the application: modal message boxes.
-class MessageBoxStartupDialogs : public StartupDialogs
+// The AppDialogs of the application: modal message boxes.
+class MessageBoxDialogs : public AppDialogs
 {
 public:
     Answer ask(const QString &text, const QList<Answer> &offered) override;
     void tell(QWidget *parent, const QString &text) override;
+    bool confirmCloseWithoutSaving(QWidget *parent, const QString &text) override;
 };
 
 // What App needs of the session manager when the session ends (logging
@@ -81,9 +90,19 @@ public:
 // then owns what the application is made of. main() is QApplication, App,
 // start(), exec().
 //
-// Members are declared in the order they are created, the document, the
-// transport, then the window, so they are destroyed in the reverse order:
-// the window first, while what it uses still exists.
+// Members are declared in the order they are created: the document, the
+// transport, the device (it uses the transport), then the window (it uses
+// all three). They are destroyed in the reverse order: the window first,
+// while what it uses still exists. A wrong order is a use after free, at
+// the latest in ~MainWindow, which disconnects the device: the clang-asan
+// preset reports it in app_test (checked: UBSan's vptr check, "member call
+// on address ... which does not point to an object of type 'QObject'").
+//
+// Saving: the document saves by itself after each change, and a failure is
+// shown in the window's non-modal box. The final save, when the window
+// closes, the application quits or the session ends, is App's: each moment
+// allows a different message (see closeWindow(), quitting() and
+// commitData()).
 class App
 {
 public:
@@ -97,8 +116,8 @@ public:
     {
         QString sqlitePath; // the old database, migrated once
         QString storePath; // the programs file
-        // Not owned: it must outlive start(). Only used during start().
-        StartupDialogs *dialogs{nullptr};
+        // Not owned: it must outlive the App.
+        AppDialogs *dialogs{nullptr};
         // Creates the MIDI transport once the programs are open, or returns
         // nullptr to turn MIDI off (no sequencer).
         MakeTransport makeTransport;
@@ -125,21 +144,33 @@ public:
     bool start();
 
     // The session ends: save now, since the application may be killed
-    // without quitting. Connected to QGuiApplication::commitDataRequest by
-    // start(), through an adapter; public so a test can call it. Item
-    // 4.11c uses 'session' to report a failed save only when the user may
-    // be asked.
+    // without quitting. A failed save is shown (modally) only if the
+    // session manager allows asking the user, and logged otherwise.
+    // Connected to QGuiApplication::commitDataRequest by start(), through
+    // an adapter; public so a test can call it.
     void commitData(SessionEnd &session);
 
     // For the tests.
     ProgramsDocument &document() { return m_document; }
     // nullptr until start() succeeds.
     MainWindow *window() const { return m_window.get(); }
+    // nullptr until start() succeeds, or with MIDI off.
+    Lpd8Device *device() const { return m_device.get(); }
 
 private:
     // Each returns false if the user chose Quit.
     bool migrate();
     bool load();
+
+    // The window's close guard: saves, and if that fails, asks whether to
+    // close without saving. False keeps the window open.
+    bool closeWindow();
+    // At aboutToQuit: saves, and shows a failure. Nothing can stop the
+    // application then.
+    void quitting();
+    // A failed save that can't be shown: the session ends without
+    // interaction.
+    static void logLostChanges(const QString &error);
 
     Options m_options;
     // A report the window must show, once it exists.
@@ -148,7 +179,15 @@ private:
     // Order matters: see the class comment.
     ProgramsDocument m_document;
     std::unique_ptr<MidiTransport> m_transport;
+    std::unique_ptr<Lpd8Device> m_device;
     std::unique_ptr<MainWindow> m_window;
+    // The user chose to close the window without saving: quitting, which
+    // follows, doesn't save or ask again.
+    bool m_closedWithoutSaving{false};
+    // commitData() failed and the session manager forbids asking: the
+    // close and the quit that follow only log, never ask (a modal box
+    // would stall the logout).
+    bool m_sessionEndsSilently{false};
 };
 
 } // namespace lpd8

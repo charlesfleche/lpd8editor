@@ -49,8 +49,8 @@ private slots:
     void test_undoAndRedoSave();
     void test_directStoreChangesSave();
     void test_failureIsReportedOnceUntilASuccess();
-    void test_saveNowIsTheLastTry();
-    void test_saveNowWithoutChangesDoesNothing();
+    void test_saveFinalReturnsTheError();
+    void test_saveFinalWithoutChangesDoesNothing();
     void test_destroyingWithAPendingSaveDoesNotWrite();
     void test_destroyingWithCommandsIsSafe();
 
@@ -73,7 +73,7 @@ void TestProgramsDocument::test_loadClearsTheUndoStack()
     // the stack is emptied and undo does nothing.
     ProgramsDocument document(path);
     const int id = document.store().add(QStringLiteral("A"), profile().defaultProgram).value();
-    QVERIFY(document.saveNow());
+    QVERIFY(document.saveFinal().has_value());
     pushChannel(document, id, 3);
     QCOMPARE(document.undoStack().count(), 1);
 
@@ -87,7 +87,7 @@ void TestProgramsDocument::test_loadDoesNotWrite()
 {
     ProgramsDocument document(path);
     const int id = document.store().add(QStringLiteral("A"), profile().defaultProgram).value();
-    QVERIFY(document.saveNow());
+    QVERIFY(document.saveFinal().has_value());
     pushChannel(document, id, 3); // something to clear
     QCoreApplication::processEvents();
     const QSignalSpy saved(&document, &ProgramsDocument::saved);
@@ -178,7 +178,7 @@ void TestProgramsDocument::test_failureIsReportedOnceUntilASuccess()
     QCOMPARE(reports.size(), 2);
 }
 
-void TestProgramsDocument::test_saveNowIsTheLastTry()
+void TestProgramsDocument::test_saveFinalReturnsTheError()
 {
     ProgramsDocument document(path);
     int reports = 0;
@@ -189,46 +189,44 @@ void TestProgramsDocument::test_saveNowIsTheLastTry()
     QCoreApplication::processEvents();
     QCOMPARE(reports, 1); // the timer's save
 
-    // The change isn't saved: saveNow() tries again and reports it again,
-    // since it is the last chance to tell the user.
-    QVERIFY(!document.saveNow());
-    QCOMPARE(reports, 2);
+    // The change isn't saved: saveFinal() tries again, and returns the
+    // error to its caller instead of calling the handler. What can be
+    // shown depends on the moment (closing, quitting), which only the
+    // caller knows.
+    const auto failed = document.saveFinal();
+    QVERIFY(!failed.has_value());
+    QVERIFY2(failed.error().startsWith("Cannot"), qPrintable(failed.error()));
+    QCOMPARE(reports, 1);
 
-    // B1: closing the window, then quitting, call saveNow() twice. Nothing
-    // changed in between: no second write, no second dialog.
-    QVERIFY(!document.saveNow());
-    QCOMPARE(reports, 2);
-
-    // A new change is a new try.
-    pushChannel(document, id, 2);
-    QVERIFY(!document.saveNow());
-    QCOMPARE(reports, 3);
+    // Still not saved, so a second final save (closing, then quitting)
+    // tries again: the changes are not given up on.
+    QVERIFY(!document.saveFinal().has_value());
+    QCOMPARE(reports, 1);
 
     // And once the disk is back, the change is written.
     QVERIFY(QFile::remove(folder));
-    pushChannel(document, id, 3);
-    QVERIFY(document.saveNow());
+    QVERIFY(document.saveFinal().has_value());
     ProgramStore written(path);
     QVERIFY(written.load().has_value());
-    QCOMPARE(written.find(id).value().program.channel, 3);
+    QCOMPARE(written.find(id).value().program.channel, 1);
 }
 
-void TestProgramsDocument::test_saveNowWithoutChangesDoesNothing()
+void TestProgramsDocument::test_saveFinalWithoutChangesDoesNothing()
 {
     // Quitting without an edit writes nothing: the file is created by the
     // first change, not by starting and quitting.
     ProgramsDocument document(path);
     QVERIFY(document.store().load().has_value());
     const QSignalSpy saved(&document, &ProgramsDocument::saved);
-    QVERIFY(document.saveNow());
+    QVERIFY(document.saveFinal().has_value());
     QCOMPARE(saved.count(), 0);
     QVERIFY(!QFile::exists(path));
 
     // After a save, the same.
     QVERIFY(document.store().add(QStringLiteral("A"), profile().defaultProgram).has_value());
-    QVERIFY(document.saveNow());
+    QVERIFY(document.saveFinal().has_value());
     QCOMPARE(saved.count(), 1);
-    QVERIFY(document.saveNow());
+    QVERIFY(document.saveFinal().has_value());
     QCOMPARE(saved.count(), 1);
 }
 

@@ -10,7 +10,7 @@ ProgramsDocument::ProgramsDocument(QString path, QObject *parent)
 {
     m_saveTimer.setSingleShot(true);
     m_saveTimer.setInterval(0);
-    connect(&m_saveTimer, &QTimer::timeout, this, [this] { save(false); });
+    connect(&m_saveTimer, &QTimer::timeout, this, &ProgramsDocument::saveScheduled);
 
     // Save on the store's own change signals, not on the undo stack's: then
     // a change made any way is saved, not only one that goes through the
@@ -58,36 +58,34 @@ void ProgramsDocument::scheduleSave()
     }
 }
 
-bool ProgramsDocument::saveNow()
+std::expected<void, QString> ProgramsDocument::saveFinal()
 {
     m_saveTimer.stop();
-    // Closing the window and quitting both call this: the second call has
-    // nothing new to save, or to tell, so it doesn't write or report again.
+    // Closing the window and quitting may both call this: with nothing
+    // changed since, the second writes nothing.
     if (!m_dirty) {
-        return m_lastSaveSucceeded;
+        return {};
     }
-    return save(true);
-}
-
-bool ProgramsDocument::save(bool reportEveryFailure)
-{
-    const auto result = m_store.save();
-    m_lastSaveSucceeded = result.has_value();
+    auto result = m_store.save();
     if (result) {
         m_dirty = false;
         m_failureReported = false;
-    } else if ((reportEveryFailure || !m_failureReported) && m_onSaveFailure) {
-        m_failureReported = true;
-        m_onSaveFailure(result.error());
-        // A failure saveNow() reported is settled: the user knows. One the
-        // timer reported once leaves the changes to save, so the next
-        // saveNow() (at quit) tries again: the last try.
-        if (reportEveryFailure) {
-            m_dirty = false;
-        }
     }
     emit saved(result.has_value());
-    return result.has_value();
+    return result;
+}
+
+void ProgramsDocument::saveScheduled()
+{
+    const auto result = m_store.save();
+    if (result) {
+        m_dirty = false;
+        m_failureReported = false;
+    } else if (!m_failureReported && m_onSaveFailure) {
+        m_failureReported = true;
+        m_onSaveFailure(result.error());
+    }
+    emit saved(result.has_value());
 }
 
 } // namespace lpd8

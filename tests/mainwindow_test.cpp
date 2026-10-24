@@ -97,8 +97,8 @@ private slots:
     void test_unsolicitedDumpIsIgnored();
     void test_midiActionsGoThroughTheTransport();
     void test_midiOff();
-    void test_closingTheWindowSavesTheLastEdit();
-    void test_closeThenQuitReportsAFailureOnce();
+    void test_closeAsksTheGuard();
+    void test_problemsShareOneBox();
     void test_newProgramUsesTheDefaultSettings();
     void test_newProgramIgnoresInvalidDefaultSetting();
 
@@ -117,6 +117,8 @@ private:
     // before it.
     std::unique_ptr<FakeTransport> transport;
     std::unique_ptr<Lpd8Simulator> simulator;
+    // The device the window uses and doesn't own, as App gives it.
+    std::unique_ptr<Lpd8Device> device;
 };
 
 void TestMainWindow::initTestCase()
@@ -136,6 +138,7 @@ void TestMainWindow::init()
     QVERIFY(document->store().load().has_value());
     transport = std::make_unique<FakeTransport>();
     simulator = std::make_unique<Lpd8Simulator>(*transport); // "20:0"
+    device = std::make_unique<Lpd8Device>(*transport);
 }
 
 void TestMainWindow::cleanup()
@@ -143,6 +146,7 @@ void TestMainWindow::cleanup()
     // Each test destroys its window first: the transport and the document
     // outlive it.
     simulator.reset();
+    device.reset();
     transport.reset();
     document.reset();
     QSettings().clear();
@@ -150,7 +154,7 @@ void TestMainWindow::cleanup()
 
 std::unique_ptr<MainWindow> TestMainWindow::windowWithPrograms(int count)
 {
-    auto window = std::make_unique<MainWindow>(*document, transport.get());
+    auto window = std::make_unique<MainWindow>(*document, transport.get(), device.get());
     auto *newProgram = window->findChild<QAction *>("actionNewProgram");
     for (int i = 0; i < count; ++i) {
         newProgram->trigger();
@@ -195,8 +199,9 @@ void TestMainWindow::test_destroyWithSelectedProgram()
     const QPointer<MidiConnectionsModel> connections = window->findChild<MidiConnectionsModel *>();
     QVERIFY(connections);
     FakeTransport *midi = transport.get();
+    Lpd8Device *dev = device.get();
     const QByteArray dump = dumpOf(withChannel(3));
-    const auto fire = [selection, connections, midi, dump] {
+    const auto fire = [selection, connections, midi, dev, dump] {
         if (selection) {
             emit selection->currentRowChanged({}, {});
             emit selection->selectionChanged({}, {});
@@ -208,6 +213,12 @@ void TestMainWindow::test_destroyWithSelectedProgram()
         emit midi->portsChanged();
         emit midi->connectionChanged();
         midi->receive(dump, "20:0");
+        // The device outlives the window too (App owns it): ~MainWindow
+        // must have disconnected it.
+        emit dev->programReceived(1, withChannel(4));
+        emit dev->sendDone(1);
+        emit dev->requestFailed(1, QStringLiteral("gone"));
+        emit dev->busyChanged(false);
     };
     connect(programs, &QObject::destroyed, this, fire);
     connect(central, &QObject::destroyed, this, fire);
@@ -390,7 +401,7 @@ void TestMainWindow::test_failureShowsOneNonModalMessage()
     const auto window = windowWithPrograms(1);
     QVERIFY(transport->connectTo(simulator->portId()));
     simulator->setMode(Lpd8Simulator::Mode::Silent);
-    window->findChild<lpd8::Lpd8Device *>()->setReplyTimeout(std::chrono::milliseconds(50));
+    device->setReplyTimeout(std::chrono::milliseconds(50));
     auto *get = window->findChild<QAction *>("actionGetProgram1");
 
     expectWindowShown(); // the message box, once
@@ -457,7 +468,7 @@ void TestMainWindow::test_midiOff()
 {
     // Without a sequencer, the window still edits programs, and the MIDI
     // actions stay off.
-    const MainWindow window(*document, nullptr);
+    const MainWindow window(*document, nullptr, nullptr);
     window.findChild<QAction *>("actionNewProgram")->trigger();
     QCOMPARE(document->store().programs().size(), 1);
     programsView(window)->setCurrentIndex(programsView(window)->model()->index(0, 0));
@@ -465,42 +476,52 @@ void TestMainWindow::test_midiOff()
     QVERIFY(!window.findChild<MidiConnectionsModel *>());
 }
 
-void TestMainWindow::test_closingTheWindowSavesTheLastEdit()
+void TestMainWindow::test_closeAsksTheGuard()
 {
-    // No event loop turn between the edit and the close: the pending save
-    // hasn't run, so only closeEvent() can have written the edit.
+    // The window doesn't save on its own (App does, in the guard): with a
+    // guard that says no, the close is cancelled and nothing is written.
     const auto window = windowWithPrograms(1);
     show(*window);
-    auto *pads = window->findChild<QTableView *>("padsView");
-    QVERIFY(pads->model()->setData(pads->model()->index(0, ControlsModel::NoteColumn), 50));
-    window->close();
+    int asked = 0;
+    bool allow = false;
+    window->setCloseGuard([&asked, &allow] {
+        ++asked;
+        return allow;
+    });
+    QVERIFY(!window->close());
+    QCOMPARE(asked, 1);
+    QVERIFY(window->isVisible());
+    QVERIFY(!QFile::exists(path)); // the pending save hasn't run, and close didn't save
 
-    ProgramStore written(path);
-    QVERIFY(written.load().has_value());
-    QCOMPARE(written.programs().size(), 1);
-    QCOMPARE(written.programs().at(0).program.pads[0].note, 50);
+    allow = true;
+    QVERIFY(window->close());
+    QCOMPARE(asked, 2);
+    QVERIFY(!window->isVisible());
 }
 
-void TestMainWindow::test_closeThenQuitReportsAFailureOnce()
+void TestMainWindow::test_problemsShareOneBox()
 {
-    // B1: on a failing disk, closing the window and then quitting (main()
-    // connects aboutToQuit to saveNow()) show one report, not two.
-    // A regular file where the folder should be: saving fails, even as root.
-    {
-        QFile blocker(dataDir->filePath("blocked"));
-        QVERIFY(blocker.open(QIODevice::WriteOnly));
-    }
-    document = std::make_unique<ProgramsDocument>(dataDir->filePath("blocked/programs.json"));
-    const auto window = windowWithPrograms(1); // a change, its save pending
-    // Counted instead of the window's handler, which shows a modal dialog.
-    int reports = 0;
-    document->setSaveFailureHandler([&reports](const QString &) { ++reports; });
-    show(*window);
+    // A problem while the box is up is added to it, once.
+    const auto window = windowWithPrograms(1);
+    expectWindowShown(); // the box, once
+    window->showProblem(QStringLiteral("First"));
+    // A longer text resizes the box, which the plugin reports like a show.
+    expectWindowShown();
+    window->showProblem(QStringLiteral("Second"));
+    window->showProblem(QStringLiteral("Second"));
+    // Whole problems are compared: one that is part of another is not a
+    // repeat.
+    expectWindowShown();
+    window->showProblem(QStringLiteral("Sec"));
+    const QList<QMessageBox *> boxes = window->findChildren<QMessageBox *>();
+    QCOMPARE(boxes.size(), 1);
+    QCOMPARE(boxes.at(0)->text(), QStringLiteral("First\n\nSecond\n\nSec"));
 
-    window->close();
-    QCOMPARE(reports, 1);
-    QVERIFY(!document->saveNow()); // what quitting does next
-    QCOMPARE(reports, 1);
+    // Once the box is closed, the next problem starts a new list.
+    boxes.at(0)->hide();
+    expectWindowShown();
+    window->showProblem(QStringLiteral("Third"));
+    QCOMPARE(boxes.at(0)->text(), QStringLiteral("Third"));
 }
 
 void TestMainWindow::test_newProgramUsesTheDefaultSettings()

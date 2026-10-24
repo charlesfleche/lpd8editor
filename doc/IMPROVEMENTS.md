@@ -250,7 +250,7 @@ that switches everything at once.
       the exact column counts of both views (4 visible fields for pads, 3 for
       knobs).
 
-- [x] 4.7b Remove the SQLite schema, triggers, and `db.cpp`, `ProgramsModel`,
+- [x] 4.7b [`60731f4`](https://github.com/charlesfleche/lpd8editor/commit/60731f44b529a96a4a48ef0e1d41181f98158d2d) Remove the SQLite schema, triggers, and `db.cpp`, `ProgramsModel`,
       the old undo commands and the storage helpers of `lpd8_sysex.cpp`.
       QtSql stays only for the migration. (Earlier text refers to this as
       "item 4.7".)
@@ -419,7 +419,7 @@ commit, after the new code is in place and tested on its own.
       a first start; its test is skipped as root, which can enter any
       folder. The read-error path itself (an I/O error mid-read) is not
       tested: it can't be provoked without a faulty device.
-- [x] 4.11b Composition root: an `App` object runs the startup and owns the
+- [x] 4.11b [`817bed3`](https://github.com/charlesfleche/lpd8editor/commit/817bed3d4e22879cbc8fbd5d3fec4f1774381bf7) Composition root: an `App` object runs the startup and owns the
       document, the transport and the window, in that order (so they are
       destroyed window first). `main()` becomes: `QApplication`, `App`,
       `exec()`. `startup.*` folds into it. For a load failing right after
@@ -472,35 +472,52 @@ commit, after the new code is in place and tested on its own.
         set-aside offered); a directory (`CannotRead`); a failed set-aside
         (the target name taken: the error, then Quit only, both files
         intact); and a load failing after a migration.
-- [ ] 4.11c `App` owns the device too, and the window only displays what it
+- [x] 4.11c `App` owns the device too, and the window only displays what it
       is given: `MainWindow(document, transport, device)` uses them and owns
       none. The selection-bound logic stays in the window, as view state
       (the target program of a request, the actions off while busy).
 
+      - `App`'s members are, in order: the document, the transport, the
+        device (it uses the transport), the window (it uses the device), so
+        they are destroyed window first. `App`'s class comment says that
+        the sanitizers catch a wrong order (the `clang-asan` preset, which
+        also runs UBSan). `~App` clears the document's save-failure
+        handler before the window goes, since the handler shows problems
+        in the window.
       - The document's save-failure handler moves to `App`. Every runtime
         problem, MIDI or save, goes to the window's one non-modal box
         (`MainWindow::showProblem()`). A problem that comes while the box
         is shown is added to its text, unless it is already there: none is
-        lost, and none stacks into a pile of boxes. Test: a MIDI failure, then a save
-        failure while the box is up, give one box with both.
+        lost, and none stacks into a pile of boxes. Test: a MIDI failure,
+        then a save failure while the box is up, give one box with both.
+      - The final save is not a timer save: `App` makes it itself, through
+        the document's final save, which returns the error instead of
+        calling the failure handler, and `closeEvent` no longer saves on
+        its own (it asks `App`, through a close guard the window is given).
+        - When the window closes: a failed save asks "Close without saving"
+          or "Cancel". Cancel ignores the close event: the window stays
+          open, and the changes stay, to be saved again. Close without
+          saving closes, and quitting then doesn't ask again.
+        - At `aboutToQuit`, the application is ending and can't be stopped:
+          a modal message (no parent window) is all that is possible.
+        - Tests: a failing close with Cancel (window still open, the change
+          still there), then with Close without saving; a failing
+          `aboutToQuit` shows one modal message.
       - A save failing while the session manager ends the session (logging
-        out):
-        with no interaction allowed, it is logged with `qCritical`, and
-        nothing is shown. With interaction allowed, it is asked for
-        (`QSessionManager::allowsInteraction()`), shown, then released.
-        Tested through the dialog fake.
-      - The final save, when the window closes (`closeEvent`) or the
-        application quits (`aboutToQuit`), can't use the non-modal box: the
-        window is going away, and the box with it. A failed final save is
-        shown modally instead (a `QMessageBox` with no parent window,
-        through the same dialog interface), so it is seen before the
-        application ends. Test: a final save that fails shows one modal
-        message, through the fake.
-      - C2: the device now outlives the window, so `~MainWindow` disconnects
+        out): with no interaction allowed, it is logged with `qCritical`,
+        and nothing is shown. With interaction allowed, it is asked for
+        (`SessionEnd::allowsInteraction()`), shown modally, then the session
+        is released. Tested through the session interface of `App::commitData()`
+        and the dialog fake.
+      - `StartupDialogs` becomes `AppDialogs`: its modal questions are used
+        before the event loop runs, and when the window closes or the
+        application quits, the moments when nothing non-modal can be shown.
+      - The device now outlives the window, so `~MainWindow` disconnects
         it in its body, and the teardown test fires its signals too.
       - `doc/ARCHITECTURE.md`'s App section matches the code. (The line in
         5.3 about the startup's choices was added by 4.11b, with the
-        change.)
+        change.) One more line in 5.3: closing the window when the
+        programs can't be saved asks before losing the changes.
 
 ## Phase 5: packaging and documentation
 
@@ -556,6 +573,12 @@ commit, after the new code is in place and tested on its own.
         programs file (renamed, never deleted, then lpd8editor starts with
         no programs), and only Quit for a file from a newer version or one
         that can't be read. Before, every case quit (item 4.11b).
+      - When the programs can't be saved, closing the window asks whether
+        to close without saving, or to cancel and keep the window open.
+        Before, the failure was shown and the window closed, losing the
+        changes. A save that fails while editing is shown in a box that
+        doesn't block the window, with any MIDI problem of the moment,
+        instead of a modal dialog (item 4.11c).
       - Known quirk, not a change to announce: the pads and knobs tables are
         empty until a program is selected, so the first selection can make
         a window at its minimum width about 28 pixels wider, once (the

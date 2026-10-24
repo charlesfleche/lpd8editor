@@ -1,5 +1,7 @@
 #include "app.h"
 #include "deviceprofile.h"
+#include "faketransport.h"
+#include "lpd8device.h"
 #include "mainwindow.h"
 #include "miditransport.h"
 #include "migration.h"
@@ -25,7 +27,7 @@ using namespace lpd8;
 
 namespace {
 
-using Answer = StartupDialogs::Answer;
+using Answer = AppDialogs::Answer;
 
 // The bytes of the file at 'path', or nothing if there is no regular file
 // there.
@@ -72,7 +74,7 @@ bool buildDatabase(const QString &path)
 
 // The startup's dialogs, answered by the test. Records what was asked and
 // told, in order.
-class FakeDialogs : public StartupDialogs
+class FakeDialogs : public AppDialogs
 {
 public:
     struct Question
@@ -97,8 +99,18 @@ public:
         notices.append(Notice{.parent = parent, .text = text});
     }
 
+    bool confirmCloseWithoutSaving(QWidget *parent, const QString &text) override
+    {
+        closeQuestions.append(Notice{.parent = parent, .text = text});
+        return closeWithoutSaving;
+    }
+
     QList<Question> questions;
     QList<Notice> notices;
+    QList<Notice> closeQuestions;
+    // The answer to confirmCloseWithoutSaving(): Cancel, unless the test
+    // says otherwise.
+    bool closeWithoutSaving{false};
     // Quit, unless the test says otherwise.
     std::function<Answer(const Question &)> answer = [](const Question &) { return Answer::Quit; };
 };
@@ -164,6 +176,39 @@ public:
     int releases{0};
 };
 
+// What a key press on the modal box saw.
+struct ModalBoxSeen
+{
+    bool found{false};
+    QString defaultButton;
+    bool escapeIsDefault{false};
+};
+
+// Presses 'key' on the modal message box once it is shown, from inside its
+// exec(): checks every 20 ms, up to a second. If no box comes, it closes
+// every window, so exec() returns and the test fails on 'found' instead of
+// hanging until its time limit.
+void pressOnModalBox(QObject *context, Qt::Key key, ModalBoxSeen *seen, int triesLeft = 50)
+{
+    QTimer::singleShot(triesLeft == 50 ? 0 : 20, context, [context, key, seen, triesLeft] {
+        auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
+        if (box == nullptr) {
+            if (triesLeft > 0) {
+                pressOnModalBox(context, key, seen, triesLeft - 1);
+            } else {
+                QApplication::closeAllWindows();
+            }
+            return;
+        }
+        seen->found = true;
+        if (box->defaultButton() != nullptr) {
+            seen->defaultButton = box->defaultButton()->text();
+        }
+        seen->escapeIsDefault = box->escapeButton() == box->defaultButton();
+        QTest::keyClick(box, key);
+    });
+}
+
 const QDateTime set_aside_time(QDate(2026, 1, 2), QTime(3, 4, 5));
 constexpr const char *set_aside_suffix = ".corrupt-20260102-030405";
 
@@ -191,11 +236,23 @@ private slots:
     void test_damagedAfterMigrationSetAside();
     void test_aboutToQuitSaves();
     void test_commitDataSaves();
+    void test_saveAndMidiProblemsShareTheWindowsBox();
+    void test_failedCloseCancelKeepsTheChanges();
+    void test_failedCloseWithoutSavingDoesNotAskAgain();
+    void test_failedQuitShowsOneMessage();
+    void test_failedCommitDataWithoutInteractionIsLogged();
+    void test_silentSessionEndAsksNothingMore();
+    void test_failedCommitDataWithInteractionIsShown();
+    void test_closeBoxDefaultsToCancel_data();
+    void test_closeBoxDefaultsToCancel();
     void test_messageBoxDefaultsToQuit_data();
     void test_messageBoxDefaultsToQuit();
 
 private:
     App::Options options();
+    // Starts a first start (an empty, writable store), adds one program
+    // (its save pending), and makes every save fail from then on.
+    void startWithFailingSaves(App &app);
     // Both files, as they are now.
     std::pair<std::optional<QByteArray>, std::optional<QByteArray>> files() const;
 
@@ -223,6 +280,8 @@ void TestApp::init()
     jsonPath = dir->filePath("programs.json");
     dialogs.questions.clear();
     dialogs.notices.clear();
+    dialogs.closeQuestions.clear();
+    dialogs.closeWithoutSaving = false;
     dialogs.answer = [](const FakeDialogs::Question &) { return Answer::Quit; };
     transportsMade = 0;
 }
@@ -584,6 +643,151 @@ void TestApp::test_commitDataSaves()
     QVERIFY(contentOf(jsonPath).value_or(QByteArray()).contains("Edited"));
 }
 
+void TestApp::startWithFailingSaves(App &app)
+{
+    expectWindowShown();
+    QVERIFY(app.start());
+    // A directory where the file goes: QSaveFile can't replace it, even for
+    // root.
+    QVERIFY(QDir().mkpath(jsonPath));
+    QVERIFY(app.document().store().add(QStringLiteral("Edited"), profile().defaultProgram));
+}
+
+void TestApp::test_saveAndMidiProblemsShareTheWindowsBox()
+{
+    // Every runtime problem goes to the window's one non-modal box: a MIDI
+    // failure, then a save failure while it is up, give one box with both.
+    App::Options opts = options();
+    opts.makeTransport = []() -> std::unique_ptr<MidiTransport> {
+        return std::make_unique<FakeTransport>();
+    };
+    App app(std::move(opts));
+    startWithFailingSaves(app);
+    QVERIFY(app.device() != nullptr);
+
+    expectWindowShown(); // the box, once
+    // Nothing is connected: the request fails at once.
+    app.device()->requestProgram(1);
+    expectEmptyWindowLaidOut();
+    // The save's problem makes the box's text longer, which resizes it:
+    // the plugin reports that like a show.
+    expectWindowShown();
+    QCoreApplication::processEvents(); // the save timer: it fails
+    const QList<QMessageBox *> boxes = app.window()->findChildren<QMessageBox *>();
+    QCOMPARE(boxes.size(), 1);
+    QVERIFY(boxes.at(0)->isVisible());
+    QCOMPARE(boxes.at(0)->windowModality(), Qt::NonModal);
+    const QString text = boxes.at(0)->text();
+    QVERIFY2(text.contains(QStringLiteral("connected")), qPrintable(text));
+    QVERIFY2(text.contains(QStringLiteral("not saved yet")), qPrintable(text));
+    // Neither was modal.
+    QVERIFY(dialogs.notices.isEmpty());
+}
+
+void TestApp::test_failedCloseCancelKeepsTheChanges()
+{
+    App app(options());
+    startWithFailingSaves(app);
+
+    // Cancel: the window stays open, the change stays in memory.
+    QVERIFY(!app.window()->close());
+    QVERIFY(app.window()->isVisible());
+    QCOMPARE(dialogs.closeQuestions.size(), 1);
+    QCOMPARE(dialogs.closeQuestions.at(0).parent, app.window());
+    QVERIFY(dialogs.closeQuestions.at(0).text.contains(QStringLiteral("could not be saved")));
+    QCOMPARE(app.document().store().programs().size(), 1);
+
+    // The problem goes away: the next close saves the change, without
+    // asking.
+    QVERIFY(QDir(jsonPath).removeRecursively());
+    QVERIFY(app.window()->close());
+    QCOMPARE(dialogs.closeQuestions.size(), 1);
+    QVERIFY(contentOf(jsonPath).value_or(QByteArray()).contains("Edited"));
+}
+
+void TestApp::test_failedCloseWithoutSavingDoesNotAskAgain()
+{
+    App app(options());
+    startWithFailingSaves(app);
+    dialogs.closeWithoutSaving = true;
+
+    QVERIFY(app.window()->close());
+    QCOMPARE(dialogs.closeQuestions.size(), 1);
+    // The last window closed, so the application quits next: the user has
+    // chosen already, so nothing more is asked or shown.
+    QVERIFY(QMetaObject::invokeMethod(QCoreApplication::instance(), "aboutToQuit"));
+    QCOMPARE(dialogs.closeQuestions.size(), 1);
+    QVERIFY(dialogs.notices.isEmpty());
+}
+
+void TestApp::test_failedQuitShowsOneMessage()
+{
+    // At aboutToQuit, the application ends whatever the user says: one
+    // modal message, not a question, and no parent window.
+    App app(options());
+    startWithFailingSaves(app);
+
+    QVERIFY(QMetaObject::invokeMethod(QCoreApplication::instance(), "aboutToQuit"));
+    QCOMPARE(dialogs.notices.size(), 1);
+    QCOMPARE(dialogs.notices.at(0).parent, nullptr);
+    QVERIFY(dialogs.notices.at(0).text.contains(QStringLiteral("are lost")));
+    QVERIFY(dialogs.closeQuestions.isEmpty());
+}
+
+void TestApp::test_failedCommitDataWithoutInteractionIsLogged()
+{
+    // The session manager forbids asking: the failure is logged, nothing is
+    // shown, and the session isn't held.
+    App app(options());
+    startWithFailingSaves(app);
+
+    FakeSessionEnd session;
+    session.interaction = false;
+    QTest::ignoreMessage(QtCriticalMsg,
+                         QRegularExpression("Cannot save the programs at the end of the session"));
+    app.commitData(session);
+    QCOMPARE(session.interactionRequests, 1);
+    QCOMPARE(session.releases, 0);
+    QVERIFY(dialogs.notices.isEmpty());
+}
+
+void TestApp::test_silentSessionEndAsksNothingMore()
+{
+    // Without interaction, Qt turns the session's end into a quit, which
+    // closes the window. After commitData() failed silently, neither the
+    // close nor the quit may ask or show anything: a modal box would stall
+    // the logout. Each failed retry is logged.
+    App app(options());
+    startWithFailingSaves(app);
+    FakeSessionEnd session;
+    session.interaction = false;
+    const QRegularExpression logged("Cannot save the programs at the end of the session");
+    QTest::ignoreMessage(QtCriticalMsg, logged);
+    app.commitData(session);
+
+    QTest::ignoreMessage(QtCriticalMsg, logged);
+    QVERIFY(app.window()->close());
+    QTest::ignoreMessage(QtCriticalMsg, logged);
+    QVERIFY(QMetaObject::invokeMethod(QCoreApplication::instance(), "aboutToQuit"));
+    QVERIFY(dialogs.closeQuestions.isEmpty());
+    QVERIFY(dialogs.notices.isEmpty());
+}
+
+void TestApp::test_failedCommitDataWithInteractionIsShown()
+{
+    // Allowed to ask: shown (modally), then the session is released.
+    App app(options());
+    startWithFailingSaves(app);
+
+    FakeSessionEnd session;
+    session.interaction = true;
+    app.commitData(session);
+    QCOMPARE(session.interactionRequests, 1);
+    QCOMPARE(session.releases, 1);
+    QCOMPARE(dialogs.notices.size(), 1);
+    QVERIFY(dialogs.notices.at(0).text.contains(QStringLiteral("could not be saved")));
+}
+
 void TestApp::test_messageBoxDefaultsToQuit_data()
 {
     QTest::addColumn<int>("key");
@@ -597,27 +801,38 @@ void TestApp::test_messageBoxDefaultsToQuit()
     // without reading must get Quit, never Retry or Set Aside.
     QFETCH(const int, key);
 
-    QString defaultButton;
-    bool escapeIsDefault = false;
-    // Runs inside ask()'s exec(), once the box is shown.
-    QTimer::singleShot(0, this, [&defaultButton, &escapeIsDefault, key] {
-        auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
-        if (box == nullptr) {
-            return; // the test then hangs, and fails at its time limit
-        }
-        if (box->defaultButton() != nullptr) {
-            defaultButton = box->defaultButton()->text();
-        }
-        escapeIsDefault = box->escapeButton() == box->defaultButton();
-        QTest::keyClick(box, static_cast<Qt::Key>(key));
-    });
+    ModalBoxSeen seen;
+    pressOnModalBox(this, static_cast<Qt::Key>(key), &seen);
 
     expectWindowShown(); // the message box
-    MessageBoxStartupDialogs real;
+    MessageBoxDialogs real;
     const Answer answer = real.ask(QStringLiteral("A question"), {Answer::Retry, Answer::SetAside});
     QCOMPARE(answer, Answer::Quit);
-    QCOMPARE(defaultButton, QStringLiteral("Quit"));
-    QVERIFY(escapeIsDefault);
+    QVERIFY(seen.found);
+    QCOMPARE(seen.defaultButton, QStringLiteral("Quit"));
+    QVERIFY(seen.escapeIsDefault);
+}
+
+void TestApp::test_closeBoxDefaultsToCancel_data()
+{
+    test_messageBoxDefaultsToQuit_data();
+}
+
+void TestApp::test_closeBoxDefaultsToCancel()
+{
+    // The real close question: Enter or Escape keep the window and the
+    // changes. Losing them takes a deliberate click.
+    QFETCH(const int, key);
+
+    ModalBoxSeen seen;
+    pressOnModalBox(this, static_cast<Qt::Key>(key), &seen);
+
+    expectWindowShown(); // the message box
+    MessageBoxDialogs real;
+    QVERIFY(!real.confirmCloseWithoutSaving(nullptr, QStringLiteral("Lose them?")));
+    QVERIFY(seen.found);
+    QCOMPARE(seen.defaultButton, QStringLiteral("Cancel"));
+    QVERIFY(seen.escapeIsDefault);
 }
 
 QTEST_MAIN(TestApp)

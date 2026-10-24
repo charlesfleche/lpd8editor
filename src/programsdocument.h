@@ -8,6 +8,7 @@
 #include <QTimer>
 #include <QUndoStack>
 
+#include <expected>
 #include <functional>
 
 namespace lpd8 {
@@ -24,20 +25,20 @@ namespace lpd8 {
 //   coalesced: all changes made in one turn of the event loop make one
 //   write. Loading never writes, and neither does clearing the stack, which
 //   changes no program.
-// - A save that fails is reported once, through the failure handler, until a
-//   save succeeds again: not one message per edit. saveNow(), the explicit
-//   save when the window closes and the application quits, reports the
-//   failure of every save it makes, since it is the last chance to tell the
-//   user. The handler's owner shows the message; the
-//   document never shows anything itself.
-// - saveNow() only writes if something changed since the last save, and
-//   since the last failure it reported: closing the window, then quitting,
-//   call it twice, and a failing disk is reported once. A failure of a
-//   save made by the timer leaves the changes to save, so saveNow() tries
-//   again.
+// - A save made by the timer that fails is reported once, through the
+//   failure handler, until a save succeeds again: not one message per edit.
+//   The handler's owner shows the message; the document never shows
+//   anything itself.
+// - saveFinal() is the save when the window closes, the application quits,
+//   or the session ends. It doesn't go through the handler: it returns the
+//   error, because what can be shown depends on the moment (a question
+//   with Cancel at a close, a modal message at quit, maybe nothing when the
+//   session ends), which only the caller knows (App). It only writes if
+//   something changed since the last save that succeeded: a failed save
+//   leaves the changes to save, so the next saveFinal() tries again.
 // - Destroying the document with a save pending does NOT save: a destructor
 //   can't report a failure, and a refused startup must never write. Quitting
-//   saves with saveNow().
+//   saves with saveFinal().
 class ProgramsDocument : public QObject
 {
     Q_OBJECT
@@ -55,10 +56,10 @@ public:
 
     void setSaveFailureHandler(SaveFailureHandler handler);
 
-    // Saves now, cancelling a pending save, and reports a failure. With
-    // nothing new to save (see the class comment), it does nothing and
-    // returns how the last save went.
-    bool saveNow();
+    // Saves now, cancelling a pending save, and returns the error, if any,
+    // for the caller to show. With nothing to save (see the class comment),
+    // it writes nothing and succeeds.
+    std::expected<void, QString> saveFinal();
 
 signals:
     // After every save attempt, scheduled or not.
@@ -66,7 +67,8 @@ signals:
 
 private:
     void scheduleSave();
-    bool save(bool reportEveryFailure);
+    // The timer's save: a failure goes to the handler, once.
+    void saveScheduled();
 
     // Order matters: see the class comment.
     ProgramStore m_store;
@@ -74,10 +76,8 @@ private:
     QTimer m_saveTimer;
     SaveFailureHandler m_onSaveFailure;
     bool m_failureReported{false};
-    // Changed since the last save that succeeded, or whose failure
-    // saveNow() reported.
+    // Changed since the last save that succeeded.
     bool m_dirty{false};
-    bool m_lastSaveSucceeded{true};
 };
 
 } // namespace lpd8

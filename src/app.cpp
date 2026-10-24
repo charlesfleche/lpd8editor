@@ -1,5 +1,6 @@
 #include "app.h"
 
+#include "lpd8device.h"
 #include "mainwindow.h"
 #include "miditransport.h"
 
@@ -63,8 +64,7 @@ private:
 
 } // namespace
 
-StartupDialogs::Answer MessageBoxStartupDialogs::ask(const QString &text,
-                                                     const QList<Answer> &offered)
+AppDialogs::Answer MessageBoxDialogs::ask(const QString &text, const QList<Answer> &offered)
 {
     QMessageBox box(QMessageBox::Warning, QApplication::applicationName(), text);
     QPushButton *quit = box.addButton(tr("Quit"), QMessageBox::RejectRole);
@@ -92,9 +92,26 @@ StartupDialogs::Answer MessageBoxStartupDialogs::ask(const QString &text,
     return Answer::Quit; // closed some other way
 }
 
-void MessageBoxStartupDialogs::tell(QWidget *parent, const QString &text)
+void MessageBoxDialogs::tell(QWidget *parent, const QString &text)
 {
     QMessageBox::information(parent, QApplication::applicationName(), text);
+}
+
+bool MessageBoxDialogs::confirmCloseWithoutSaving(QWidget *parent, const QString &text)
+{
+    // Over the window, which is still there: the close was only asked for.
+    QMessageBox box(QMessageBox::Warning,
+                    QApplication::applicationName(),
+                    text,
+                    QMessageBox::NoButton,
+                    parent);
+    const QPushButton *close =
+            box.addButton(tr("Close Without Saving"), QMessageBox::DestructiveRole);
+    QAbstractButton *cancel = box.addButton(QMessageBox::Cancel);
+    box.setDefaultButton(qobject_cast<QPushButton *>(cancel));
+    box.setEscapeButton(cancel);
+    box.exec();
+    return box.clickedButton() == close;
 }
 
 App::App(Options options)
@@ -104,8 +121,15 @@ App::App(Options options)
     Q_ASSERT(m_options.dialogs != nullptr);
 }
 
-// Destroys the members in reverse order: the window first.
-App::~App() = default;
+App::~App()
+{
+    // The handler shows problems in the window, which goes first. Nothing
+    // can call it during the teardown today (no events run, and the
+    // document's timer stops with it), but in case a future teardown runs
+    // events, it must not reach a window that is gone. The members are
+    // then destroyed in reverse order: the window first.
+    m_document.setSaveFailureHandler({});
+}
 
 bool App::start()
 {
@@ -114,20 +138,23 @@ bool App::start()
     }
 
     // Every way out saves: the document doesn't save when it is destroyed.
-    // Closing the window saves too (MainWindow::closeEvent()). The Quit
+    // Closing the window saves (its close guard, closeWindow()). The Quit
     // action and closing the last window end in quit(), hence aboutToQuit.
     // The session manager may end the application without it (logging
-    // out), so it asks for the data first with commitDataRequest.
-    ProgramsDocument *doc = &m_document;
-    QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, doc, [doc] {
-        doc->saveNow();
-    });
+    // out), so it asks for the data first with commitDataRequest. The
+    // document is the connections' context: they end with the App.
+    QObject::connect(QCoreApplication::instance(),
+                     &QCoreApplication::aboutToQuit,
+                     &m_document,
+                     [this] { quitting(); });
     if (auto *gui = qobject_cast<QGuiApplication *>(QCoreApplication::instance())) {
-        QObject::connect(
-                gui, &QGuiApplication::commitDataRequest, doc, [this](QSessionManager &manager) {
-                    QtSessionEnd session(manager);
-                    commitData(session);
-                });
+        QObject::connect(gui,
+                         &QGuiApplication::commitDataRequest,
+                         &m_document,
+                         [this](QSessionManager &manager) {
+                             QtSessionEnd session(manager);
+                             commitData(session);
+                         });
     }
 
     // MIDI, created once the programs are open: a refused startup doesn't
@@ -136,8 +163,21 @@ bool App::start()
         m_transport = m_options.makeTransport();
     }
 
-    m_window = std::make_unique<MainWindow>(m_document, m_transport.get());
+    if (m_transport) {
+        m_device = std::make_unique<Lpd8Device>(*m_transport);
+    }
+
+    m_window = std::make_unique<MainWindow>(m_document, m_transport.get(), m_device.get());
     m_window->setWindowTitle(QApplication::applicationName());
+    m_window->setCloseGuard([this] { return closeWindow(); });
+    // A save made by the timer, after a change, that fails: shown in the
+    // window's box, without blocking the editing. The document reports it
+    // once, until a save succeeds again.
+    m_document.setSaveFailureHandler([this](const QString &error) {
+        m_window->showProblem(tr("%1\n\nYour changes are not saved yet. lpd8editor will try "
+                                 "again at the next change, and when the window closes.")
+                                      .arg(error));
+    });
     m_window->show();
 
     // The migration report, shown once, over the window. It is also saved
@@ -148,9 +188,76 @@ bool App::start()
     return true;
 }
 
-void App::commitData([[maybe_unused]] SessionEnd &session)
+bool App::closeWindow()
 {
-    m_document.saveNow();
+    const auto saved = m_document.saveFinal();
+    if (saved) {
+        return true;
+    }
+    if (m_sessionEndsSilently) {
+        // The session manager ends the session and forbids asking: Qt
+        // turns that into a quit, which closes the window. A question here
+        // would stall the logout.
+        logLostChanges(saved.error());
+        return true;
+    }
+    // The window is still there and the close can be cancelled: ask. On
+    // Cancel the changes stay, unsaved, and the next close tries again.
+    if (!m_options.dialogs->confirmCloseWithoutSaving(
+                m_window.get(),
+                tr("%1\n\nYour changes could not be saved, and are lost if you close the "
+                   "window now. Cancel keeps it open: you can make room on the disk, or "
+                   "fix the folder's permissions, then close it again.")
+                        .arg(saved.error()))) {
+        return false;
+    }
+    m_closedWithoutSaving = true;
+    return true;
+}
+
+void App::quitting()
+{
+    if (m_closedWithoutSaving) {
+        return; // the user chose to lose the changes, and was told
+    }
+    const auto saved = m_document.saveFinal();
+    if (!saved && m_sessionEndsSilently) {
+        logLostChanges(saved.error()); // see closeWindow()
+    } else if (!saved) {
+        // The application ends whatever the answer: no question, only
+        // what happened, modally, so it is seen before the end.
+        m_options.dialogs->tell(
+                nullptr,
+                tr("%1\n\nYour last changes could not be saved, and are lost.").arg(saved.error()));
+    }
+}
+
+void App::commitData(SessionEnd &session)
+{
+    const auto saved = m_document.saveFinal();
+    if (saved) {
+        return;
+    }
+    // The session manager may forbid asking anything (a logout that must
+    // not wait for the user). Then the failure can only be logged.
+    if (!session.allowsInteraction()) {
+        logLostChanges(saved.error());
+        // And so must the close and the quit that follow: nothing more is
+        // asked or shown until the application ends.
+        m_sessionEndsSilently = true;
+        return;
+    }
+    m_options.dialogs->tell(nullptr,
+                            tr("%1\n\nYour last changes could not be saved: if the session "
+                               "ends now, they are lost.")
+                                    .arg(saved.error()));
+    // Done asking: the session manager may go on.
+    session.release();
+}
+
+void App::logLostChanges(const QString &error)
+{
+    qCritical("Cannot save the programs at the end of the session: %s", qUtf8Printable(error));
 }
 
 bool App::migrate()
@@ -182,8 +289,8 @@ bool App::migrate()
                         "elsewhere to start with no programs.");
         }
         const auto answer = m_options.dialogs->ask(what + QLatin1Char(' ') + advice,
-                                                   {StartupDialogs::Answer::Retry});
-        if (answer != StartupDialogs::Answer::Retry) {
+                                                   {AppDialogs::Answer::Retry});
+        if (answer != AppDialogs::Answer::Retry) {
             return false;
         }
     }
@@ -216,8 +323,8 @@ bool App::load()
         m_options.dialogs->ask(text, {});
         return false;
     }
-    if (m_options.dialogs->ask(text, {StartupDialogs::Answer::SetAside})
-        != StartupDialogs::Answer::SetAside) {
+    if (m_options.dialogs->ask(text, {AppDialogs::Answer::SetAside})
+        != AppDialogs::Answer::SetAside) {
         return false;
     }
     const auto aside = store.setAsideUnreadableFile(m_options.now());

@@ -31,7 +31,10 @@ using lpd8::ProgramListModel;
 static const QString SETTINGS_KEY_DEFAULT_NAME = "default/name";
 static const QString SETTINGS_KEY_DEFAULT_SYSEX = "default/sysex";
 
-MainWindow::MainWindow(lpd8::ProgramsDocument &document, lpd8::MidiTransport *midi, QWidget *parent)
+MainWindow::MainWindow(lpd8::ProgramsDocument &document,
+                       lpd8::MidiTransport *midi,
+                       lpd8::Lpd8Device *device,
+                       QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , m_document(document)
@@ -40,18 +43,12 @@ MainWindow::MainWindow(lpd8::ProgramsDocument &document, lpd8::MidiTransport *mi
               document.store(), document.undoStack(), ControlsModel::Controls::Pads, this))
     , knobsModel(new ControlsModel(
               document.store(), document.undoStack(), ControlsModel::Controls::Knobs, this))
+    , m_device(device)
 {
+    // Both or neither: the device talks through the transport.
+    Q_ASSERT((midi == nullptr) == (device == nullptr));
     ui->setupUi(this);
     setStatusBar(nullptr);
-
-    // A failed save is shown once (ProgramsDocument), with what it means.
-    m_document.setSaveFailureHandler([this](const QString &error) {
-        QMessageBox::warning(this,
-                             tr("Cannot save the programs"),
-                             tr("%1\n\nYour changes are not saved yet. lpd8editor will "
-                                "try again at the next change, and when it quits.")
-                                     .arg(error));
-    });
 
     // Undo
 
@@ -163,8 +160,6 @@ MainWindow::MainWindow(lpd8::ProgramsDocument &document, lpd8::MidiTransport *mi
 
     const QList<QAction *> midiActions = getProgramActions + sendProgramActions;
 
-    device = new lpd8::Lpd8Device(*midi, this);
-
     // Connected below with connectionsModel as the context: ~MainWindow
     // deletes it first, while 'ui' still exists, so the connections end
     // before anything the lambda uses is gone. Off while a request is in
@@ -173,7 +168,7 @@ MainWindow::MainWindow(lpd8::ProgramsDocument &document, lpd8::MidiTransport *mi
         for (QAction *a : midiActions) {
             a->setEnabled(connectionsModel->connected()
                           && ui->programsView->selectionModel()->currentIndex().row() != -1
-                          && !device->isBusy());
+                          && !m_device->isBusy());
         }
     };
 
@@ -194,25 +189,25 @@ MainWindow::MainWindow(lpd8::ProgramsDocument &document, lpd8::MidiTransport *mi
             connectionsModel,
             midiActionsSetEnabled);
 
-    connect(device, &lpd8::Lpd8Device::busyChanged, connectionsModel, midiActionsSetEnabled);
+    connect(m_device, &lpd8::Lpd8Device::busyChanged, connectionsModel, midiActionsSetEnabled);
 
     // The device: its signals may come from inside requestProgram(), so they
     // are connected before any request (lpd8device.h).
 
-    connect(device, &lpd8::Lpd8Device::programReceived, this, &MainWindow::programReceived);
-    connect(device, &lpd8::Lpd8Device::sendDone, this, &MainWindow::requestEnded);
-    connect(device, &lpd8::Lpd8Device::requestFailed, this, [this](int, const QString &reason) {
+    connect(m_device, &lpd8::Lpd8Device::programReceived, this, &MainWindow::programReceived);
+    connect(m_device, &lpd8::Lpd8Device::sendDone, this, &MainWindow::requestEnded);
+    connect(m_device, &lpd8::Lpd8Device::requestFailed, this, [this](int, const QString &reason) {
         requestFailed(reason);
     });
 
     for (int i = 0; i < getProgramActions.count(); ++i) {
-        connect(getProgramActions[i], &QAction::triggered, device, [this, i]() {
+        connect(getProgramActions[i], &QAction::triggered, this, [this, i]() {
             getProgram(i + 1);
         });
     }
 
     for (int i = 0; i < sendProgramActions.count(); ++i) {
-        connect(sendProgramActions[i], &QAction::triggered, device, [this, i]() {
+        connect(sendProgramActions[i], &QAction::triggered, this, [this, i]() {
             sendProgram(i + 1);
         });
     }
@@ -227,7 +222,7 @@ void MainWindow::getProgram(int slot)
     // Set before the request: its answer, or its failure, may come before
     // requestProgram() returns.
     pending = PendingRequest{.slot = slot, .targetProgramId = target};
-    device->requestProgram(slot);
+    m_device->requestProgram(slot);
 }
 
 void MainWindow::sendProgram(int slot)
@@ -237,7 +232,7 @@ void MainWindow::sendProgram(int slot)
         return; // the actions are disabled then
     }
     pending = PendingRequest{.slot = slot, .targetProgramId = -1};
-    device->sendProgram(slot, stored->program);
+    m_device->sendProgram(slot, stored->program);
 }
 
 void MainWindow::programReceived(int slot, const lpd8::Program &program)
@@ -245,11 +240,11 @@ void MainWindow::programReceived(int slot, const lpd8::Program &program)
     Q_ASSERT(pending && pending->slot == slot);
     const int target = pending ? pending->targetProgramId : -1;
     requestEnded();
-    // The program selected when the user asked, not the one selected now
-    // (E2). It may have been deleted while the device answered.
+    // The program selected when the user asked, not the one selected now.
+    // It may have been deleted while the device answered.
     if (!m_document.store().get(target)) {
-        showMidiProblem(tr("The program received from the LPD8 was not applied: the program it "
-                           "was for has been deleted."));
+        showProblem(tr("The program received from the LPD8 was not applied: the program it "
+                       "was for has been deleted."));
         return;
     }
     push(lpd8::makeSetProgramCommand(m_document.store(), target, program),
@@ -264,23 +259,40 @@ void MainWindow::requestEnded()
 void MainWindow::requestFailed(const QString &reason)
 {
     requestEnded();
-    showMidiProblem(reason);
+    showProblem(reason);
 }
 
-void MainWindow::showMidiProblem(const QString &text)
+void MainWindow::showProblem(const QString &text)
 {
-    if (!midiProblemBox) {
-        midiProblemBox =
-                new QMessageBox(QMessageBox::Warning, tr("LPD8"), QString(), QMessageBox::Ok, this);
+    if (!problemBox) {
+        problemBox = new QMessageBox(QMessageBox::Warning,
+                                     QApplication::applicationName(),
+                                     QString(),
+                                     QMessageBox::Ok,
+                                     this);
         // Never modal, never exec(): this is called from the device's
-        // signals, which may come from inside its request loop.
-        midiProblemBox->setWindowModality(Qt::NonModal);
+        // signals, which may come from inside its request loop, and from
+        // the document's save timer.
+        problemBox->setWindowModality(Qt::NonModal);
     }
-    if (midiProblemBox->isVisible()) {
-        return; // one message for problems that come together
+    if (!problemBox->isVisible()) {
+        m_problems.clear(); // the user has read the previous ones
     }
-    midiProblemBox->setText(text);
-    midiProblemBox->show();
+    // One box for problems that come together. Each new one is added, so
+    // none is lost; one already shown isn't repeated (an unplug fails every
+    // queued request with the same reason). Whole problems are compared, not
+    // substrings: a short problem that happens to be part of a longer one
+    // is still shown.
+    if (!m_problems.contains(text)) {
+        m_problems.append(text);
+        problemBox->setText(m_problems.join(QStringLiteral("\n\n")));
+    }
+    problemBox->show();
+}
+
+void MainWindow::setCloseGuard(CloseGuard guard)
+{
+    m_closeGuard = std::move(guard);
 }
 
 MainWindow::~MainWindow()
@@ -291,10 +303,12 @@ MainWindow::~MainWindow()
     // lambdas, which use 'ui'. So, while 'ui' still exists, remove every
     // object outside the window's widgets that connects into them:
     //
-    // - the save failure handler, which shows a dialog over this window
     // - the MIDI objects (lambdas using 'ui' and the store). The transport
-    //   outlives the window, so its connections into them end only when
-    //   they are deleted, here.
+    //   and the device outlive the window (App owns them), so their
+    //   connections into the window end only when they are broken, here:
+    //   the connections model is deleted, and the device disconnected.
+    //   (App clears the document's save-failure handler, which shows
+    //   problems in this window, before destroying it.)
     // - the selection model's connections to this window (showProgram,
     //   refreshUiAccordingToSelection)
     // - the models (modelReset -> refreshUiAccordingToSelection, which uses
@@ -303,9 +317,10 @@ MainWindow::~MainWindow()
     //
     // tests/mainwindow_test.cpp makes signals fire during the teardown to
     // check this.
-    m_document.setSaveFailureHandler({});
-    delete device;
-    device = nullptr;
+    if (m_device) {
+        m_device->disconnect(this);
+        m_device = nullptr;
+    }
     delete connectionsModel;
     connectionsModel = nullptr;
     ui->programsView->selectionModel()->disconnect(this);
@@ -319,7 +334,12 @@ MainWindow::~MainWindow()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    m_document.saveNow();
+    // The window doesn't save itself: App does the final save, and may let
+    // the user cancel the close if it fails.
+    if (m_closeGuard && !m_closeGuard()) {
+        event->ignore();
+        return;
+    }
     QMainWindow::closeEvent(event);
 }
 
@@ -358,7 +378,8 @@ void MainWindow::on_actionDeleteProgram_triggered()
 
 void MainWindow::on_actionQuit_triggered()
 {
-    // QCoreApplication::aboutToQuit saves (main.cpp).
+    // quit() first asks every window to close (Qt 6), so closeEvent() and
+    // its guard run; then App saves at aboutToQuit.
     qApp->quit();
 }
 

@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     // executable (src/CMakeLists.txt), so it is set here, not in App.
     QApplication::setWindowIcon(QIcon(":/lpd8editor.svg"));
 
-    lpd8::MessageBoxStartupDialogs dialogs;
+    lpd8::MessageBoxDialogs dialogs;
     lpd8::App lpd8editor(lpd8::App::Options{
             .sqlitePath = defaultDbPath(),
             .storePath = defaultStorePath(),
