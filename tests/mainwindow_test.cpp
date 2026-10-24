@@ -18,6 +18,7 @@
 #include <QStackedWidget>
 #include <QTableView>
 #include <QTemporaryDir>
+#include <QTextDocument>
 #include <QUndoStack>
 #include <QtTest>
 
@@ -99,6 +100,7 @@ private slots:
     void test_midiOff();
     void test_closeAsksTheGuard();
     void test_problemsShareOneBox();
+    void test_problemsArePlainText();
     void test_newProgramUsesTheDefaultSettings();
     void test_newProgramIgnoresInvalidDefaultSetting();
 
@@ -522,6 +524,22 @@ void TestMainWindow::test_problemsShareOneBox()
     expectWindowShown();
     window->showProblem(QStringLiteral("Third"));
     QCOMPARE(boxes.at(0)->text(), QStringLiteral("Third"));
+}
+
+void TestMainWindow::test_problemsArePlainText()
+{
+    // A problem can name a file or a program. A box left to guess would show
+    // this as HTML, and load what an <img> tag names (doc/SECURITY.md,
+    // finding 6).
+    const QString text = QStringLiteral("Cannot write <img src=\"/x\">/programs.json");
+    QVERIFY(Qt::mightBeRichText(text));
+    const auto window = windowWithPrograms(1);
+    expectWindowShown();
+    window->showProblem(text);
+    const auto *box = window->findChild<QMessageBox *>();
+    QVERIFY(box != nullptr);
+    QCOMPARE(box->textFormat(), Qt::PlainText);
+    QCOMPARE(box->text(), text);
 }
 
 void TestMainWindow::test_newProgramUsesTheDefaultSettings()

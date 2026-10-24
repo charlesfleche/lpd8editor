@@ -2,6 +2,7 @@
 
 #include "lpd8device.h"
 #include "mainwindow.h"
+#include "messagebox.h"
 #include "miditransport.h"
 
 #include <QApplication>
@@ -67,6 +68,9 @@ private:
 AppDialogs::Answer MessageBoxDialogs::ask(const QString &text, const QList<Answer> &offered)
 {
     QMessageBox box(QMessageBox::Warning, QApplication::applicationName(), text);
+    // The texts name files and folders: never let Qt guess HTML
+    // (messagebox.h).
+    box.setTextFormat(Qt::PlainText);
     QPushButton *quit = box.addButton(tr("Quit"), QMessageBox::RejectRole);
     QList<std::pair<QAbstractButton *, Answer>> buttons{{quit, Answer::Quit}};
     for (const Answer answer : offered) {
@@ -94,7 +98,7 @@ AppDialogs::Answer MessageBoxDialogs::ask(const QString &text, const QList<Answe
 
 void MessageBoxDialogs::tell(QWidget *parent, const QString &text)
 {
-    QMessageBox::information(parent, QApplication::applicationName(), text);
+    showInformation(parent, QApplication::applicationName(), text);
 }
 
 bool MessageBoxDialogs::confirmCloseWithoutSaving(QWidget *parent, const QString &text)
@@ -105,6 +109,7 @@ bool MessageBoxDialogs::confirmCloseWithoutSaving(QWidget *parent, const QString
                     text,
                     QMessageBox::NoButton,
                     parent);
+    box.setTextFormat(Qt::PlainText);
     const QPushButton *close =
             box.addButton(tr("Close Without Saving"), QMessageBox::DestructiveRole);
     QAbstractButton *cancel = box.addButton(QMessageBox::Cancel);

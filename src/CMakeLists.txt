@@ -18,6 +18,8 @@ add_library(${_lib}
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
+    messagebox.cpp
+    messagebox.h
     migration.cpp
     migration.h
     midinames.cpp

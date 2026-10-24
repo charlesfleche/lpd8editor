@@ -4,6 +4,7 @@
 #include "deviceprofile.h"
 #include "lpd8codec.h"
 #include "lpd8device.h"
+#include "messagebox.h"
 #include "midiconnectionsmodel.h"
 #include "miditransport.h"
 #include "midivaluedelegate.h"
@@ -266,11 +267,10 @@ void MainWindow::requestFailed(const QString &reason)
 void MainWindow::showProblem(const QString &text)
 {
     if (!problemBox) {
-        problemBox = new QMessageBox(QMessageBox::Warning,
-                                     QApplication::applicationName(),
-                                     QString(),
-                                     QMessageBox::Ok,
-                                     this);
+        // Plain text: problems name files and programs (messagebox.h).
+        problemBox = plainTextMessageBox(
+                             QMessageBox::Warning, QApplication::applicationName(), QString(), this)
+                             .release(); // owned by its parent, the window
         // Never modal, never exec(): this is called from the device's
         // signals, which may come from inside its request loop, and from
         // the document's save timer.
@@ -433,7 +433,7 @@ void MainWindow::on_actionImportProgram_triggered()
 
     const auto imported = lpd8::importProgramFile(path);
     if (!imported) {
-        QMessageBox::warning(this, title, imported.error());
+        showWarning(this, title, imported.error());
         return;
     }
     push(lpd8::makeAddCommand(m_document.store(), imported->name, imported->program),
@@ -467,7 +467,7 @@ void MainWindow::on_actionExportProgram_triggered()
     }
 
     if (const auto written = lpd8::exportProgramFile(program.program, path); !written) {
-        QMessageBox::warning(this, title, written.error());
+        showWarning(this, title, written.error());
     }
 }
 

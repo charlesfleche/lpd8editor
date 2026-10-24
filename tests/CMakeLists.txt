@@ -34,6 +34,7 @@ _add_test(lpd8codec)
 _add_test(lpd8device)
 _add_test(lpd8simulator)
 _add_test(mainwindow)
+_add_test(messagebox)
 _add_test(midiconnectionsmodel)
 _add_test(migration)
 _add_test(miditransport)
@@ -46,6 +47,14 @@ _add_test(programstore)
 _add_test(storecommands)
 _add_test(sysexassembler)
 _add_test(utils)
+
+# The static QMessageBox functions guess HTML: none may come back.
+add_test(
+    NAME plain_text_messages
+    COMMAND ${CMAKE_COMMAND}
+        -DSOURCE_DIR=${PROJECT_SOURCE_DIR}/src
+        -P ${PROJECT_SOURCE_DIR}/cmake/CheckPlainText.cmake
+)
 
 # This test plays other ALSA clients, which send events of their choice.
 target_link_libraries(alsaseqtransport_test PRIVATE ALSA::ALSA)
