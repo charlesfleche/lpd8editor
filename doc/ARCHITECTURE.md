@@ -11,7 +11,7 @@ replaced.
 flowchart TB
     subgraph Domain ["Domain: pure C++ and Qt Core, no I/O"]
         Program["Program / Pad / Knob<br/>(value types)"]
-        Codec["lpd8::codec<br/>decode / encode SysEx"]
+        Codec["lpd8codec.*<br/>decode / encode SysEx"]
     end
 
     subgraph Storage
@@ -39,7 +39,6 @@ flowchart TB
     Store --> Program
     Document --> Store
     Migration --> Store
-    Migration --> Codec
     Lpd8 --> Codec
     Lpd8 --> Transport
     Alsa -.implements.-> Transport
@@ -98,8 +97,9 @@ functions with no I/O:
   exports (doc/SYSEX.md, "Storage format").
 
 The byte offsets of `doc/SYSEX.md` are in this one file (`lpd8codec.*`), the
-only place that knows them: program files, the migration and `Lpd8Device` all
-go through it. `DeviceProfile` holds the device slots and the factory
+only place that knows them: program files and `Lpd8Device` go through it
+(the migration builds programs from the old database's columns, not from
+SysEx). `DeviceProfile` holds the device slots and the factory
 program. Supporting another device means writing
 another codec.
 

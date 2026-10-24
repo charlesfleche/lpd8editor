@@ -521,13 +521,15 @@ commit, after the new code is in place and tested on its own.
 
 ## Phase 5: packaging and documentation
 
-- [x] 5.1 Install a `.desktop` file, the icon, and AppStream metadata, and
+- [x] 5.1 [`bd496d7`](https://github.com/charlesfleche/lpd8editor/commit/bd496d738c86df989590109bf5b6099cb075fe0a) Install a `.desktop` file, the icon, and AppStream metadata, and
       validate them. They are in `data/`, named after the application id
       `io.github.charlesfleche.lpd8editor`, installed by CMake (and so in the
       DEB), and checked by `desktop-file-validate` and `appstreamcli validate
       --no-net` as tests, skipped when the tool is missing.
-- [ ] 5.2 Update `README.md` and `CLAUDE.md`: presets, tooling, supported
-      platforms.
+- [x] 5.2 Update `README.md` and `CLAUDE.md`: presets, tooling, supported
+      platforms. `CLAUDE.md`'s architecture map describes `App`, the store
+      and document, the models, the transport and the device, and the
+      warnings-as-errors flag is `CMAKE_COMPILE_WARNING_AS_ERROR`.
 - [ ] 5.3 Release notes for the next release: the changes users can notice
       since v0.0.18 (the last tag). Each commit that changes behaviour adds
       a line below, so none is found later as a regression. Items before

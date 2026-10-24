@@ -32,8 +32,8 @@ To work on one configuration:
 cmake --preset clang-debug
 cmake --build --preset clang-debug
 ctest --preset clang-debug               # all tests
-ctest --preset clang-debug -R db_test    # one test
-./build/clang-debug/tests/db_test test_createProgram   # one test function
+ctest --preset clang-debug -R programstore_test    # one test
+./build/clang-debug/tests/programstore_test test_saveAndLoadRoundTrip   # one test function
 ```
 
 ## Checks
@@ -112,9 +112,11 @@ below are the ones a tool can't check, or that need their reason explained.
 ### Errors
 
 - A failure that can happen at run time (a bad file, a missing device, a
-  database error) is reported to the caller, and in the end to the user. The
-  target is `std::expected<T, Error>`. Today the code still uses a mix of
-  bools, exceptions and `qWarning()`, which the architecture items replace.
+  write that fails) is reported to the caller, and in the end to the user,
+  as `std::expected<T, Error>`. When the caller must choose what to offer,
+  the error has a kind (`LoadError`, `MigrationError`). The exception is a
+  constructor that can't build its object: `AlsaSeqTransport` throws when
+  there is no sequencer, and its creator catches it and turns MIDI off.
 - Exceptions must never cross the Qt event loop (slots, lambdas, virtual
   functions called by Qt).
 - `Q_ASSERT` is for programmer errors only, never for input validation.
