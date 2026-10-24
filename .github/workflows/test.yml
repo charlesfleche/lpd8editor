@@ -50,7 +50,7 @@ jobs:
 
       # Release presets: some warnings only show up with optimizations on.
       - name: Configure
-        run: cmake --preset ${{ matrix.compiler }}-release -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+        run: cmake --preset ${{ matrix.compiler }}-release -DCMAKE_COMPILE_WARNING_AS_ERROR=ON -DLPD8EDITOR_REQUIRE_VALIDATORS=ON
 
       - name: Build
         run: cmake --build --preset ${{ matrix.compiler }}-release
@@ -73,7 +73,7 @@ jobs:
         run: tools/ci/install-dependencies.sh
 
       - name: Configure
-        run: cmake --preset ${{ matrix.compiler }}-release -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+        run: cmake --preset ${{ matrix.compiler }}-release -DCMAKE_COMPILE_WARNING_AS_ERROR=ON -DLPD8EDITOR_REQUIRE_VALIDATORS=ON
 
       - name: Build
         run: cmake --build --preset ${{ matrix.compiler }}-release

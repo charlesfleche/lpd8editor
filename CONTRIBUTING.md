@@ -15,7 +15,7 @@ Dependencies on Debian or Ubuntu:
 ```bash
 sudo apt install cmake ninja-build g++ clang libasound2-dev qt6-base-dev libqt6sql6-sqlite qt6-svg-plugins
 # For the checks below:
-sudo apt install clang-format clang-tidy cppcheck valgrind
+sudo apt install clang-format clang-tidy cppcheck valgrind desktop-file-utils appstream
 ```
 
 Use the CMake presets (`cmake --list-presets` lists them). Each one builds into

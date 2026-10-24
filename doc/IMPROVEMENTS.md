@@ -472,7 +472,7 @@ commit, after the new code is in place and tested on its own.
         set-aside offered); a directory (`CannotRead`); a failed set-aside
         (the target name taken: the error, then Quit only, both files
         intact); and a load failing after a migration.
-- [x] 4.11c `App` owns the device too, and the window only displays what it
+- [x] 4.11c [`dee562e`](https://github.com/charlesfleche/lpd8editor/commit/dee562e9406b3633edb7f6d1ca542949a88b03e7) `App` owns the device too, and the window only displays what it
       is given: `MainWindow(document, transport, device)` uses them and owns
       none. The selection-bound logic stays in the window, as view state
       (the target program of a request, the actions off while busy).
@@ -521,8 +521,11 @@ commit, after the new code is in place and tested on its own.
 
 ## Phase 5: packaging and documentation
 
-- [ ] 5.1 Install a `.desktop` file, the icon, and AppStream metadata, and
-      validate them.
+- [x] 5.1 Install a `.desktop` file, the icon, and AppStream metadata, and
+      validate them. They are in `data/`, named after the application id
+      `io.github.charlesfleche.lpd8editor`, installed by CMake (and so in the
+      DEB), and checked by `desktop-file-validate` and `appstreamcli validate
+      --no-net` as tests, skipped when the tool is missing.
 - [ ] 5.2 Update `README.md` and `CLAUDE.md`: presets, tooling, supported
       platforms.
 - [ ] 5.3 Release notes for the next release: the changes users can notice
@@ -579,6 +582,9 @@ commit, after the new code is in place and tested on its own.
         changes. A save that fails while editing is shown in a box that
         doesn't block the window, with any MIDI problem of the moment,
         instead of a modal dialog (item 4.11c).
+      - lpd8editor appears in the desktop's application menu, with its icon,
+        and in software centers (item 5.1). Before, the package installed
+        only the program.
       - Known quirk, not a change to announce: the pads and knobs tables are
         empty until a program is selected, so the first selection can make
         a window at its minimum width about 28 pixels wider, once (the

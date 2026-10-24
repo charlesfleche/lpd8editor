@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AppStream metadata: what software centers (GNOME Software, KDE
+     Discover) show about the application. Validated by the tests with
+     'appstreamcli validate'. -->
+<component type="desktop-application">
+  <id>io.github.charlesfleche.lpd8editor</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+
+  <name>lpd8editor</name>
+  <summary>Edit the programs of an Akai LPD8 pad controller</summary>
+  <developer id="io.github.charlesfleche">
+    <name>Charles Flèche</name>
+  </developer>
+
+  <description>
+    <p>
+      lpd8editor edits the programs of the original Akai LPD8 pad
+      controller: the note, program change and control change of each pad,
+      whether a pad toggles, and the control change and range of each knob.
+    </p>
+    <ul>
+      <li>Keep any number of programs, with undo and redo</li>
+      <li>Get a program from the LPD8, or send one to any of its four slots</li>
+      <li>Import and export programs as files</li>
+    </ul>
+    <p>
+      It talks to the device over MIDI (the ALSA sequencer, which PipeWire and
+      JACK also reach). The LPD8 Mk2 and the LPD8 Wireless are not supported.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">io.github.charlesfleche.lpd8editor.desktop</launchable>
+  <provides>
+    <binary>lpd8editor</binary>
+  </provides>
+
+  <url type="homepage">https://github.com/charlesfleche/lpd8editor</url>
+  <url type="bugtracker">https://github.com/charlesfleche/lpd8editor/issues</url>
+  <url type="vcs-browser">https://github.com/charlesfleche/lpd8editor</url>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>The programs, and the pads and knobs of the selected one</caption>
+      <image>https://raw.githubusercontent.com/charlesfleche/lpd8editor/master/doc/screenshot.png</image>
+    </screenshot>
+  </screenshots>
+
+  <categories>
+    <category>AudioVideo</category>
+    <category>Audio</category>
+    <category>Midi</category>
+  </categories>
+  <keywords>
+    <keyword>MIDI</keyword>
+    <keyword>LPD8</keyword>
+    <keyword>Akai</keyword>
+    <keyword>SysEx</keyword>
+  </keywords>
+
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+
+  <content_rating type="oars-1.1"/>
+
+  <releases>
+    <release version="0.0.18" date="2026-01-25"/>
+  </releases>
+</component>

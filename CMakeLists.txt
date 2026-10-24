@@ -88,6 +88,7 @@ include(cmake/Memcheck.cmake)
 include(CTest)
 
 add_subdirectory(src)
+add_subdirectory(data)
 if (BUILD_TESTING)
     find_package(Qt6 REQUIRED COMPONENTS Test)
     add_subdirectory(tests)

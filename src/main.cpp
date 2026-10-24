@@ -18,6 +18,9 @@ int main(int argc, char *argv[])
     QApplication::setOrganizationName(appName);
     QApplication::setApplicationName(appName);
     QApplication::setApplicationVersion(appVersion);
+    // The installed .desktop file (data/): on Wayland, the compositor finds
+    // the window's icon and name through it.
+    QGuiApplication::setDesktopFileName(QStringLiteral("io.github.charlesfleche.lpd8editor"));
 
     app.setProperty("applicationLink", appUrl);
     app.setProperty("applicationLicense", "MIT License");

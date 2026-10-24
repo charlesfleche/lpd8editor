@@ -20,6 +20,8 @@ packages="
     qt6-base-dev
     libqt6sql6-sqlite
     qt6-svg-plugins
+    desktop-file-utils
+    appstream
 "
 
 sudo=""

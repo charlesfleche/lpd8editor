@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=lpd8editor
+GenericName=LPD8 Editor
+Comment=Edit the programs of an Akai LPD8 pad controller
+Exec=lpd8editor
+Icon=io.github.charlesfleche.lpd8editor
+Terminal=false
+Categories=AudioVideo;Audio;Midi;
+Keywords=MIDI;LPD8;Akai;SysEx;controller;pads;
