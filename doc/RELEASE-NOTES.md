@@ -98,10 +98,35 @@ invisible; this is what you can notice.
 The fix of the MIDI program dumps above ("Only the answer to your own
 request is applied") came out of a security review.
 
-<!-- Security fixes from the security review branch add their lines here,
-     when they are merged. -->
+- Another program on the computer could crash lpd8editor with a crafted
+  MIDI message, freeze its window by flooding it with messages, make it
+  keep more and more memory, or remove the LPD8 from the connection menu.
+  All of these are fixed: such messages are ignored, and the window stays
+  responsive.
+- Program files are read strictly: only decimal values from 0 to 255 are
+  accepted, and a file that is not a regular file (a FIFO or a device,
+  for example in a downloaded archive) or larger than 64 KiB is refused
+  instead of freezing the window.
+- Error messages are shown as plain text. A file or folder name that looks
+  like HTML could make lpd8editor open other files on the computer, or
+  freeze.
+- 'Export program' always suggests a visible file in the Documents folder,
+  even for a program named like a path (`../../.bashrc`): path separators and
+  control characters become `_`, and leading dots and spaces are dropped.
+- lpd8editor never saves a programs file too large to be opened again,
+  which would have kept it from starting.
+- An old database that is not a regular file, or a FIFO next to it named
+  like its journal, is refused at startup instead of hanging.
+
+The details, and the rules that keep these fixed, are in `doc/SECURITY.md`.
 
 ### For packagers and people who build lpd8editor
+
+- The build adds hardening flags (stack protector, `_FORTIFY_SOURCE=3` in
+  optimized builds, `_GLIBCXX_ASSERTIONS`, PIE, full RELRO, a
+  non-executable stack). They are on by default; `-DLPD8EDITOR_HARDENING=OFF`
+  leaves the distribution's own flags alone. The `hardening` test checks
+  the binary.
 
 - Building needs a C++23 compiler (GCC 14 or Clang 19), CMake 3.25 and Qt
   6.8 or later. Git is optional (a source archive takes its version from

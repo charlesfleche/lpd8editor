@@ -22,6 +22,8 @@ fi
 if [ ! -e /dev/snd/seq ]; then
     if ! $sudo modprobe snd-seq 2>/dev/null; then
         export DEBIAN_FRONTEND=noninteractive
+        # A fresh runner's package lists may not know this kernel's package.
+        $sudo apt-get update
         $sudo apt-get install --yes --no-install-recommends "linux-modules-extra-$(uname -r)"
         $sudo modprobe snd-seq
     fi

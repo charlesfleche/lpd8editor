@@ -630,6 +630,31 @@ commit, after the new code is in place and tested on its own.
       - lpd8editor appears in the desktop's application menu, with its icon,
         and in software centers (item 5.1). Before, the package installed
         only the program.
+      - Security fixes (the security review, doc/SECURITY.md): a MIDI event
+        that points into another process's memory is ignored (any local
+        program could crash lpd8editor with one); a program that floods
+        the MIDI port no longer freezes the window, nor makes it keep
+        unbounded memory; port announcements are taken only from the
+        system, so another program can't remove the LPD8 from the list.
+      - Program files are read strictly: decimal values from 0 to 255 only
+        (hexadecimal, signs and numbers that wrap around were accepted);
+        a FIFO, a device or a folder is refused instead of freezing the
+        window; a file larger than 64 KiB is refused.
+      - Messages are shown as plain text: a file or folder name that looks
+        like HTML is shown as it is, and no longer makes Qt open the files
+        it names.
+      - The file suggested by Export stays in the Documents folder, whatever
+        the program's name: path separators and control characters become
+        '_', and leading dots and spaces are dropped.
+      - Saving refuses a programs file larger than the 8 MB that loading
+        accepts (a far too long name), keeping the previous file, instead
+        of writing one that the next start can't open.
+      - An old database that is not a regular file (a FIFO), or a FIFO next
+        to it named like its journal, is refused at startup instead of
+        hanging.
+      - For packagers: the build adds hardening flags (stack protector,
+        `_FORTIFY_SOURCE=3`, `_GLIBCXX_ASSERTIONS`, PIE, full RELRO), on by
+        default (`LPD8EDITOR_HARDENING`), checked by the `hardening` test.
       - Known quirk, not a change to announce: the pads and knobs tables are
         empty until a program is selected, so the first selection can make
         a window at its minimum width about 28 pixels wider, once (the
