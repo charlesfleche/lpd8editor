@@ -52,4 +52,4 @@ The code targets C++23 (`target_compile_features(... cxx_std_23)` on the library
 
 ## Conventions
 
-Coding conventions are in `CONTRIBUTING.md` (C++23, Qt idioms, naming, errors, tests, commits). `doc/IMPROVEMENTS.md` is the improvement checklist: one commit per item, each commit ticks its item and links the previous item to its commit.
+Coding conventions are in `CONTRIBUTING.md` (C++23, Qt idioms, naming, errors, tests, commits). `doc/IMPROVEMENTS.md` is the improvement checklist: one commit per item, each commit ticks its item and links the previous item to its commit. The user-facing release notes are `doc/RELEASE-NOTES.md`; a commit that changes behaviour adds its line to item 5.3's list and to that file.

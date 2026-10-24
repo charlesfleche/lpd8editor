@@ -526,14 +526,57 @@ commit, after the new code is in place and tested on its own.
       `io.github.charlesfleche.lpd8editor`, installed by CMake (and so in the
       DEB), and checked by `desktop-file-validate` and `appstreamcli validate
       --no-net` as tests, skipped when the tool is missing.
-- [x] 5.2 Update `README.md` and `CLAUDE.md`: presets, tooling, supported
+- [x] 5.2 [`980785d`](https://github.com/charlesfleche/lpd8editor/commit/980785dcb1d229978cf9e5a09aa3336c7b748258) Update `README.md` and `CLAUDE.md`: presets, tooling, supported
       platforms. `CLAUDE.md`'s architecture map describes `App`, the store
       and document, the models, the transport and the device, and the
       warnings-as-errors flag is `CMAKE_COMPILE_WARNING_AS_ERROR`.
-- [ ] 5.3 Release notes for the next release: the changes users can notice
+- [x] 5.3 Release notes for the next release: the changes users can notice
       since v0.0.18 (the last tag). Each commit that changes behaviour adds
-      a line below, so none is found later as a regression. Items before
-      4.7a were not audited for this yet: that is part of this item.
+      a line below, so none is found later as a regression. The list below
+      is the source; `doc/RELEASE-NOTES.md` is the same for users, grouped
+      by topic, with a marked place for the security fixes of the separate
+      security branch. Items before 4.7a were audited when this item was
+      done: their lines are the first ones below, marked with the item.
+
+      Before tagging the release:
+
+      - Retake `doc/screenshot.png` on a real desktop: it shows the old
+        interface (the database's column names as headers). The AppStream
+        metadata points to it.
+      - Add the release to `data/io.github.charlesfleche.lpd8editor.metainfo.xml`
+        (`<release version="x.y.z" date="YYYY-MM-DD"/>`, newest first), and
+        move the "Next release" notes of `doc/RELEASE-NOTES.md` under its
+        number. On the tag, the `metainfo_release_version` test fails if the
+        newest `<release>` isn't the tagged version, so the release workflow
+        stops before publishing.
+
+      - Fixed a crash: edit a pad, delete the program, undo twice (3.13).
+      - Editing a value without changing it adds no undo step (3.11, kept
+        by 4.6).
+      - A failed import no longer leaves a half-made program (3.7), and an
+        import of a file that is not an LPD8 program is refused with a
+        message (3.12, 3.15).
+      - Import and export show their errors instead of failing silently,
+        and a failed export never leaves a truncated file (3.15).
+      - The file dialogs filter LPD8 programs (`*.lpd8`), export suggests
+        `<name>.lpd8`, and an imported program is named after the file
+        without its extension (3.15). Before, the whole file name.
+      - A dump from another manufacturer's device with the same opcode
+        bytes is no longer taken for an LPD8 program (3.12).
+      - When the data folder or database can't be opened, a message says
+        so instead of an abort without a word (3.14; replaced by the
+        startup choices of 4.11b).
+      - A program file with more than 66 values (two programs back to
+        back, for example) is refused; before, its first program was
+        imported without a word (41cc82d).
+      - A program message one byte short is refused; before, it was
+        accepted, with the last knob value read as 0 (64e1f24, 3.8).
+      - Cosmetic: the note D sharp is written D♯, like the other sharps,
+        instead of D# (f34be32).
+      - For packagers: C++23 (GCC 14, Clang 19), CMake 3.25 and Qt 6.8
+        are required (1.2, 1.3); Git and Qt LinguistTools are optional
+        (1.3). Release packages are built per distribution, with
+        `SHA256SUMS` (2.3).
 
       - Importing a program file whose slot byte (the 8th value) is not 1
         to 4 is refused as "not an LPD8 program" (since 691fb56, when the
