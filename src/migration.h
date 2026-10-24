@@ -20,6 +20,27 @@ struct MigrationReport
     QString reportFileError; // why it couldn't be saved, if it couldn't
 };
 
+// Why a migration failed. The kind lets the startup say what to do before
+// retrying (doc/IMPROVEMENTS.md, item 4.11b).
+struct MigrationError
+{
+    enum class Kind {
+        // The database was left with a 'hot journal' ('<file>-journal'): a
+        // write to it was interrupted, and SQLite must undo it before
+        // anyone can read the file. A read-only connection can't (SQLite's
+        // SQLITE_READONLY_ROLLBACK), so the migration fails the same way at
+        // every start until it is done.
+        HotJournal,
+        // Anything else: not a database, unreadable, or the JSON file can't
+        // be written.
+        Other,
+    };
+
+    Kind kind{Kind::Other};
+    QString message; // for the user
+    QString journalPath; // the journal, for HotJournal only
+};
+
 // The report as text for the user: how many programs moved, those left out
 // and why, where the old database is now, and where this text is saved.
 QString describe(const MigrationReport &report);
@@ -52,8 +73,8 @@ QString describe(const MigrationReport &report);
 //   left with a 'hot journal' (db.sqlite3-journal, after a crash during a
 //   write): a read-only connection can't roll it back, so SQLite refuses it.
 //   The next start then fails the same way, so the user must be told
-//   (doc/IMPROVEMENTS.md, item 4.11b).
-std::expected<std::optional<MigrationReport>, QString>
+//   (doc/IMPROVEMENTS.md, item 4.11b): that failure is a HotJournal error.
+std::expected<std::optional<MigrationReport>, MigrationError>
 migrateSqliteDatabase(const QString &sqlitePath, const QString &jsonPath);
 
 } // namespace lpd8

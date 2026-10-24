@@ -28,6 +28,11 @@ QString tr(const char *text, int n = -1)
 // default connection, which other code may use.
 constexpr const char *connection_name = "lpd8editor-migration";
 
+// SQLite's extended result code for a hot journal on a read-only
+// connection (https://sqlite.org/rescode.html#readonly_rollback), as
+// QSqlError::nativeErrorCode() gives it.
+constexpr QLatin1StringView sqlite_readonly_rollback("776");
+
 using Error = std::unexpected<QString>;
 
 // How a stored value is shown in a report: empty, a number, or quoted text.
@@ -144,8 +149,9 @@ struct OldProgram
     QVariant channel;
 };
 
-// Reads every program it can into 'store', and reports the others.
-std::expected<MigrationReport, QString> readInto(QSqlDatabase &db, ProgramStore &store)
+// Reads every program it can into 'store', and reports the others. The
+// error is SQLite's, whole: its native code tells a hot journal apart.
+std::expected<MigrationReport, QSqlError> readInto(QSqlDatabase &db, ProgramStore &store)
 {
     MigrationReport report;
 
@@ -157,7 +163,7 @@ std::expected<MigrationReport, QString> readInto(QSqlDatabase &db, ProgramStore 
     // old list showed both the same way.
     QSqlQuery q(db);
     if (!q.exec("select programId, name, channel from programs order by programId")) {
-        return Error(q.lastError().text());
+        return std::unexpected(q.lastError());
     }
     QList<OldProgram> programs;
     while (q.next()) {
@@ -262,7 +268,7 @@ QString describe(const MigrationReport &report)
     return parts.join(QStringLiteral("\n\n"));
 }
 
-std::expected<std::optional<MigrationReport>, QString>
+std::expected<std::optional<MigrationReport>, MigrationError>
 migrateSqliteDatabase(const QString &sqlitePath, const QString &jsonPath)
 {
     // Nothing to do, or already done: touch nothing.
@@ -271,14 +277,14 @@ migrateSqliteDatabase(const QString &sqlitePath, const QString &jsonPath)
     }
 
     ProgramStore store(jsonPath);
-    std::expected<MigrationReport, QString> report;
+    std::expected<MigrationReport, QSqlError> report;
     {
         QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", connection_name);
         db.setDatabaseName(sqlitePath);
         // Read-only: the migration must never change the old database.
         db.setConnectOptions("QSQLITE_OPEN_READONLY");
         if (!db.open()) {
-            report = Error(db.lastError().text());
+            report = std::unexpected(db.lastError());
         } else {
             report = readInto(db, store);
         }
@@ -287,13 +293,31 @@ migrateSqliteDatabase(const QString &sqlitePath, const QString &jsonPath)
     // Every QSqlDatabase object of the connection is gone: it can be removed.
     QSqlDatabase::removeDatabase(connection_name);
     if (!report) {
-        return Error(tr("Cannot read the old programs database %1: %2")
-                             .arg(QDir::toNativeSeparators(sqlitePath), report.error()));
+        const QString message =
+                tr("Cannot read the old programs database %1: %2")
+                        .arg(QDir::toNativeSeparators(sqlitePath), report.error().text());
+        // SQLite's message ("attempt to write a readonly database") doesn't
+        // name the cause, but its extended result code does:
+        // SQLITE_READONLY_ROLLBACK (776) means a hot journal that a read-only
+        // connection can't play back. Qt's SQLite driver reports extended
+        // codes in nativeErrorCode(). The code, not the journal file being
+        // there, decides: a journal also exists while another program is
+        // writing (then the error is SQLITE_BUSY), which needs other
+        // advice: close that program, don't run sqlite3 on its database.
+        if (report.error().nativeErrorCode() == sqlite_readonly_rollback) {
+            return std::unexpected(
+                    MigrationError{.kind = MigrationError::Kind::HotJournal,
+                                   .message = message,
+                                   .journalPath = sqlitePath + QStringLiteral("-journal")});
+        }
+        return std::unexpected(MigrationError{
+                .kind = MigrationError::Kind::Other, .message = message, .journalPath = {}});
     }
 
     // First the new file, atomically...
     if (const auto saved = store.save(); !saved) {
-        return Error(saved.error());
+        return std::unexpected(MigrationError{
+                .kind = MigrationError::Kind::Other, .message = saved.error(), .journalPath = {}});
     }
 
     // ...then, and only then, move the old one aside. If this fails, the

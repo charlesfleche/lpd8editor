@@ -506,8 +506,9 @@ void TestProgramStore::test_setAsideKeepsTheBytes()
 
 void TestProgramStore::test_aDirectoryCannotBeRead()
 {
-    // G1: a directory where the file should be: CannotRead (nothing to set
-    // aside), not Damaged. It fails the same way for root, so CI tests it.
+    // A directory where the file should be: CannotRead (nothing to set
+    // aside), not Damaged. Unlike a permission error, it fails the same way
+    // for root, so CI, which may run as root, tests it too.
     QVERIFY(QDir().mkpath(path));
     ProgramStore store(path);
     const auto loaded = store.load();
@@ -517,7 +518,8 @@ void TestProgramStore::test_aDirectoryCannotBeRead()
     QVERIFY(!store.save().has_value());
     QVERIFY(QFileInfo(path).isDir());
 
-    // R2: not Damaged, so it is not set aside: nothing is renamed.
+    // Not Damaged, so it is not set aside: renaming a directory could hide
+    // something the user still needs. Nothing is renamed.
     const QDateTime when(QDate(2026, 1, 2), QTime(3, 4, 5));
     QVERIFY(!store.setAsideUnreadableFile(when).has_value());
     QVERIFY(QFileInfo(path).isDir());
@@ -545,7 +547,7 @@ void TestProgramStore::test_aFifoDoesNotBlock()
 
 void TestProgramStore::test_aFolderThatCannotBeEnteredIsNotAFirstStart()
 {
-    // R6: stat() fails with EACCES, not ENOENT. Taking that for a missing
+    // stat() fails with EACCES, not ENOENT. Taking that for a missing
     // file would start empty and, at the first save attempt, report a
     // confusing error, or worse, write elsewhere. Root ignores permissions,
     // so there the file is simply read and this test can't provoke the
@@ -574,9 +576,10 @@ void TestProgramStore::test_aFolderThatCannotBeEnteredIsNotAFirstStart()
 
 void TestProgramStore::test_setAsideRefusesATakenName()
 {
-    // G1: QFile::rename() never replaces an existing file. With the
+    // QFile::rename() never replaces an existing file. With the
     // timestamp fixed, the target name can be taken in advance: the rename
-    // fails, for root too, and nothing is lost.
+    // fails, for root too (unlike a permission error), and nothing is
+    // lost.
     const QByteArray corrupt = "{ broken";
     writeAll(path, corrupt);
     const QDateTime when(QDate(2026, 1, 2), QTime(3, 4, 5));

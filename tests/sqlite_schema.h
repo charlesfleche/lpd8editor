@@ -1,6 +1,8 @@
 #ifndef SQLITE_SCHEMA_H
 #define SQLITE_SCHEMA_H
 
+#include <QFile>
+#include <QFileInfo>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
@@ -76,6 +78,77 @@ inline bool createLastSqliteSchema(const QSqlDatabase &db)
         }
     }
     return true;
+}
+
+// A write to the database at 'path' (closed, any schema), left in
+// progress: a transaction whose changes were spilled into the database
+// file, with the old pages saved in '<path>-journal', and SQLite's lock
+// held, until the object is destroyed (then it rolls back). ok() is false,
+// with a warning, if a step failed.
+//
+// How: with a one-page cache, a large update can't keep its changes in
+// memory, so SQLite writes them to the file before the commit, after saving
+// the old pages in the journal.
+class InterruptedWrite
+{
+public:
+    explicit InterruptedWrite(const QString &path)
+    {
+        QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", connection);
+        db.setDatabaseName(path);
+        m_ok = db.open();
+        exec("create table if not exists filler(x blob)");
+        for (int i = 0; i < 50; ++i) {
+            exec("insert into filler values (randomblob(4000))");
+        }
+        exec("pragma cache_size = 1");
+        exec("begin");
+        exec("update filler set x = randomblob(4000)");
+        if (m_ok && QFileInfo(path + "-journal").size() == 0) {
+            qWarning() << "No journal was written";
+            m_ok = false;
+        }
+    }
+    ~InterruptedWrite()
+    {
+        {
+            QSqlDatabase db = QSqlDatabase::database(connection);
+            QSqlQuery(db).exec("rollback");
+            db.close();
+        }
+        QSqlDatabase::removeDatabase(connection);
+    }
+    InterruptedWrite(const InterruptedWrite &) = delete;
+    InterruptedWrite &operator=(const InterruptedWrite &) = delete;
+    InterruptedWrite(InterruptedWrite &&) = delete;
+    InterruptedWrite &operator=(InterruptedWrite &&) = delete;
+
+    bool ok() const { return m_ok; }
+
+private:
+    static constexpr const char *connection = "interrupted-write";
+
+    void exec(const QString &statement)
+    {
+        QSqlQuery q(QSqlDatabase::database(connection));
+        if (m_ok && !q.exec(statement)) {
+            qWarning() << statement << q.lastError().text();
+            m_ok = false;
+        }
+    }
+
+    bool m_ok{false};
+};
+
+// Makes 'to' a copy of the database at 'from' as a crash would leave it: in
+// the middle of a write, with a 'hot journal' ('<to>-journal') that SQLite
+// must play back before anyone can read it. 'from' is left as it was. The
+// copy's journal is "hot" because no connection holds a lock on the copy:
+// the writer is gone, as after a crash.
+inline bool copyWithHotJournal(const QString &from, const QString &to)
+{
+    const InterruptedWrite write(from);
+    return write.ok() && QFile::copy(from, to) && QFile::copy(from + "-journal", to + "-journal");
 }
 
 #endif // SQLITE_SCHEMA_H

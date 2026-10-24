@@ -6,6 +6,8 @@ set(_lib ${CMAKE_PROJECT_NAME}-lib)
 add_library(${_lib}
     alsaseqtransport.cpp
     alsaseqtransport.h
+    app.cpp
+    app.h
     deviceprofile.cpp
     deviceprofile.h
     enums.h
@@ -37,8 +39,6 @@ add_library(${_lib}
     programsdocument.h
     programstore.cpp
     programstore.h
-    startup.cpp
-    startup.h
     exactinteger.cpp
     exactinteger.h
     storecommands.cpp

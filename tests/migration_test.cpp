@@ -101,6 +101,8 @@ private slots:
     void test_doesNothingWhenTheJsonFileExists();
     void test_doesNothingWithoutADatabase();
     void test_unreadableDatabaseIsAnError();
+    void test_hotJournalIsRecognised();
+    void test_journalOfALiveWriteIsNotAHotJournal();
     void test_failedJsonWriteKeepsTheDatabase();
     void test_doesNotReplaceAnEarlierMigratedFile();
     void test_doesNotReplaceAnEarlierReport();
@@ -135,7 +137,7 @@ void TestMigration::test_migratesTheCurrentSchema()
 
     const auto result = migrateSqliteDatabase(sqlitePath, jsonPath);
     if (!result) { // not QVERIFY2: its message would be built even on success
-        QFAIL(qPrintable(result.error()));
+        QFAIL(qPrintable(result.error().message));
     }
     const MigrationReport report = result.value().value();
     QCOMPARE(report.migrated, 3);
@@ -193,7 +195,7 @@ void TestMigration::test_reportsBadRowsOfAnUnconstrainedDatabase()
 
     const auto result = migrateSqliteDatabase(sqlitePath, jsonPath);
     if (!result) { // not QVERIFY2: its message would be built even on success
-        QFAIL(qPrintable(result.error()));
+        QFAIL(qPrintable(result.error().message));
     }
     const MigrationReport report = result.value().value();
 
@@ -240,7 +242,7 @@ void TestMigration::test_nullNameBecomesEmpty()
 
     const auto result = migrateSqliteDatabase(sqlitePath, jsonPath);
     if (!result) { // not QVERIFY2: its message would be built even on success
-        QFAIL(qPrintable(result.error()));
+        QFAIL(qPrintable(result.error().message));
     }
     QCOMPARE(result.value().value().migrated, 1);
     ProgramStore store(jsonPath);
@@ -286,10 +288,54 @@ void TestMigration::test_unreadableDatabaseIsAnError()
 
     const auto result = migrateSqliteDatabase(sqlitePath, jsonPath);
     QVERIFY(!result.has_value());
-    QVERIFY2(result.error().contains("Cannot read the old programs database"),
-             qPrintable(result.error()));
+    QVERIFY2(result.error().message.contains("Cannot read the old programs database"),
+             qPrintable(result.error().message));
+    QCOMPARE(result.error().kind, MigrationError::Kind::Other);
+    QVERIFY(result.error().journalPath.isEmpty());
     QVERIFY(!QFile::exists(jsonPath));
     QCOMPARE(readAll(sqlitePath), bytes); // untouched, not renamed
+}
+
+void TestMigration::test_hotJournalIsRecognised()
+{
+    // A database a crash left in the middle of a write: the read-only
+    // connection can't play its journal back, so the migration fails, and
+    // says where the journal is, for the user's advice.
+    const QString original = dir->filePath("original.sqlite3");
+    QVERIFY(buildDatabase(original, oldSchema() + oldProgram(1, "Old"), false));
+    QVERIFY(copyWithHotJournal(original, sqlitePath));
+    const QByteArray bytes = readAll(sqlitePath);
+    const QByteArray journal = readAll(sqlitePath + "-journal");
+
+    const auto result = migrateSqliteDatabase(sqlitePath, jsonPath);
+    QVERIFY(!result.has_value());
+    QCOMPARE(result.error().kind, MigrationError::Kind::HotJournal);
+    QCOMPARE(result.error().journalPath, sqlitePath + "-journal");
+    QVERIFY2(result.error().message.contains("Cannot read the old programs database"),
+             qPrintable(result.error().message));
+    // Nothing written, nothing played back.
+    QVERIFY(!QFile::exists(jsonPath));
+    QCOMPARE(readAll(sqlitePath), bytes);
+    QCOMPARE(readAll(sqlitePath + "-journal"), journal);
+}
+
+void TestMigration::test_journalOfALiveWriteIsNotAHotJournal()
+{
+    // Another program is writing to the database right now: the journal is
+    // there and not empty, as with a hot journal, but its writer holds the
+    // lock. SQLite answers SQLITE_BUSY (after the driver's 5 second busy
+    // timeout), not SQLITE_READONLY_ROLLBACK: the user must close that
+    // program, not run sqlite3 on its database.
+    QVERIFY(buildDatabase(sqlitePath, oldSchema() + oldProgram(1, "Old"), false));
+    const InterruptedWrite write(sqlitePath);
+    QVERIFY(write.ok());
+    QVERIFY(QFileInfo(sqlitePath + "-journal").size() > 0);
+
+    const auto result = migrateSqliteDatabase(sqlitePath, jsonPath);
+    QVERIFY(!result.has_value());
+    QCOMPARE(result.error().kind, MigrationError::Kind::Other);
+    QVERIFY(result.error().journalPath.isEmpty());
+    QVERIFY(!QFile::exists(jsonPath));
 }
 
 void TestMigration::test_failedJsonWriteKeepsTheDatabase()
@@ -303,6 +349,7 @@ void TestMigration::test_failedJsonWriteKeepsTheDatabase()
 
     const auto result = migrateSqliteDatabase(sqlitePath, notAFolder + "/programs.json");
     QVERIFY(!result.has_value());
+    QCOMPARE(result.error().kind, MigrationError::Kind::Other);
     QVERIFY(QFile::exists(sqlitePath)); // not renamed: the next start retries
     QVERIFY(!QFile::exists(sqlitePath + ".migrated"));
 }

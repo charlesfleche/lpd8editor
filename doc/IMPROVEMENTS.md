@@ -402,14 +402,14 @@ commit, after the new code is in place and tested on its own.
         one message, not one each.
       - The old `Q_UNIMPLEMENTED()` for "nothing selected" goes: Get is
         disabled with no selection, and the target is fixed at request time.
-- [x] 4.11a The programs file's load error gets a kind (`LoadError`):
+- [x] 4.11a [`ab7be77`](https://github.com/charlesfleche/lpd8editor/commit/ab7be7765aafaf5ecd39073c5e7906b2d0e735ad) The programs file's load error gets a kind (`LoadError`):
       `CannotRead` (permissions, I/O, not a regular file), `Damaged`, and
       `NewerFormat`, so the startup can offer what fits (4.11b): only a
       damaged file may be set aside. `setAsideUnreadableFile()` takes the
       time that names the file, so a test can make the rename fail. Both
-      error paths are tested in ways that work for root too (G1): a
-      directory and a FIFO named `programs.json`, and a set-aside whose
-      target name is taken. The store keeps the kind, and
+      error paths are tested in ways that work for root too, since CI may
+      run as root, which ignores permissions: a directory and a FIFO named
+      `programs.json`, and a set-aside whose target name is taken. The store keeps the kind, and
       `setAsideUnreadableFile()` refuses unless the last load failed as
       `Damaged` (a directory, then a set-aside: refused, nothing renamed).
       A `LoadError` built without a kind is `CannotRead`, the strictest. The
@@ -419,7 +419,7 @@ commit, after the new code is in place and tested on its own.
       a first start; its test is skipped as root, which can enter any
       folder. The read-error path itself (an I/O error mid-read) is not
       tested: it can't be provoked without a faulty device.
-- [ ] 4.11b Composition root: an `App` object runs the startup and owns the
+- [x] 4.11b Composition root: an `App` object runs the startup and owns the
       document, the transport and the window, in that order (so they are
       destroyed window first). `main()` becomes: `QApplication`, `App`,
       `exec()`. `startup.*` folds into it. For a load failing right after
@@ -481,9 +481,10 @@ commit, after the new code is in place and tested on its own.
         problem, MIDI or save, goes to the window's one non-modal box
         (`MainWindow::showProblem()`). A problem that comes while the box
         is shown is added to its text, unless it is already there: none is
-        lost, and none stacks (G2). Test: a MIDI failure, then a save
+        lost, and none stacks into a pile of boxes. Test: a MIDI failure, then a save
         failure while the box is up, give one box with both.
-      - A save failing while the session manager ends the session (G3):
+      - A save failing while the session manager ends the session (logging
+        out):
         with no interaction allowed, it is logged with `qCritical`, and
         nothing is shown. With interaction allowed, it is asked for
         (`QSessionManager::allowsInteraction()`), shown, then released.
@@ -497,8 +498,9 @@ commit, after the new code is in place and tested on its own.
         message, through the fake.
       - C2: the device now outlives the window, so `~MainWindow` disconnects
         it in its body, and the teardown test fires its signals too.
-      - `doc/ARCHITECTURE.md`'s App section matches the code. One line in
-        5.3: a damaged programs file can be set aside at startup.
+      - `doc/ARCHITECTURE.md`'s App section matches the code. (The line in
+        5.3 about the startup's choices was added by 4.11b, with the
+        change.)
 
 ## Phase 5: packaging and documentation
 
@@ -548,6 +550,12 @@ commit, after the new code is in place and tested on its own.
         receives from the application's port; before, the message went to
         no one, with the same effect. The menu is disabled then
         anyway, unless another tool connected one way only.
+      - When the programs can't be opened at startup, the message offers
+        what fits: Retry after a failed migration (with how to repair a
+        database a crash left half-written), Set aside for a damaged
+        programs file (renamed, never deleted, then lpd8editor starts with
+        no programs), and only Quit for a file from a newer version or one
+        that can't be read. Before, every case quit (item 4.11b).
       - Known quirk, not a change to announce: the pads and knobs tables are
         empty until a program is selected, so the first selection can make
         a window at its minimum width about 28 pixels wider, once (the

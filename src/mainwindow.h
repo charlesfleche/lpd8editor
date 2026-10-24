@@ -32,9 +32,9 @@ class MainWindow : public QMainWindow
 
 public:
     // 'document' holds the user's programs, already loaded (see
-    // openPrograms()). 'midi' is how the window talks to the device, or
+    // lpd8::App::start()). 'midi' is how the window talks to the device, or
     // nullptr to turn MIDI off (no sequencer). Both must outlive the window:
-    // their owner declares them before it.
+    // their owner (lpd8::App) declares them before it.
     MainWindow(lpd8::ProgramsDocument &document,
                lpd8::MidiTransport *midi,
                QWidget *parent = nullptr);
