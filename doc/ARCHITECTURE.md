@@ -126,6 +126,48 @@ completely. A database brings a schema, triggers, transactions and an
 the file atomically: a crash in the middle of a save leaves the previous
 version intact. The `format` number allows the file format to change later.
 
+SQLite was considered again after the rework, with a design that avoids the
+old triggers: `CHECK` constraints for the value ranges, undo as a table of
+program versions, and `sqlite3_update_hook` to refresh the models. It was not
+adopted, for these reasons:
+
+- **`CHECK` constraints don't replace `Program::isValid()`.** The same ranges
+  must be checked for programs that never pass through the database: SysEx
+  from the device, `.lpd8` files, and the values the delegates accept. The
+  rules would be written twice, in SQL and in C++.
+- **A database file is still outside input.** Somebody can supply a
+  `db.sqlite3` without the constraints, so strict reading becomes verifying
+  the schema at each start. SQLite is also a much larger parser to expose to
+  a hostile file than `QJsonDocument` (see `SECURITY.md`).
+- **`AUTOINCREMENT` only replaces `nextId`**, which is one integer.
+- **Undo as a table of versions repeats `QUndoStack`.** Undo is one history
+  across all programs, so the table needs a global sequence, a cursor, the
+  removal of the redo tail at each new edit, and tombstones for removed
+  programs that remember their row. The undo commands already hold the same
+  snapshots (a program id and two `Program` values) in memory, and
+  `QUndoStack` gives the action texts, the enabled states and the merging of
+  edits for free.
+- **`sqlite3_update_hook` fits Qt's models badly.** QtSql doesn't expose it,
+  so the application would link `libsqlite3` itself next to Qt's plugin. The
+  hook runs per row in the middle of a statement, when the connection must
+  not be used; it reports a table and a rowid, not a column; and it is
+  skipped for `WITHOUT ROWID` tables, for a `DELETE` without `WHERE`, and for
+  rows replaced by `ON CONFLICT REPLACE`. Above all it reports a change after
+  it happened, while a model must call `beginInsertRows()` or
+  `beginRemoveRows()` before. In practice that means model resets, which
+  lose the selection and close open editors: the problem of the old
+  `ProgramsModel`.
+- **The hook answers a question this application doesn't have.** There is
+  one process and one writer. The code that changes a program knows what it
+  changed, and the store's signals say so with the row.
+
+SQLite becomes the right choice if one of these changes: the data no longer
+fits comfortably in memory, another process writes to it, or the undo history
+must survive a restart (then the table of versions, as a real table, does
+what `QUndoStack` can't). The way back is cheap: `ProgramStore`'s interface
+doesn't show the file format, so only `load()` and `save()` would change, and
+the signals, the models and the undo commands would stay.
+
 Ids are never handed out twice, not even across sessions (`nextId`), so an id
 remembered anywhere can't come to name another program. Reading is strict: an
 unknown key, or a value out of range, makes the file unreadable rather than
