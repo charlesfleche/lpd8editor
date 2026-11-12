@@ -79,6 +79,9 @@ invisible; this is what you can notice.
 - A program message one byte short is refused. Before, it was accepted,
   with the last knob value read as 0.
 - The note D sharp is written D♯, like the other sharps, instead of D#.
+- A new program is named "P" and the first number that no program's name
+  has: after deleting "P5", the next new program is "P5" again. Before, a
+  number was never used twice.
 - Importing a file that isn't an LPD8 program is refused with a message.
   That includes a file whose slot byte (the 8th value) is not 1 to 4.
   Files exported by lpd8editor always have slot 1, so only files from

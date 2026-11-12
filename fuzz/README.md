@@ -8,7 +8,7 @@ outside lpd8editor, and check properties that must hold whatever the input:
 | `codec` | `lpd8::decodeProgram()`: device replies, program files, the settings' template | An error points inside the message. What is accepted is a complete SysEx message holding a valid program, which encodes back to the same bytes in the storage and 'send' formats. |
 | `sysex_assembler` | `lpd8::SysexAssembler`: the bytes other MIDI clients send | Only complete messages (F0, data bytes, F7) within the size limit come out, the buffer never exceeds the limit, and cutting the input into pieces changes nothing. |
 | `program_text` | `parseProgramText()`, the program file reader | A file that parses holds only ASCII digits and whitespace, with at most 3 digits per value, and 66 bytes, and writing them in the export format parses back to the same bytes. |
-| `program_store` | `lpd8::fromJson()`, the programs file read at every start | What is accepted holds valid programs and names, unique ids from 1 to `max_program_id`, and a next id above them, and survives a round trip through `toJson()`. |
+| `program_store` | `lpd8::fromJson()`, the programs file read at every start | What is accepted holds valid programs and names, and survives a round trip through `toJson()`. |
 | `migration` | `lpd8::migrateSqliteDatabase()`, on old databases without CHECK constraints | The input chooses the values of the old tables (out of range, 64-bit, REAL, text, BLOB, NULL, missing rows). The migration succeeds, every program is migrated or reported, the file it writes loads, and a migrated program holds exactly the database's values, checked against an oracle that reads them with SQL's `typeof()`. |
 
 All of them run under AddressSanitizer and UndefinedBehaviorSanitizer, so a

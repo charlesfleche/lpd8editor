@@ -105,15 +105,14 @@ another codec.
 
 ### Storage: `ProgramStore`
 
-The store keeps the programs in memory, each with a stable integer id, and
-saves them to one human-readable JSON file:
+The store keeps the programs in memory, each with an integer id, and saves
+them to one human-readable JSON file:
 
 ```json
 {
     "format": 1,
-    "nextId": 2,
     "programs": [
-        { "id": 1, "name": "Drums", "channel": 9,
+        { "name": "Drums", "channel": 9,
           "pads":  [ { "note": 36, "programChange": 1, "controlChange": 48, "toggle": false }, ... ],
           "knobs": [ { "controlChange": 16, "low": 0, "high": 127 }, ... ] }
     ]
@@ -139,7 +138,8 @@ adopted, for these reasons:
   `db.sqlite3` without the constraints, so strict reading becomes verifying
   the schema at each start. SQLite is also a much larger parser to expose to
   a hostile file than `QJsonDocument` (see `SECURITY.md`).
-- **`AUTOINCREMENT` only replaces `nextId`**, which is one integer.
+- **`AUTOINCREMENT` has nothing to replace.** The file holds no ids (see
+  below), so there is no counter to keep.
 - **Undo as a table of versions repeats `QUndoStack`.** Undo is one history
   across all programs, so the table needs a global sequence, a cursor, the
   removal of the redo tail at each new edit, and tombstones for removed
@@ -168,8 +168,17 @@ what `QUndoStack` can't). The way back is cheap: `ProgramStore`'s interface
 doesn't show the file format, so only `load()` and `save()` would change, and
 the signals, the models and the undo commands would stay.
 
-Ids are never handed out twice, not even across sessions (`nextId`), so an id
-remembered anywhere can't come to name another program. Reading is strict: an
+Ids only live in memory. An undo command or a pending MIDI request needs a
+name for a program that stays right when rows move, and nothing that could
+remember an id outlives the application. So the file is only the list of
+programs, in order: `load()` gives each one a new id, and the store never
+hands out an id twice in its lifetime, so an id remembered anywhere can't
+come to name another program. An earlier version of the format stored each
+program's id and the next id to hand out (`nextId`). That only added rules to
+check (two programs with the same id, a `nextId` below an id in use) and
+values to keep in step in a hand edit, such as copying a program's block.
+
+Reading is strict: an
 unknown key, or a value out of range, makes the file unreadable rather than
 being dropped at the next save. A file that can't be loaded is never
 overwritten; its error has a kind (`LoadError`: can't be read, damaged, or
@@ -191,7 +200,8 @@ Program files (`.lpd8`, import and export) are read and written by
 
 **Migration**: on the first start of the new version, if the JSON file doesn't
 exist but `db.sqlite3` does, its programs are read once, read-only (by
-`migration.cpp`, which checks every value), and saved as JSON. The old file is
+`migration.cpp`, which checks every value), and saved as JSON, in the order
+of their old ids. The old file is
 renamed to `db.sqlite3.migrated` and kept as a backup, with the migration's
 report next to it. QtSql is only used by this migration.
 

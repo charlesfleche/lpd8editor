@@ -57,8 +57,8 @@ private slots:
     void test_setProgramAndNameSignalSeparately();
     void test_noOpSetsEmitNothing();
     void test_idsAreNotReusedInASession();
-    void test_idsAreNotReusedAcrossSessions();
-    void test_handEditedNextIdCannotCollide();
+    void test_loadGivesNewIds();
+    void test_theFileHasNoIds();
     void test_saveAndLoadRoundTrip();
     void test_loadMissingFileIsEmpty();
     void test_loadRejects_data();
@@ -93,11 +93,9 @@ void TestProgramStore::test_addAndFind()
     ProgramStore store(path);
     const QSignalSpy added(&store, &ProgramStore::programAdded);
 
-    // nextId() says which id add() hands out.
-    const int expectedId = store.nextId();
+    // Ids count up from 1.
     const int id = store.add(QStringLiteral("Drums"), someProgram()).value();
-    QCOMPARE(id, expectedId);
-    QCOMPARE(store.nextId(), id + 1);
+    QCOMPARE(id, 1);
     QCOMPARE(added.count(), 1);
     QCOMPARE(added.at(0).at(0).toInt(), id);
     QCOMPARE(added.at(0).at(1).toInt(), 0); // the row
@@ -146,11 +144,22 @@ void TestProgramStore::test_idsRunOutWithoutOverflow()
              std::optional<int>(max_program_id));
     QVERIFY(!store.add(QStringLiteral("None left"), someProgram()).has_value());
 
-    // The same through a file whose nextId says no id is left.
+    // A load needs a new id for each program of the file: it fails, and the
+    // store is unchanged. The file is fine, so it is not Damaged (never set
+    // aside).
     QVERIFY(store.save().has_value());
+    const auto reloaded = store.load();
+    QVERIFY(!reloaded.has_value());
+    QCOMPARE(reloaded.error().kind, LoadError::Kind::CannotRead);
+    QVERIFY2(reloaded.error().message.contains("no program id is left"),
+             qPrintable(reloaded.error().message));
+    QVERIFY(hasProgram(store, max_program_id));
+
+    // Ids are not in the file: another store reads it, and starts from 1.
     ProgramStore loaded(path);
     QVERIFY(loaded.load().has_value());
-    QVERIFY(!loaded.add(QStringLiteral("None left"), someProgram()).has_value());
+    QCOMPARE(loaded.programs().at(0).id, 1);
+    QVERIFY(loaded.add(QStringLiteral("Room left"), someProgram()).has_value());
 }
 
 void TestProgramStore::test_remove()
@@ -286,27 +295,50 @@ void TestProgramStore::test_idsAreNotReusedInASession()
     QCOMPARE(store.add(QStringLiteral("B"), someProgram(), last), std::optional<int>(last));
 }
 
-void TestProgramStore::test_idsAreNotReusedAcrossSessions()
+void TestProgramStore::test_loadGivesNewIds()
 {
-    int deleted = -1;
-    {
-        ProgramStore store(path);
-        store.add(QStringLiteral("A"), someProgram());
-        deleted = store.add(QStringLiteral("B"), someProgram()).value(); // the highest id
-        QVERIFY(store.remove(deleted));
-        QVERIFY(store.save().has_value());
-    }
+    // An id from before a load must not name a program after it: the file
+    // may hold other programs by then. So load() never reuses an id.
     ProgramStore store(path);
+    const int a = store.add(QStringLiteral("A"), someProgram()).value();
+    const int b = store.add(QStringLiteral("B"), someProgram(3)).value();
+    QVERIFY(store.remove(a));
+    QVERIFY(store.save().has_value());
+
     QVERIFY(store.load().has_value());
-    QVERIFY(store.add(QStringLiteral("C"), someProgram()).value() != deleted);
+    QCOMPARE(store.programs().size(), 1);
+    const StoredProgram loaded = store.programs().at(0);
+    QCOMPARE(loaded.name, QStringLiteral("B"));
+    QCOMPARE(loaded.program, someProgram(3));
+    QVERIFY(loaded.id > b);
+    QVERIFY(!hasProgram(store, a));
+    QVERIFY(!hasProgram(store, b));
+    // And new programs come after the loaded ones.
+    QVERIFY(store.add(QStringLiteral("C"), someProgram()).value() > loaded.id);
+
+    // A store that starts with the file numbers its programs from 1, in the
+    // file's order.
+    ProgramStore fresh(path);
+    QVERIFY(fresh.load().has_value());
+    QCOMPARE(fresh.programs().size(), 1);
+    QCOMPARE(fresh.programs().at(0).id, 1);
 }
 
-void TestProgramStore::test_handEditedNextIdCannotCollide()
+void TestProgramStore::test_theFileHasNoIds()
 {
-    StoreContent content;
-    content.programs = {StoredProgram{.id = 5, .name = "A", .program = someProgram()}};
-    content.nextId = 2; // edited by hand: lower than an id in use
-    QCOMPARE(fromJson(toJson(content)).value().nextId, 6);
+    // Nothing in the file must be kept in step by hand: the same program
+    // twice (a block copied and pasted) is two programs.
+    const NamedProgram drums{.name = "Drums", .program = someProgram()};
+    const QByteArray json = toJson({drums, drums});
+    QVERIFY(!json.contains("id"));
+    QVERIFY(!json.contains("Id"));
+    QCOMPARE(fromJson(json).value(), (QList<NamedProgram>{drums, drums}));
+
+    writeAll(path, json);
+    ProgramStore store(path);
+    QVERIFY(store.load().has_value());
+    QCOMPARE(store.programs().size(), 2);
+    QVERIFY(store.programs().at(0).id != store.programs().at(1).id);
 }
 
 void TestProgramStore::test_saveAndLoadRoundTrip()
@@ -329,7 +361,8 @@ void TestProgramStore::test_saveAndLoadRoundTrip()
     const QSignalSpy reset(&loaded, &ProgramStore::programsReset);
     QVERIFY(loaded.load().has_value());
     QCOMPARE(reset.count(), 1);
-    QCOMPARE(loaded.programs(), store.programs()); // ids, names and programs
+    // Names and programs, in order. The ids too: both stores counted from 1.
+    QCOMPARE(loaded.programs(), store.programs());
 }
 
 void TestProgramStore::test_loadMissingFileIsEmpty()
@@ -354,9 +387,7 @@ void TestProgramStore::test_loadRejects_data()
     constexpr auto damaged = LoadError::Kind::Damaged;
     constexpr auto newer = LoadError::Kind::NewerFormat;
 
-    StoreContent content;
-    content.programs = {StoredProgram{.id = 1, .name = "Drums", .program = someProgram()}};
-    const QByteArray valid = toJson(content);
+    const QByteArray valid = toJson({NamedProgram{.name = "Drums", .program = someProgram()}});
     const auto edited = [&valid](const QByteArray &from, const QByteArray &to) {
         QByteArray json = valid;
         Q_ASSERT(json.contains(from));
@@ -376,14 +407,11 @@ void TestProgramStore::test_loadRejects_data()
                                 << newer;
     QTest::newRow("Format 0.5") << edited(R"("format": 1)", R"("format": 0.5)")
                                 << "unknown format version 0.5" << damaged;
-    QTest::newRow("Unknown root key")
-            << edited(R"("nextId")", R"("next")") << "unknown key 'next'" << damaged;
-    QTest::newRow("No nextId") << edited(R"("nextId": 1,)", "") << "'nextId' must be an integer"
-                               << damaged;
-    QTest::newRow("nextId above the cap") << edited(R"("nextId": 1)", R"("nextId": 2147483648)")
-                                          << "'nextId' must be an integer" << damaged;
-    QTest::newRow("Id at INT_MAX") << edited(R"("id": 1)", R"("id": 2147483647)")
-                                   << "'id' must be an integer from 1 to 2147483646" << damaged;
+    QTest::newRow("Unknown root key") << edited(R"("format": 1)", R"("format": 1, "nextId": 2)")
+                                      << "unknown key 'nextId'" << damaged;
+    // Ids are not part of the format: one written by hand is a mistake.
+    QTest::newRow("An id") << edited(R"("channel": 9)", R"("channel": 9, "id": 1)")
+                           << "program 1 (Drums): unknown key 'id'" << damaged;
     QTest::newRow("Unknown program key")
             << edited(R"("channel": 9)", R"("channel": 9, "colour": "red")")
             << "unknown key 'colour'" << damaged;
@@ -454,7 +482,7 @@ void TestProgramStore::test_unreadableFileStaysProtectedUntilReadable()
     QVERIFY(!store.save().has_value());
     QCOMPARE(readAll(path), QByteArray("{ broken"));
 
-    writeAll(path, toJson(StoreContent{}));
+    writeAll(path, toJson({}));
     QVERIFY(store.load().has_value());
     QVERIFY(store.isWritable());
     QVERIFY(store.save().has_value());
@@ -462,7 +490,7 @@ void TestProgramStore::test_unreadableFileStaysProtectedUntilReadable()
 
 void TestProgramStore::test_newerFormatIsNotOverwritten()
 {
-    const QByteArray newer = R"({"format": 2, "nextId": 1, "programs": [], "future": "data"})";
+    const QByteArray newer = R"({"format": 2, "programs": [], "future": "data"})";
     writeAll(path, newer);
 
     ProgramStore store(path);
@@ -581,7 +609,7 @@ void TestProgramStore::test_aFolderThatCannotBeEnteredIsNotAFirstStart()
     const QString locked = dir->filePath("locked");
     QVERIFY(QDir().mkpath(locked));
     const QString inside = locked + "/programs.json";
-    writeAll(inside, toJson(StoreContent{}));
+    writeAll(inside, toJson({}));
     QVERIFY(QFile::setPermissions(locked, QFileDevice::Permissions{}));
     // Restored even if a check fails, so QTemporaryDir can remove it.
     const auto restore = qScopeGuard([&locked] {

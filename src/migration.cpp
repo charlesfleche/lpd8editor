@@ -177,8 +177,8 @@ std::expected<MigrationReport, QSqlError> readInto(QSqlDatabase &db, ProgramStor
             report.skipped.append(tr("program %1 (%2): %3").arg(shown(old.id), old.name, why));
         };
 
-        // Through exactInteger() too: an id above INT_MAX must not wrap onto
-        // another program's id.
+        // The id finds the program's pads and knobs. Through exactInteger()
+        // too: an id above INT_MAX must not wrap onto another program's id.
         const auto id = exactInteger(old.id, max_program_id);
         if (!id || *id < 1) {
             skip(tr("its id is not an integer from 1 to %1").arg(max_program_id));
@@ -203,11 +203,11 @@ std::expected<MigrationReport, QSqlError> readInto(QSqlDatabase &db, ProgramStor
 
         const Program program{
                 .channel = static_cast<quint8>(*channel), .pads = *pads, .knobs = *knobs};
-        // The old id is kept: ids are positive and unique there too.
-        // ProgramStore refuses what it can't store (an id out of its range,
-        // a name that isn't valid UTF-16): report that as well.
-        if (!store.add(old.name, program, *id)) {
-            skip(tr("it can't be stored (id or name not accepted)"));
+        // The old id is not kept: the programs file has no ids, only the
+        // order. ProgramStore refuses what it can't store (a name that
+        // isn't valid UTF-16): report that as well.
+        if (!store.add(old.name, program)) {
+            skip(tr("it can't be stored (name not accepted)"));
             continue;
         }
         ++report.migrated;

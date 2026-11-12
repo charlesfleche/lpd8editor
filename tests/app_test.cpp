@@ -349,8 +349,8 @@ void TestApp::test_migrationIsShownOverTheWindow()
     QVERIFY(dialogs.notices.at(0).text.contains(QDir::toNativeSeparators(report.reportFileAt)));
 
     QCOMPARE(app.document().store().programs().size(), 2);
-    QCOMPARE(app.document().store().programs().at(0).id, 3);
-    QCOMPARE(app.document().store().programs().at(1).id, 7);
+    QCOMPARE(app.document().store().programs().at(0).name, QStringLiteral("Drums"));
+    QCOMPARE(app.document().store().programs().at(1).name, QStringLiteral("Keys"));
     QCOMPARE(app.document().undoStack().count(), 0);
 }
 

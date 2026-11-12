@@ -655,6 +655,11 @@ commit, after the new code is in place and tested on its own.
       - For packagers: the build adds hardening flags (stack protector,
         `_FORTIFY_SOURCE=3`, `_GLIBCXX_ASSERTIONS`, PIE, full RELRO), on by
         default (`LPD8EDITOR_HARDENING`), checked by the `hardening` test.
+      - A new program is named "P" and the first number that no program's
+        name has: after deleting "P5", the next one is "P5" again. Before,
+        the number was the program's id in the database, which was never
+        used again. The programs file stores no ids: it is the list of the
+        programs, in order.
       - Known quirk, not a change to announce: the pads and knobs tables are
         empty until a program is selected, so the first selection can make
         a window at its minimum width about 28 pixels wider, once (the

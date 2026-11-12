@@ -544,19 +544,26 @@ void TestMainWindow::test_problemsArePlainText()
 
 void TestMainWindow::test_newProgramUsesTheDefaultSettings()
 {
-    // Without settings: the factory program, named 'P' and its id.
+    // Without settings: the factory program, named 'P' and the first number
+    // that no program's name has.
     {
-        const auto window = windowWithPrograms(1);
-        const StoredProgram &created = document->store().programs().at(0);
-        QCOMPARE(created.name, QStringLiteral("P%1").arg(created.id));
-        QCOMPARE(created.program, profile().defaultProgram);
+        const auto window = windowWithPrograms(2);
+        const ProgramStore &store = document->store();
+        QCOMPARE(store.programs().at(0).name, QStringLiteral("P1"));
+        QCOMPARE(store.programs().at(0).program, profile().defaultProgram);
+        QCOMPARE(store.programs().at(1).name, QStringLiteral("P2"));
+
+        // P1 is free again once its program is gone.
+        QVERIFY(document->store().remove(store.programs().at(0).id));
+        window->findChild<QAction *>("actionNewProgram")->trigger();
+        QCOMPARE(store.programs().at(1).name, QStringLiteral("P1"));
     }
 
     // With them: the template and the name.
     QSettings().setValue("default/sysex", encodeStoredProgram(withChannel(5)));
     QSettings().setValue("default/name", QStringLiteral("Mine"));
     const auto window = windowWithPrograms(1);
-    const StoredProgram &created = document->store().programs().at(1);
+    const StoredProgram &created = document->store().programs().at(2);
     QCOMPARE(created.name, QStringLiteral("Mine"));
     QCOMPARE(created.program, withChannel(5));
 }

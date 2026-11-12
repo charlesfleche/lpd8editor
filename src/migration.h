@@ -63,7 +63,8 @@ QString describe(const MigrationReport &report);
 //   written again to say so. It never deletes anything: if the program stops in between,
 //   the JSON file exists, so the next start doesn't migrate again, and the
 //   database is still there.
-// - Keeps each program's id, name and order. A program that can't be
+// - Keeps each program's name and order (the old ids are not kept: the
+//   programs file has none). A program that can't be
 //   migrated (a value out of range, which databases created by v0.0.0 to
 //   v0.0.5 can hold since their tables have no CHECK constraints, or
 //   missing rows) is left out and reported in 'skipped', by program and

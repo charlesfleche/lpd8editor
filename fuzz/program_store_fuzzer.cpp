@@ -13,8 +13,6 @@
 
 #include <QByteArray>
 
-#include <algorithm>
-
 extern "C" int LLVMFuzzerInitialize(int * /*argc*/, char *** /*argv*/)
 {
     return 0;
@@ -27,21 +25,15 @@ extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size
         return 0;
     }
 
-    // What the store promises (programstore.h): valid programs and names,
-    // unique ids from 1 to max_program_id, and a next id above all of them.
-    for (const lpd8::StoredProgram &stored : content->programs) {
-        check(stored.program.isValid());
-        check(stored.name.isValidUtf16());
-        check(stored.id >= 1 && stored.id <= lpd8::max_program_id);
-        check(stored.id < content->nextId);
-        check(std::ranges::count(content->programs, stored.id, &lpd8::StoredProgram::id) == 1);
+    // What the store promises (programstore.h): valid programs and names.
+    for (const lpd8::NamedProgram &named : *content) {
+        check(named.program.isValid());
+        check(named.name.isValidUtf16());
     }
-    check(content->nextId >= 1 && content->nextId <= lpd8::max_program_id + 1);
 
     // A save then a load gives the same store back.
     const auto again = lpd8::fromJson(lpd8::toJson(*content));
     check(again.has_value());
-    check(again->programs == content->programs);
-    check(again->nextId == content->nextId);
+    check(*again == *content);
     return 0;
 }

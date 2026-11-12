@@ -1,9 +1,7 @@
 {
     "format": 1,
-    "nextId": 2,
     "programs": [
         {
-            "id": 1,
             "name": "Drums",
             "channel": 9,
             "pads": [

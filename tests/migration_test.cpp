@@ -162,19 +162,15 @@ void TestMigration::test_migratesTheCurrentSchema()
     QVERIFY(store.load().has_value());
     const QList<StoredProgram> &programs = store.programs();
     QCOMPARE(programs.size(), 3);
-    // Ids, names and order are kept.
-    QCOMPARE(programs.at(0).id, 1);
+    // Names and order (by old id: 1, 2, 5) are kept. The old ids are not:
+    // the programs file has none.
     QCOMPARE(programs.at(0).name, QStringLiteral("Drums"));
     QCOMPARE(programs.at(0).program, profile().defaultProgram);
-    QCOMPARE(programs.at(1).id, 2);
     QCOMPARE(programs.at(1).name, QStringLiteral("Café 日本語"));
     QCOMPARE(programs.at(1).program.pads[3],
              (Pad{.note = 60, .programChange = 4, .controlChange = 51, .toggle = true}));
-    QCOMPARE(programs.at(2).id, 5);
     QCOMPARE(programs.at(2).program.channel, quint8(3));
     QCOMPARE(programs.at(2).program.knobs[7].high, quint8(100));
-    // New ids continue after the old ones.
-    QCOMPARE(store.add(QStringLiteral("New"), profile().defaultProgram), std::optional<int>(6));
 }
 
 void TestMigration::test_reportsBadRowsOfAnUnconstrainedDatabase()

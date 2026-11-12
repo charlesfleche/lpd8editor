@@ -1,9 +1,7 @@
 {
     "format": 1,
-    "nextId": 8,
     "programs": [
         {
-            "id": 1,
             "name": "Drums",
             "channel": 9,
             "pads": [
@@ -100,7 +98,6 @@
             ]
         },
         {
-            "id": 7,
             "name": "Pads ♯ é",
             "channel": 9,
             "pads": [

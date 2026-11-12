@@ -14,8 +14,18 @@
 
 namespace lpd8 {
 
-// A program as the user keeps it: the device content, plus what only the
-// application knows, a stable id and a name.
+// A program as the user keeps it: the device content, plus a name, which
+// only the application knows. This is what the programs file holds.
+struct NamedProgram
+{
+    QString name;
+    Program program;
+
+    bool operator==(const NamedProgram &) const = default;
+};
+
+// A program in the store: the same, plus the id the store gave it. The id
+// only lives in memory: it is not in the file.
 struct StoredProgram
 {
     int id{-1};
@@ -66,11 +76,14 @@ inline constexpr int max_program_id = std::numeric_limits<int>::max() - 1;
 // program change have separate signals: a rename touches one column of a
 // view, a program change the others.
 //
-// Ids are unique and never handed out twice, not even across sessions: the
-// file stores the next id to hand out. A deleted program's id stays free, so
-// undo can restore the program under it, and anything that remembers an id
-// outside the store (the last selected program, a migration's mapping) can
-// never find another program under it after a restart.
+// Ids name a program while the application runs: an undo command or a
+// pending MIDI request holds an id, which stays right when rows move. The
+// store hands them out, counting up, and never twice in its lifetime: a
+// deleted program's id stays free, so undo can restore the program under it,
+// and nothing that remembers an id can find another program under it. Ids
+// are not saved: nothing outlives the application that could remember one.
+// load() gives every program of the file a new id, in the file's order, so
+// an id from before a load names nothing after it.
 //
 // Names are labels: duplicates are allowed. A name must be valid UTF-16
 // (QString::isValidUtf16(), no lone surrogate), because JSON is UTF-8 and an
@@ -93,9 +106,6 @@ public:
     const StoredProgram *get(int id) const;
     // The row of program 'id' in programs(), if there is one.
     std::optional<int> rowOf(int id) const;
-    // The id the next add() without an id hands out (for a default name).
-    int nextId() const { return m_nextId; }
-
     // Adds a program at the end and returns its id: a new one, or 'id' if
     // it is given (to restore a deleted program). Returns nothing if 'id' is
     // taken or out of range, if no id is left, or if 'name' or 'program' is
@@ -110,8 +120,8 @@ public:
     bool setProgram(int id, const Program &program);
     bool setName(int id, const QString &name);
 
-    // Replaces the programs with those of the file. A file that doesn't
-    // exist is an empty store (the first start). On failure, the store is
+    // Replaces the programs with those of the file, under new ids. A file
+    // that doesn't exist is an empty store (the first start). On failure, the store is
     // unchanged, the message says what is wrong for the user, and save()
     // refuses to write until setAsideUnreadableFile(): the file may hold the
     // user's programs in a form this version can't read (a newer format, a
@@ -152,7 +162,7 @@ private:
 
     QString m_path;
     QList<StoredProgram> m_programs;
-    int m_nextId{1};
+    int m_nextId{1}; // the next id to hand out, above every id handed out
     // Set when load() fails: the file must not be overwritten.
     std::optional<LoadError> m_loadError;
 };
@@ -160,7 +170,9 @@ private:
 // The JSON format, version 1. Separate from the file I/O so it can be tested
 // without files. It stores each program's fields, not a SysEx message: the
 // file stays readable and editable by hand, and independent of the device's
-// encoding.
+// encoding. A program has no id there: the file is the list of programs, in
+// order, so a hand edit can copy, move or delete one with nothing to keep
+// in step.
 //
 // Reading is strict: a key this version doesn't know is an error, not
 // ignored. Ignoring it would drop it silently at the next save, and a typo
@@ -171,15 +183,10 @@ inline constexpr int store_format_version = 1;
 // this large.
 inline constexpr qint64 max_store_file_size = qint64{8} * 1024 * 1024;
 
-struct StoreContent
-{
-    QList<StoredProgram> programs;
-    int nextId{1}; // the next id to hand out, always above every id in use
-};
-
-QByteArray toJson(const StoreContent &content);
-// The error is Damaged, or NewerFormat. Its message has no file name.
-std::expected<StoreContent, LoadError> fromJson(const QByteArray &json);
+QByteArray toJson(const QList<NamedProgram> &programs);
+// The error is Damaged, or NewerFormat. Its message has no file name, and
+// names a program by its position in the file, from 1.
+std::expected<QList<NamedProgram>, LoadError> fromJson(const QByteArray &json);
 
 } // namespace lpd8
 

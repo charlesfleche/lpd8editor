@@ -11,7 +11,8 @@
 // - the programs file it writes loads again;
 // - a migrated program holds exactly the database's values, checked
 //   against an oracle that reads them with SQL's typeof() rather than
-//   through QVariant like the migration does.
+//   through QVariant like the migration does;
+// - the migrated programs are in the order of the old ids.
 
 #include "fuzzer.h"
 
@@ -265,14 +266,17 @@ extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size
     check(store.programs().size() == report.migrated);
 
     // Every program row is migrated or reported, and the migrated ones hold
-    // what the oracle reads, under their old id.
+    // what the oracle reads, in the order of the old ids. The programs file
+    // has no ids, so the rows are matched to its programs by walking both in
+    // that order.
     {
         QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", connection_name);
         db.setDatabaseName(report.oldFileNowAt);
         check(db.open());
         QSqlQuery q(db);
-        check(q.exec("select programId, typeof(programId) from programs"));
+        check(q.exec("select programId, typeof(programId), name from programs order by programId"));
         int rows = 0;
+        qsizetype next = 0; // in store.programs()
         while (q.next()) {
             ++rows;
             const bool usableId = q.value(1).toString() == QLatin1String("integer")
@@ -280,17 +284,19 @@ extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size
                     && q.value(0).toLongLong() <= lpd8::max_program_id;
             const auto expected =
                     usableId ? oracle(db, static_cast<int>(q.value(0).toLongLong())) : std::nullopt;
-            const lpd8::StoredProgram *stored =
-                    usableId ? store.get(static_cast<int>(q.value(0).toLongLong())) : nullptr;
-            if (stored != nullptr) {
-                check(expected.has_value());
-                check(stored->program == expected.value());
-            } else if (expected) {
-                // Only the name can make a program with good values
-                // unstorable (not valid UTF-16).
-                check(!report.skipped.isEmpty());
+            // Only the name can make a program with good values unstorable
+            // (not valid UTF-16). A NULL name is an empty one.
+            const QString name = q.value(2).toString();
+            if (!expected || !name.isValidUtf16()) {
+                continue; // skipped: counted below
             }
+            check(next < store.programs().size());
+            const lpd8::StoredProgram &stored = store.programs().at(next);
+            check(stored.program == expected.value());
+            check(stored.name == name);
+            ++next;
         }
+        check(next == store.programs().size());
         check(rows == report.migrated + report.skipped.size());
         db.close();
     }

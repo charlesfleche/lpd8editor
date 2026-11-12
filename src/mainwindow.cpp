@@ -27,11 +27,28 @@
 
 #include <QtDebug>
 
+#include <algorithm>
+
 using lpd8::ControlsModel;
 using lpd8::ProgramListModel;
 
 static const QString SETTINGS_KEY_DEFAULT_NAME = "default/name";
 static const QString SETTINGS_KEY_DEFAULT_SYSEX = "default/sysex";
+
+// The default name of a new program: "P1", or the first "P<n>" that no
+// program has. Among n + 1 names, n programs leave one free, so the loop
+// ends.
+namespace {
+QString freeDefaultName(const QList<lpd8::StoredProgram> &programs)
+{
+    for (int n = 1;; ++n) {
+        const QString name = QStringLiteral("P%1").arg(n);
+        if (!std::ranges::contains(programs, name, &lpd8::StoredProgram::name)) {
+            return name;
+        }
+    }
+}
+} // namespace
 
 MainWindow::MainWindow(lpd8::ProgramsDocument &document,
                        lpd8::MidiTransport *midi,
@@ -359,11 +376,11 @@ void MainWindow::on_actionNewProgram_triggered()
                        << ": it is not an LPD8 program";
         }
     }
-    // Without the setting, 'P' and the program's id, as before. A setting
-    // that is set, even empty, is used as it is.
+    // Without the setting, the first free "P<n>". A setting that is set,
+    // even empty, is used as it is.
     QString name = settings.value(SETTINGS_KEY_DEFAULT_NAME).toString();
     if (name.isNull()) {
-        name = QStringLiteral("P%1").arg(m_document.store().nextId());
+        name = freeDefaultName(m_document.store().programs());
     }
     push(lpd8::makeAddCommand(m_document.store(), name, program), "create a program");
 }

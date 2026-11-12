@@ -1,10 +1,10 @@
 {
     "format": 1,
-    "nextId": 1,
+    "nextId": 2,
     "programs": [
         {
-            "id": 7,
-            "name": "Pads ♯ é",
+            "id": 1,
+            "name": "Drums",
             "channel": 9,
             "pads": [
                 {
@@ -23,7 +23,7 @@
                     "note": 38,
                     "programChange": 3,
                     "controlChange": 50,
-                    "toggle": true
+                    "toggle": false
                 },
                 {
                     "note": 39,

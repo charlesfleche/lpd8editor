@@ -80,7 +80,10 @@ void TestProgramsDocument::test_loadClearsTheUndoStack()
     QVERIFY(document.store().load().has_value());
     QCOMPARE(document.undoStack().count(), 0);
     document.undoStack().undo();
-    QCOMPARE(document.store().find(id).value().program, profile().defaultProgram);
+    // The loaded program has a new id: the old one names nothing.
+    QVERIFY(!document.store().find(id).has_value());
+    QCOMPARE(document.store().programs().size(), 1);
+    QCOMPARE(document.store().programs().at(0).program, profile().defaultProgram);
 }
 
 void TestProgramsDocument::test_loadDoesNotWrite()

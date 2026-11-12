@@ -49,7 +49,7 @@ QJsonObject knobToJson(const Knob &knob)
     return {{"controlChange", knob.controlChange}, {"low", knob.low}, {"high", knob.high}};
 }
 
-QJsonObject programToJson(const StoredProgram &stored)
+QJsonObject programToJson(const NamedProgram &stored)
 {
     QJsonArray pads;
     for (const Pad &pad : stored.program.pads) {
@@ -59,8 +59,7 @@ QJsonObject programToJson(const StoredProgram &stored)
     for (const Knob &knob : stored.program.knobs) {
         knobs.append(knobToJson(knob));
     }
-    return {{"id", stored.id},
-            {"name", stored.name},
+    return {{"name", stored.name},
             {"channel", stored.program.channel},
             {"pads", pads},
             {"knobs", knobs}};
@@ -191,30 +190,24 @@ std::expected<void, QString> controlsFromJson(const QJsonObject &object,
     return {};
 }
 
-std::expected<StoredProgram, QString> programFromJson(const QJsonObject &object)
+// 'number' is the program's position in the file, from 1: the file has no
+// other way to tell two programs of the same name apart.
+std::expected<NamedProgram, QString> programFromJson(const QJsonObject &object, qsizetype number)
 {
-    StoredProgram stored;
-
-    // id + 1 must fit in an int: see max_program_id.
-    const auto id = wholeNumber(object.value("id"_L1));
-    if (!id || *id < 1 || *id > max_program_id) {
-        return Error(tr("'id' must be an integer from 1 to %1").arg(max_program_id));
-    }
-    stored.id = static_cast<int>(*id);
+    NamedProgram stored;
 
     const QJsonValue name = object.value("name"_L1);
     if (!name.isString()) {
-        return Error(tr("program %1: 'name' must be a string").arg(stored.id));
+        return Error(tr("program %1: 'name' must be a string").arg(number));
     }
     stored.name = name.toString();
 
     // From here, errors name the program.
-    const auto inProgram = [&stored](const QString &error) {
-        return Error(tr("program %1 (%2): %3").arg(QString::number(stored.id), stored.name, error));
+    const auto inProgram = [&stored, number](const QString &error) {
+        return Error(tr("program %1 (%2): %3").arg(QString::number(number), stored.name, error));
     };
 
-    if (const auto unknown =
-                unknownKey(object, {"id"_L1, "name"_L1, "channel"_L1, "pads"_L1, "knobs"_L1})) {
+    if (const auto unknown = unknownKey(object, {"name"_L1, "channel"_L1, "pads"_L1, "knobs"_L1})) {
         return inProgram(*unknown);
     }
     if (!isAcceptableName(stored.name)) {
@@ -247,18 +240,17 @@ std::expected<StoredProgram, QString> programFromJson(const QJsonObject &object)
 
 } // namespace
 
-QByteArray toJson(const StoreContent &content)
+QByteArray toJson(const QList<NamedProgram> &programs)
 {
     QJsonArray array;
-    for (const StoredProgram &stored : content.programs) {
+    for (const NamedProgram &stored : programs) {
         array.append(programToJson(stored));
     }
-    const QJsonObject root{
-            {"format", store_format_version}, {"nextId", content.nextId}, {"programs", array}};
+    const QJsonObject root{{"format", store_format_version}, {"programs", array}};
     return QJsonDocument(root).toJson(QJsonDocument::Indented);
 }
 
-std::expected<StoreContent, LoadError> fromJson(const QByteArray &json)
+std::expected<QList<NamedProgram>, LoadError> fromJson(const QByteArray &json)
 {
     const auto damaged = [](const QString &why) {
         return std::unexpected(LoadError{.kind = LoadError::Kind::Damaged, .message = why});
@@ -294,14 +286,8 @@ std::expected<StoreContent, LoadError> fromJson(const QByteArray &json)
     if (format != store_format_version) {
         return damaged(tr("unknown format version %1").arg(QString::number(format)));
     }
-    if (const auto unknown = unknownKey(root, {"format"_L1, "nextId"_L1, "programs"_L1})) {
+    if (const auto unknown = unknownKey(root, {"format"_L1, "programs"_L1})) {
         return damaged(*unknown);
-    }
-
-    // nextId may be max_program_id + 1: then no id is left to hand out.
-    const auto nextId = wholeNumber(root.value("nextId"_L1));
-    if (!nextId || *nextId < 1 || *nextId > max_program_id + 1.0) {
-        return damaged(tr("'nextId' must be an integer from 1 to %1").arg(max_program_id + 1));
     }
 
     const QJsonValue programsValue = root.value("programs"_L1);
@@ -309,30 +295,18 @@ std::expected<StoreContent, LoadError> fromJson(const QByteArray &json)
         return damaged(tr("'programs' must be a list"));
     }
 
-    QList<StoredProgram> programs;
+    QList<NamedProgram> programs;
     for (const QJsonValue value : programsValue.toArray()) {
         if (!value.isObject()) {
             return damaged(tr("each program must be an object"));
         }
-        auto stored = programFromJson(value.toObject());
+        auto stored = programFromJson(value.toObject(), programs.size() + 1);
         if (!stored) {
             return damaged(stored.error());
         }
-        const bool duplicate = std::ranges::any_of(
-                programs, [&](const StoredProgram &p) { return p.id == stored->id; });
-        if (duplicate) {
-            return damaged(tr("two programs have the id %1").arg(stored->id));
-        }
         programs.append(std::move(*stored));
     }
-
-    // Never hand out an id in use, even if the file was edited by hand. Every
-    // id is at most max_program_id, so 'p.id + 1' can't overflow.
-    const int next = std::ranges::fold_left(
-            programs, static_cast<int>(*nextId), [](int n, const StoredProgram &p) {
-                return std::max(n, p.id + 1);
-            });
-    return StoreContent{.programs = std::move(programs), .nextId = next};
+    return programs;
 }
 
 ProgramStore::ProgramStore(QString path, QObject *parent)
@@ -444,11 +418,17 @@ bool ProgramStore::setName(int id, const QString &name)
 std::expected<void, LoadError> ProgramStore::load()
 {
     const QString file = QDir::toNativeSeparators(m_path);
-    const auto replaceWith = [this](StoreContent content) {
+    // The caller checked that m_nextId leaves room for an id each.
+    const auto replaceWith = [this](const QList<NamedProgram> &content) {
         emit programsAboutToBeReset();
-        m_programs = std::move(content.programs);
-        // Also above any id handed out earlier in this session.
-        m_nextId = std::max(m_nextId, content.nextId);
+        m_programs.clear();
+        m_programs.reserve(content.size());
+        for (const NamedProgram &named : content) {
+            // New ids, above any handed out before: an id from before the
+            // load can't come to name one of these programs.
+            m_programs.append(
+                    StoredProgram{.id = m_nextId++, .name = named.name, .program = named.program});
+        }
         m_loadError.reset();
         emit programsReset();
     };
@@ -464,7 +444,7 @@ std::expected<void, LoadError> ProgramStore::load()
         // without signals: a change that changes nothing emits nothing.
         m_loadError.reset();
         if (!m_programs.isEmpty()) {
-            replaceWith(StoreContent{.programs = {}, .nextId = 1});
+            replaceWith({});
         }
         return {};
     }
@@ -507,7 +487,14 @@ std::expected<void, LoadError> ProgramStore::load()
     if (!content) {
         return unreadable(content.error().kind, content.error().message);
     }
-    replaceWith(std::move(*content));
+    // m_nextId is at most max_program_id + 1, so this can't overflow. Out of
+    // reach in practice (two billion programs added since the start), but an
+    // id must never wrap around onto one in use.
+    if (content->size() > max_program_id - m_nextId + 1) {
+        return unreadable(LoadError::Kind::CannotRead,
+                          tr("no program id is left: restart lpd8editor"));
+    }
+    replaceWith(*content);
     return {};
 }
 
@@ -522,7 +509,12 @@ std::expected<void, QString> ProgramStore::save() const
     // load() refuses a file above max_store_file_size, and names have no
     // length limit: a file that large would lock the user out at the next
     // start (unreadable, so not overwritten either). Never write one.
-    const QByteArray json = toJson(StoreContent{.programs = m_programs, .nextId = m_nextId});
+    QList<NamedProgram> content;
+    content.reserve(m_programs.size());
+    for (const StoredProgram &stored : m_programs) {
+        content.append(NamedProgram{.name = stored.name, .program = stored.program});
+    }
+    const QByteArray json = toJson(content);
     if (json.size() > max_store_file_size) {
         return Error(tr("The programs are too large to be saved in %1: a name is probably far "
                         "too long.")
